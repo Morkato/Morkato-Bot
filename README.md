@@ -2,7 +2,7 @@
   O objetivo do projeto é ser um RPG/RP de Kimetsu no Yaiba no discord: Usando Python para o Bot; Nodejs para Back-end e Front-end; PostgreSQL para Banco de dados.
   
   Predendo recriar quase todos os sistemas presentes no Anime, como: 
-  1.  Respirações e Kekkijutsus, que iremos chamar de "Arts" para simplificar. Não poderá existir Arts com mesmo nome, mesmo sendo de tipos diferentes. Cada Art também tendo os ataques que iremos chamar de "Formas" assim como no anime. As Formas será global para todos, ou seja, não poerá ter Formas com o mesmo nome mesmo em Arts deferentes;
+  1.  Respirações e Kekkijutsus, que iremos chamar de "Arts" para simplificar. Não poderá existir Arts com mesmo nome, mesmo sendo de tipos diferentes. Cada Art também tendo os ataques que iremos chamar de "Formas" assim como no anime. As Formas será global para todos, ou seja, não poerá ter Formas com o mesmo nome mesmo em Arts deferentes. Cada Art terá um `exp` defirente para cada usuário;
   2.  Um sistema de NPC podendo ser controlado por um ADM e ter as mesmas coisas que um player comum tem;
   3.  Um sistema de items, com esse tendo cormécio ou leilão entre jogadores ou NPCS, tendo também um sistema de raridade, podendo ser achado em possíveis canais, sendo opicional: um sistema de durabilidade e quantidade;
   4.  Uma loja para cada chat, sendo possível achar items em certos canais;

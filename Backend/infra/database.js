@@ -5,9 +5,7 @@ const configuration = {
   host: process.env.DATABASE_HOST,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
-  port: process.env.DATABASE_PORT,
-  idleTimeoutMillis: 30000,
-  max: 1
+  port: process.env.DATABASE_PORT
 }
 
 const cache = {
