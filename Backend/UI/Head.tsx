@@ -1,13 +1,15 @@
 import NextHead from 'next/head'
-import { Component } from "react"
+import { Component, ReactNode } from "react"
+import Script from 'next/script'
+import Link from 'next/link'
 
 export class Head extends Component<{
   title?: string
   description?: string
   type?: string
-  scripts?: string[]
-  styles?: string[]
-  stylesString?: string[]
+  scripts?: { src?: string, crossorigin?: "" | "anonymous" | "use-credentials", integrity?: string }[]
+  links?: { rel?: string, href?: string, crossorigin?: "" | "anonymous" | "use-credentials", integrity?: string }[]
+  methods?: (() => ReactNode)[]
 }> {
   render() {
     const [ title, description, type ] = [ this.props.title || "Morkato Bot", this.props.description || "Apenas um simples bot.", this.props.type || "website" ]
@@ -28,11 +30,11 @@ export class Head extends Component<{
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
 
-        {(this.props.scripts || []).map(e => <script src={e}></script>)}
+        {(this.props.scripts || []).map(e => <Script src={e.src} crossOrigin={e.crossorigin} integrity={e.integrity} />)}
 
-        {(this.props.styles || []).map(e => <link rel="stylesheet" href={e}></link>)}
+        {(this.props.links || []).map(e => <link rel={e.rel} href={e.href} crossOrigin={e.crossorigin} integrity={e.integrity} />)}
 
-        {(this.props.stylesString || []).map(e => <style>{e}</style>)}
+        {(this.props.methods || []).map(comp => comp())}
       </NextHead>
     )
   }
