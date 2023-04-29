@@ -1,0 +1,11 @@
+log
+*.log
+
+node_modules
+.next
+
+.error
+
+.env
+
+Backend/.env
