@@ -1,6 +1,14 @@
+import valid, { required, optional } from '@/models/validator'
 import { NotFoundError } from '@/erros/index'
 
 import query from '@/infra/database'
+import Logger from 'infra/logger'
+
+const logger = Logger({
+  appName: "models:arts",
+  registryLog: true,
+  format: '$date $app: $message'
+})
 
 export interface Art<Type extends number = 0> {
   name: string
@@ -92,7 +100,12 @@ async function getArtsFromGuildAndType<T extends number>(guild_id: string, type:
   return results.rows;
 }
 
-async function getArtFromType<T extends number>({ name, guild_id, type }: { name: string, guild_id: string, type: T }): Promise<Art<T>> {
+async function getArtFromType<T extends number>(props: { name: string, guild_id: string, type: T }): Promise<Art<T>> {
+  const { name, guild_id, type } = valid<Art<T>>(props, {
+    name: required(),
+    guild_id: required(),
+    type: { option: required(), allow: [0, 1, 2] }
+  })
   const expcted = {
     text: `
       SELECT
@@ -117,17 +130,7 @@ async function getArtFromType<T extends number>({ name, guild_id, type }: { name
   return results.rows[0];
 }
 
-async function createArt<T extends number>({
-  name,
-  role = null,
-  type,
-
-  guild_id,
-  
-  embed_title = null,
-  embed_description = null,
-  embed_url = null
-}: {
+async function createArt<T extends number>(art: {
   name: string,
   role?: string | null,
   type: T
@@ -138,6 +141,26 @@ async function createArt<T extends number>({
   embed_description?: string | null,
   embed_url?: string | null
 }): Promise<Art<T>> {
+  const { 
+    name,
+    type,
+    role,
+    guild_id,
+    embed_title,
+    embed_description,
+    embed_url
+  } = valid<Art<T>>(art, {
+    name: required(),
+    type: required(),
+    role: { option: optional(), default: null, allow: null },
+
+    guild_id: required(),
+
+    embed_title: { option: optional(), default: null, allow: null },
+    embed_description: { option: optional(), default: null, allow: null },
+    embed_url: { option: optional(), default: null, allow: null }
+  })
+
   const expcted = {
     text: `
       INSERT
@@ -173,8 +196,11 @@ async function createArt<T extends number>({
 
   try {
     const results = await query(expcted)
+    const art: Art<T> = results.rows[0]
 
-    return results.rows[0];
+    logger.info(`Created new Art name: ${art.name} of guild id: ${art.guild_id}.`, {})
+    
+    return art;
   } catch(err) {
     throw err;
   }
@@ -190,7 +216,17 @@ async function editArt<T extends number>(art: Art<T>, to: {
 }): Promise<Art<T>> {
   const [ original_name, type, guild_id ] = [ art.name, art.type, art.guild_id ]
   
-  const { name, role, embed_title, embed_description, embed_url } = {...art, ...to}
+  const { name, role, embed_title, embed_description, embed_url } = valid<Art<T>>(to, {
+    name: { option: optional(), default: art.name },
+    role: { option: optional(), default: art.role, allow: null },
+    type: { option: optional(), default: art.type, allow: art.type },
+
+    guild_id: { option: optional(), default: art.guild_id, allow: art.guild_id },
+
+    embed_title: { option: optional(), default: art.embed_title, allow: null },
+    embed_description: { option: optional(), default: art.embed_description, allow: null },
+    embed_url: { option: optional(), default: art.embed_url, allow: null }
+  })
   
   const expcted = {
     text: `
@@ -209,8 +245,6 @@ async function editArt<T extends number>(art: Art<T>, to: {
         guild_id = $5
         AND LOWER(name) = LOWER($1)
         AND type = $3
-      LIMIT
-        1
       RETURNING
         *
     ;`,
@@ -219,10 +253,25 @@ async function editArt<T extends number>(art: Art<T>, to: {
 
   const results = await query(expcted)
 
-  return results.rows[0]
+  art = results.rows[0]
+
+  logger.info(`Art name: ${art.name} edited of guild id: ${art.guild_id}.`, {})
+
+  return art;
 }
 
-async function deleteArt<T extends number>({ guild_id, type, name }: Art<T>): Promise<void> {
+export async function deleteArt<T extends number>(art: Art<T>): Promise<void> {
+  const { name, type, guild_id } = valid<Art<T>>(art, {
+    name: required(),
+    type: { option: required(), allow: [0, 1, 2] },
+    role: required(),
+
+    guild_id: required(),
+
+    embed_title: required(),
+    embed_description: required(),
+    embed_url: required()
+  })
   const expected = {
     text: `
       DELETE FROM
@@ -231,40 +280,40 @@ async function deleteArt<T extends number>({ guild_id, type, name }: Art<T>): Pr
         guild_id = $1
         AND type = $2
         AND LOWER(name) = LOWER($3)
-      LIMIT
-        1
     ;`,
     values: [guild_id, type, name]
   }
 
   await query(expected)
+
+  logger.info(`Art name: ${name} of guild_id: ${guild_id} deleted.`, {})
 }
 
-async function getRespirations(): Promise<Respiration[]> {
+export async function getRespirations(): Promise<Respiration[]> {
   return await getArtsFromType(1);
 }
 
-async function getRespiration(guild_id: string, name: string): Promise<Respiration> {
+export async function getRespiration(guild_id: string, name: string): Promise<Respiration> {
   return await getArtFromType({ name, guild_id, type: 1 });
 }
 
-async function getRespirationsFromGuild(guild_id: string): Promise<Respiration[]> {
+export async function getRespirationsFromGuild(guild_id: string): Promise<Respiration[]> {
   return await getArtsFromGuildAndType(guild_id, 1);
 }
 
-async function getKekkijutsus(): Promise<Kekkijutsu[]> {
+export async function getKekkijutsus(): Promise<Kekkijutsu[]> {
   return await getArtsFromType(2);
 }
 
-async function getKekkijutsu(guild_id: string, name: string): Promise<Kekkijutsu> {
+export async function getKekkijutsu(guild_id: string, name: string): Promise<Kekkijutsu> {
   return await getArtFromType({ guild_id, name, type: 2 });
 }
 
-async function getKekkijutstsFromGuild(guild_id): Promise<Kekkijutsu[]> {
+export async function getKekkijutstsFromGuild(guild_id): Promise<Kekkijutsu[]> {
   return await getArtsFromGuildAndType(guild_id, 2);
 }
 
-async function createRespiration({
+export async function createRespiration({
   name,
   role = null,
 
@@ -287,7 +336,7 @@ async function createRespiration({
   })
 }
 
-async function createKekkijutsu({
+export async function createKekkijutsu({
   name,
   role = null,
 
@@ -310,7 +359,7 @@ async function createKekkijutsu({
   })
 }
 
-async function editRespiration(resp: Respiration, to: {
+export async function editRespiration(resp: Respiration, to: {
   name?: string
   role?: string | null
 
@@ -320,7 +369,7 @@ async function editRespiration(resp: Respiration, to: {
 }): Promise<Respiration> {
   return await editArt({ ...resp, type: 1 }, to)
 }
-async function editKekkijutsu(kekki: Kekkijutsu, to: {
+export async function editKekkijutsu(kekki: Kekkijutsu, to: {
   name?: string
   role?: string | null
 
@@ -331,9 +380,9 @@ async function editKekkijutsu(kekki: Kekkijutsu, to: {
   return await editArt({ ...kekki, type: 2 }, to)
 }
 
-const deleteRespiration = async (resp: Respiration) => await deleteArt({...resp, type: 1})
+export const deleteRespiration = async (resp: Respiration) => await deleteArt({...resp, type: 1})
 
-const deleteKekkijutsu = async (kekki: Kekkijutsu) => await deleteArt({...kekki, type: 2})
+export const deleteKekkijutsu = async (kekki: Kekkijutsu) => await deleteArt({...kekki, type: 2})
 
 export default Object.freeze({
   getAll,

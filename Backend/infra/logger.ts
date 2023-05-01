@@ -1,14 +1,37 @@
 import { readFile, writeFile } from 'fs/promises'
+import chalk, { ChalkInstance } from 'chalk'
 import { existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
 import stripColor from 'ansi-regex'
 import AsyncLock from 'async-lock'
-import chalk from 'chalk'
+
+interface LogSettings {
+  [key: string]: string
+  functionName?: string
+  userName?: string
+  sessionId?: string
+}
+
+interface LogType<T extends string> {
+  app: string
+  forFormat: string
+  registryLog?: boolean
+  settings?: LogSettings
+  type: T
+}
+
+interface LogInfo extends LogType<'infp'> {  }
+
+const formatColorsLogTypes: { [key: string]: ChalkInstance } = {
+  info: chalk.bgBlackBright
+}
 
 const cache: { lock: AsyncLock | null } = {
   lock: null
 }
+
+const dir = join(process.cwd(), '.logs')
 
 if(!process.env.BACKEND_LOG) {
   console.warn('BACKEND_LOG not set, enabling logging by default')
@@ -17,22 +40,13 @@ if(!process.env.BACKEND_LOG) {
 }
 
 if(!process.env.REGISTRY_LOG) {
-  console.warn('REGISTRY_LOG not set, enabling logging by default')
+  console.warn('REGISTRY_LOG not set, disabled logging by default')
 
-  process.env.REGISTRY_LOG = "on"
+  process.env.REGISTRY_LOG = "off"
 }
-
-const dir = join(process.cwd(), '.logs')
 
 if(!existsSync(dir) && process.env.REGISTRY_LOG === "on") {
   mkdirSync(dir)
-}
-
-interface LogSettings {
-  appName?: string;
-  functionName?: string;
-  userName?: string;
-  sessionId?: string;
 }
 
 const getNow = () => {
@@ -68,145 +82,76 @@ async function registry(message: string, appName?: string) {
   })
 }
 
-export function info(message: string, {formated, registryLog, settings}: { formated?: string, registryLog?: boolean, settings?: LogSettings }): void {
-  if(process.env.BACKEND_LOG !== "on")
-    return;
-  if(!formated)
-    formated = `${chalk.bgBlackBright('info')} $date $app $user $func $session\n\t${chalk.blackBright('-')} $message`;
-  const day = chalk.magenta(getNow())
+function format(message: string, keys: { [key: string]: string }) {
+  const formatter = /(\$(?<key>[^ \n\t]+))/g
 
-  const prefixs = { date: day, message: chalk.blackBright(message), session: null, func: null, user: null }
+  const keysOfText = message.matchAll(formatter)
 
-  if(settings) {
-    const { appName, functionName, userName, sessionId } = settings
-
-    if(appName)
-      prefixs['app'] = chalk.bgMagenta(`[App::${appName}]`);
-    if(functionName)
-      prefixs['func'] = chalk.greenBright(`[Func::${functionName}]`);
-    if(userName)
-      prefixs['user'] = `[User::${userName}]`;
-    if(sessionId)
-      prefixs['session'] = `[Session::${sessionId}]`
-    
-    for(let [ key, value ] of Object.entries(prefixs)) {
-      formated = formated.replace(`$${key}`, value || '');
-    }
-
-    message = formated
-
-    if(registryLog)
-      registry(message, appName);
-  }
-
-  console.log(message)
-}
-
-export function warn(message: string, {formated, registryLog, settings}: { formated?: string, registryLog?: boolean, settings?: LogSettings }): void {
-  if(process.env.BACKEND_LOG !== "on")
-    return;
-  if(!formated)
-    formated = `${chalk.bgYellowBright('warn')} $date $app $user $func $session\n\t${chalk.yellowBright('-')} $message`;
-  const day = chalk.magenta(getNow())
-
-  const prefixs = { date: day, message: chalk.yellowBright(message), session: null, func: null, user: null }
-
-  if(settings) {
-    const { appName, functionName, userName, sessionId } = settings
-
-    if(appName)
-      prefixs['app'] = chalk.bgMagenta(`[App::${appName}]`);
-    if(functionName)
-      prefixs['func'] = chalk.greenBright(`[Func::${functionName}]`);
-    if(userName)
-      prefixs['user'] = `[User::${userName}]`;
-    if(sessionId)
-      prefixs['session'] = `[Session::${sessionId}]`
-
-    for(let [ key, value ] of Object.entries(prefixs)) {
-      formated = formated.replace(`$${key}`, value || '');
-    }
+  for(let { groups } of keysOfText)
+    message = message.replace(`$${groups.key}`, keys[groups.key] || '');
   
-    message = formated
-
-    if(registryLog)
-      registry(message, appName);
-  }
-
-
-  console.warn(message)
+    
+  return message;
 }
 
-export function err(message: string, {formated, error, exit, registryLog, settings}: { formated?: string, error?: Error, exit?: boolean, registryLog?: boolean, settings?: LogSettings }): void {
-  if(process.env.BACKEND_LOG !== "on") {
-    if(exit) {
-      throw error || new Error(message);
-    }
+function log<T extends string>(message: string, { forFormat, app, registryLog, settings, type }: LogType<T>) {
+  if(process.env.BACKEND_LOG !== "on")
+    return;
+
+  const method = 'info' ?  console.log : 'warn' ? console.warn : 'error' ? console.error : console.log
+  const formatColor = formatColorsLogTypes[type] || chalk.bgBlueBright
+  const formatedType = formatColor(type)
+  const formatedApp = chalk.bgMagentaBright(`[App::${app}]`)
+  const date = chalk.magenta(getNow())
+
+  if(!settings) {
+    const formatedMessage = format(forFormat, { type: formatedType, date: date, app: formatedApp, message: formatColor(message) })
+
+    if(registryLog)
+      registry(formatedMessage);
+
+    method(formatedMessage)
 
     return;
   }
 
-  if(!formated)
-    formated = `${chalk.bgRed('error')} $date $app $user $func $session\n\t${chalk.redBright('-')} $message`;
+  const { functionName, userName, sessionId, ...adicionalSettings } = settings
 
-  const day = chalk.magenta(getNow())
+  const formatedSettings: { [key: string]: string } = {  }
 
-  const prefixs = { date: day, message: chalk.redBright(message), session: null, func: null, user: null }
+  if(functionName)
+    formatedSettings['func'] = chalk.greenBright(`[Func::${functionName}]`);
+  if(userName)
+    formatedSettings['user'] = chalk.whiteBright(`[User::${userName}]`);
+  if(sessionId)
+    formatedSettings['session'] = chalk.whiteBright(`[Session::${sessionId}]`);
+  
+  for(let [ key, value ] of Object.entries(adicionalSettings))
+    formatedSettings[key] = chalk.blueBright(`[${key}::${value}]`);
+  
+  const formatedMessage = format(forFormat, { ...formatedSettings, type: formatedType, date: date, app: formatedApp, message })
 
-  if(settings) {
-    const { appName, functionName, userName, sessionId } = settings
+  if(registryLog)
+    registry(formatedMessage);
+  
+  method(formatedMessage)
+}
 
-    if(appName)
-      prefixs['app'] = chalk.bgMagenta(`[App::${appName}]`);
-    if(functionName)
-      prefixs['func'] = chalk.greenBright(`[Func::${functionName}]`);
-    if(userName)
-      prefixs['user'] = `[User::${userName}]`;
-    if(sessionId)
-      prefixs['session'] = `[Session::${sessionId}]`
+export function info(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
+  return log(message, { type: 'info', app, forFormat, registryLog, settings });
+}
 
-    for(let [ key, value ] of Object.entries(prefixs)) {
-      formated = formated.replace(`$${key}`, value || '');
-    }
-    
-    message = formated
-    
-    if(registryLog)
-      registry(message, appName);
-  }
+export function warn(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
+  return log(message, { type: 'warn', app, forFormat, registryLog, settings });
+}
 
-  if (error) {
-    message += `\n\n${chalk.gray(error.stack || error.message)}`
-  }
-
-  console.error(message)
-
-  if(exit)
-    process.exit(1);
+export function err(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
+  return log(message, { type: 'error', app, forFormat, registryLog, settings });
 }
 
 
-export default function createLog(settings: { appName: string, format?: string, registryLog?: boolean, errorExit?: boolean}) {
-  return {
-    info: (message: string, { config, registryLog }: { config?: LogSettings, registryLog?: boolean }) => info(
-      message, {
-        registryLog: registryLog === undefined ? false : registryLog,
-        formated: settings.format,
-        settings: { ...config, ...settings }
-      }),
-    warn: (message: string, { config, registryLog }: { config?: LogSettings, registryLog?: boolean }) => warn(
-      message, {
-        registryLog: registryLog === undefined ? false : registryLog,
-        formated: settings.format,
-        settings: { ...config, ...settings }
-      }),
-    error: (message: string, {error, exit, registryLog, config}: { error?: Error, exit?: boolean, registryLog?: boolean, config?: LogSettings }) => err(
-      message, {
-        error: error,
-        exit: exit === undefined ? (settings.errorExit || false) : exit,
-        formated: settings.format,
-        registryLog: registryLog === undefined ? false : registryLog,
-        settings: { ...config, ...settings }
-      })
-  }
-}
+export default ({ app, forFormat, registryLog }: { app: string, forFormat: string, registryLog?: boolean}) => ({
+  info: (message: string, settings?: LogSettings) => info(message, { app, forFormat, registryLog, settings }),
+  warn: (message: string, settings?: LogSettings) => warn(message, { app, forFormat, registryLog, settings }),
+  error: (message: string, settings?: LogSettings) => err(message, { app, forFormat, registryLog, settings })
+})

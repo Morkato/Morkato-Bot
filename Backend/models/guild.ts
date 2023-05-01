@@ -9,7 +9,7 @@ export interface Guild {
   updated_at: Date
 }
 
-const getAll = async (): Promise<Guild[]> => {
+export const getAll = async (): Promise<Guild[]> => {
   const expected = {
     text: `
       SELECT
@@ -24,7 +24,7 @@ const getAll = async (): Promise<Guild[]> => {
   return results.rows;
 }
 
-async function getGuild(id: string): Promise<Guild> {
+export async function getGuild(id: string): Promise<Guild> {
   const expected = {
     text: `
       SELECT
@@ -47,7 +47,7 @@ async function getGuild(id: string): Promise<Guild> {
   return results.rows[0];
 }
 
-async function getGuilds(rows_id: number[]): Promise<Guild[]> {
+export async function getGuilds(rows_id: number[]): Promise<Guild[]> {
   const expected = {
     text: `
       SELECT
@@ -67,7 +67,7 @@ async function getGuilds(rows_id: number[]): Promise<Guild[]> {
   return results.rows;
 }
 
-async function createGuild({ id }: { id: string }): Promise<Guild> {
+export async function createGuild({ id }: { id: string }): Promise<Guild> {
   const expected = {
     text: `
       INSERT INTO
@@ -85,7 +85,7 @@ async function createGuild({ id }: { id: string }): Promise<Guild> {
   return results.rows[0];
 }
 
-async function deleteGuild({ id }: Guild): Promise<void> {
+export async function deleteGuild({ id }: Guild): Promise<void> {
   const expected = {
     text: `
       DELETE FROM

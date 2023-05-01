@@ -1,7 +1,7 @@
 (async () => {
   require('dotenv').config()
   
-  const { query } = require('./infra/database')
+  const { query } = require('infra/database')
   const { readFileSync } = require('fs')
 
   const database = readFileSync('database.sql', { encoding: 'utf-8' }).toString()
