@@ -9,10 +9,8 @@ interface KeyOption {
 
 type ChoiceKeyOption = KeyOption | 0 | 1
 
-export default function validator(obj: {
-  [key: string]: string | number | boolean | null | (string | number | boolean | null)[]
-}, keys: { [key: string]: ChoiceKeyOption }
-): { [key: string]: string | number | boolean | null | (string | number | boolean | null)[] } {
+export default function validator<T extends any = {}>(obj: any, keys: { [key: string]: ChoiceKeyOption }
+): T {
   // Verifica se o "objeto" é um JSON valído.
 
   try {
@@ -72,23 +70,23 @@ const validators: { [key: string]: any } = {
     .regex(/^[0-9]+$/)
   ),
   embed_title: createFlag(Joi.string()
-    .allow(null)
     .trim()
     .regex(/^\D.+$/)
     .min(1)
     .max(96)
   ),
   embed_description: createFlag(Joi.string()
-    .allow(null)
     .trim()
     .regex(/^\D.+$/)
     .min(1)
     .max(4096)
   ),
   embed_url: createFlag(Joi.string()
-    .allow(null)
     .trim()
     .regex(/^((https?:\/\/)([\D0-9]+)|(\/[\D0-9]+))$/)
+  ),
+  type: createFlag(Joi.number()
+    .integer()
   ),
   guild_id: (option: KeyOption) => validators.id(option),
   role: (option: KeyOption) => validators.id(option)
