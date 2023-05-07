@@ -1,13 +1,13 @@
-import valid, { required, optional } from '@/models/validator'
-import { NotFoundError } from '@/erros/index'
+import valid, { required, optional } from 'models/validator'
+import Logger, { LogSettings } from 'infra/logger'
+import { NotFoundError } from 'erros/index'
 
-import query from '@/infra/database'
-import Logger from 'infra/logger'
+import query from 'infra/database'
 
 const logger = Logger({
-  appName: "models:arts",
+  app: 'models:arts',
   registryLog: true,
-  format: '$date $app: $message'
+  forFormat: '$user $app $func $Server $art_type $art_name \n\t$type : $message'
 })
 
 export interface Art<Type extends number = 0> {
@@ -31,7 +31,7 @@ export interface Kekkijutsu extends Art<2> {  }
 
 export interface NotDefenedArt extends Art<0 | 1 | 2> {  }
 
-async function getAll(): Promise<NotDefenedArt[]> {
+async function getAll(logOptions?: LogSettings): Promise<NotDefenedArt[]> {
   const expcted = {
     text: `
       SELECT
@@ -42,10 +42,11 @@ async function getAll(): Promise<NotDefenedArt[]> {
   }
 
   const resuslts = await query(expcted)
+  logger.info('Obteve todas as arts.', { functionName: 'getAll', ...(logOptions??{}) })
 
   return resuslts.rows;
 }
-async function getAllFromGuild(guild_id: string): Promise<NotDefenedArt[]> {
+async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Promise<NotDefenedArt[]> {
   const expcted = {
     text: `
       SELECT
@@ -59,11 +60,12 @@ async function getAllFromGuild(guild_id: string): Promise<NotDefenedArt[]> {
   }
 
   const resuslts = await query(expcted)
-
+  logger.info(`Obteve todas as artes de um servidor`, { functionName: 'getAllFromGuild', Server: `${guild_id}`,...(logOptions??{}) })
+  
   return resuslts.rows;
 }
 
-async function getArtsFromType<T extends number>(type: T): Promise<Art<T>[]> {
+async function getArtsFromType<T extends number>(type: T, logOptions?: LogSettings): Promise<Art<T>[]> {
   const expcted = {
     text: `
       SELECT
@@ -77,11 +79,12 @@ async function getArtsFromType<T extends number>(type: T): Promise<Art<T>[]> {
   }
 
   const results = await query(expcted)
+  logger.info(`Obteve todas as artes filtando pelo tipo`, { functionName: 'getAllFromGuild', art_type: `${type}`,...(logOptions??{}) })
 
   return results.rows;
 }
 
-async function getArtsFromGuildAndType<T extends number>(guild_id: string, type: T): Promise<Art<T>[]> {
+async function getArtsFromGuildAndType<T extends number>(guild_id: string, type: T, logOptions?: LogSettings): Promise<Art<T>[]> {
   const expcted = {
     text: `
       SELECT
@@ -96,11 +99,12 @@ async function getArtsFromGuildAndType<T extends number>(guild_id: string, type:
   }
 
   const results = await query(expcted)
+  logger.info('Obteve todas as artes de umservidor filtrando pelo tipo.', { functionName: 'getArtsFromGuildAndType<T>', Server: `${guild_id}`, art_type: `${type}`, ...(logOptions??{}) })
 
   return results.rows;
 }
 
-async function getArtFromType<T extends number>(props: { name: string, guild_id: string, type: T }): Promise<Art<T>> {
+async function getArtFromType<T extends number>(props: { name: string, guild_id: string, type: T }, logOptions?: LogSettings): Promise<Art<T>> {
   const { name, guild_id, type } = valid<Art<T>>(props, {
     name: required(),
     guild_id: required(),
@@ -124,8 +128,13 @@ async function getArtFromType<T extends number>(props: { name: string, guild_id:
 
   const results = await query(expcted)
 
-  if(results.rowCount === 0)
-    throw new NotFoundError({ message: "Art type: " + type + " not exists in guild_id \"" + guild_id + "\"." });
+  if(results.rowCount === 0) {
+    logger.error('Falha ao achar uma arte de um servidor filtrando pelo nome e tipo.\n', {settings: { functionName: 'getArtFromType<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{})} })
+    
+    throw new NotFoundError({ message: "Tipo de arte: " + type + " Não existe no servidor id: \"" + guild_id + "\"." });
+  }
+
+  logger.info(`Obteve arte de um servidor filtrando pelo nome e tipo.`, { functionName: 'getArtFromType<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{})})
 
   return results.rows[0];
 }
@@ -140,7 +149,7 @@ async function createArt<T extends number>(art: {
   embed_title?: string | null,
   embed_description?: string | null,
   embed_url?: string | null
-}): Promise<Art<T>> {
+}, logOptions?: LogSettings): Promise<Art<T>> {
   const { 
     name,
     type,
@@ -198,7 +207,7 @@ async function createArt<T extends number>(art: {
     const results = await query(expcted)
     const art: Art<T> = results.rows[0]
 
-    logger.info(`Created new Art name: ${art.name} of guild id: ${art.guild_id}.`, {})
+    logger.info(`Foi criado uma arte em um servidor filtrado pelo tipo.`, { functionName: 'createArt<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{}) })
     
     return art;
   } catch(err) {
@@ -213,7 +222,7 @@ async function editArt<T extends number>(art: Art<T>, to: {
   embed_title?: string | null
   embed_description?: string | null
   embed_url?: string | null
-}): Promise<Art<T>> {
+}, logOptions?: LogSettings): Promise<Art<T>> {
   const [ original_name, type, guild_id ] = [ art.name, art.type, art.guild_id ]
   
   const { name, role, embed_title, embed_description, embed_url } = valid<Art<T>>(to, {
@@ -255,12 +264,12 @@ async function editArt<T extends number>(art: Art<T>, to: {
 
   art = results.rows[0]
 
-  logger.info(`Art name: ${art.name} edited of guild id: ${art.guild_id}.`, {})
+  logger.info(`Uma arte em um servidor filtrando pelo tipo e nome foi editada.`, { functionName: 'createArt<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{}) })
 
   return art;
 }
 
-export async function deleteArt<T extends number>(art: Art<T>): Promise<void> {
+export async function deleteArt<T extends number>(art: Art<T>, logOptions?: LogSettings): Promise<void> {
   const { name, type, guild_id } = valid<Art<T>>(art, {
     name: required(),
     type: { option: required(), allow: [0, 1, 2] },
@@ -286,31 +295,31 @@ export async function deleteArt<T extends number>(art: Art<T>): Promise<void> {
 
   await query(expected)
 
-  logger.info(`Art name: ${name} of guild_id: ${guild_id} deleted.`, {})
+  logger.info(`Uma arte em um servidor fintrando pelo tipo e nome from excluída`, { functionName: 'deleteArt<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{}) })
 }
 
-export async function getRespirations(): Promise<Respiration[]> {
-  return await getArtsFromType(1);
+export async function getRespirations(logOptions?: LogSettings): Promise<Respiration[]> {
+  return await getArtsFromType(1, { functionName: 'getRespirations', art_type: 'Respiration' });
 }
 
-export async function getRespiration(guild_id: string, name: string): Promise<Respiration> {
-  return await getArtFromType({ name, guild_id, type: 1 });
+export async function getRespiration(guild_id: string, name: string, logOptions?: LogSettings): Promise<Respiration> {
+  return await getArtFromType({ name, guild_id, type: 1 }, { functionName: 'getRespiration', art_type: 'Respiration', ...logOptions });
 }
 
-export async function getRespirationsFromGuild(guild_id: string): Promise<Respiration[]> {
-  return await getArtsFromGuildAndType(guild_id, 1);
+export async function getRespirationsFromGuild(guild_id: string, logOptions?: LogSettings): Promise<Respiration[]> {
+  return await getArtsFromGuildAndType(guild_id, 1, { functionName: 'getRespirationsFromGuild', art_type: 'Respiration', ...logOptions });
 }
 
-export async function getKekkijutsus(): Promise<Kekkijutsu[]> {
-  return await getArtsFromType(2);
+export async function getKekkijutsus(logOptions?: LogSettings): Promise<Kekkijutsu[]> {
+  return await getArtsFromType(2, { functionName: 'getKekkijutsus', art_type: 'Kekkijutsu', ...logOptions });
 }
 
-export async function getKekkijutsu(guild_id: string, name: string): Promise<Kekkijutsu> {
-  return await getArtFromType({ guild_id, name, type: 2 });
+export async function getKekkijutsu(guild_id: string, name: string, logOptions?: LogSettings): Promise<Kekkijutsu> {
+  return await getArtFromType({ guild_id, name, type: 2 }, { functionName: 'getKekkijutsu', art_type: 'Kekkijutsu', ...logOptions });
 }
 
-export async function getKekkijutstsFromGuild(guild_id): Promise<Kekkijutsu[]> {
-  return await getArtsFromGuildAndType(guild_id, 2);
+export async function getKekkijutstsFromGuild(guild_id: string, logOptions?: LogSettings): Promise<Kekkijutsu[]> {
+  return await getArtsFromGuildAndType(guild_id, 2 , { functionName: 'getKekkijutsusFromGuild', art_type: 'Kekkijutsu', ...logOptions });
 }
 
 export async function createRespiration({
@@ -333,7 +342,7 @@ export async function createRespiration({
     embed_title: embed_title,
     embed_description: embed_description,
     embed_url: embed_url
-  })
+  }, { functionName: 'createRespirations', art_type: 'Respiration' })
 }
 
 export async function createKekkijutsu({
@@ -356,7 +365,7 @@ export async function createKekkijutsu({
     embed_title: embed_title,
     embed_description: embed_description,
     embed_url: embed_url
-  })
+  }, { functionName: 'createKekkijutsu', art_type: 'Kekkijutsu' })
 }
 
 export async function editRespiration(resp: Respiration, to: {
@@ -367,7 +376,7 @@ export async function editRespiration(resp: Respiration, to: {
   embed_description?: string | null
   embed_url?: string | null
 }): Promise<Respiration> {
-  return await editArt({ ...resp, type: 1 }, to)
+  return await editArt({ ...resp, type: 1 }, to, { functionName: 'editRespiration', art_type: 'Respiration' })
 }
 export async function editKekkijutsu(kekki: Kekkijutsu, to: {
   name?: string
@@ -377,12 +386,12 @@ export async function editKekkijutsu(kekki: Kekkijutsu, to: {
   embed_description?: string | null
   embed_url?: string | null
 }): Promise<Kekkijutsu> {
-  return await editArt({ ...kekki, type: 2 }, to)
+  return await editArt({ ...kekki, type: 2 }, to, { functionName: 'editKekkijutsu', art_type: 'Kekkijutsu' })
 }
 
-export const deleteRespiration = async (resp: Respiration) => await deleteArt({...resp, type: 1})
+export const deleteRespiration = async (resp: Respiration) => await deleteArt({...resp, type: 1}, { functionName: 'deleteRespiration', art_type: 'Respiration' })
 
-export const deleteKekkijutsu = async (kekki: Kekkijutsu) => await deleteArt({...kekki, type: 2})
+export const deleteKekkijutsu = async (kekki: Kekkijutsu) => await deleteArt({...kekki, type: 2},{ functionName: 'deleteKekkijutsu', art_type: 'Kekkijutsu' })
 
 export default Object.freeze({
   getAll,

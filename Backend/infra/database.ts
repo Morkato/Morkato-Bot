@@ -36,3 +36,5 @@ async function getPoolClient(): Promise<PoolClient> {
 
   return await cache.pool.connect()
 }
+
+export { query };

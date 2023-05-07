@@ -1,19 +1,27 @@
 import { readFile, writeFile } from 'fs/promises'
-import chalk, { ChalkInstance } from 'chalk'
 import { existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
+
+import chalk, { ChalkInstance } from 'chalk'
 
 import stripColor from 'ansi-regex'
 import AsyncLock from 'async-lock'
 
-interface LogSettings {
+export namespace global {
+  export const logger = {
+    LOG: true,
+    REGISTRY: false
+  }
+}
+
+export interface LogSettings {
   [key: string]: string
   functionName?: string
   userName?: string
   sessionId?: string
 }
 
-interface LogType<T extends string> {
+export interface LogType<T extends string> {
   app: string
   forFormat: string
   registryLog?: boolean
@@ -21,10 +29,10 @@ interface LogType<T extends string> {
   type: T
 }
 
-interface LogInfo extends LogType<'infp'> {  }
-
 const formatColorsLogTypes: { [key: string]: ChalkInstance } = {
-  info: chalk.bgBlackBright
+  info: chalk.greenBright,
+  warn: chalk.yellowBright,
+  error: chalk.redBright
 }
 
 const cache: { lock: AsyncLock | null } = {
@@ -32,22 +40,6 @@ const cache: { lock: AsyncLock | null } = {
 }
 
 const dir = join(process.cwd(), '.logs')
-
-if(!process.env.BACKEND_LOG) {
-  console.warn('BACKEND_LOG not set, enabling logging by default')
-
-  process.env.BACKEND_LOG = 'on'
-}
-
-if(!process.env.REGISTRY_LOG) {
-  console.warn('REGISTRY_LOG not set, disabled logging by default')
-
-  process.env.REGISTRY_LOG = "off"
-}
-
-if(!existsSync(dir) && process.env.REGISTRY_LOG === "on") {
-  mkdirSync(dir)
-}
 
 const getNow = () => {
   const now = (new Date())
@@ -64,14 +56,13 @@ const getNow = () => {
   return day;
 }
 
-async function registry(message: string, appName?: string) {
+export async function registry(message: string, app: string) {
   if(process.env.REGISTRY_LOG !== "on")
     return;
   if(!cache.lock)
     cache.lock = new AsyncLock();
   
-  appName = appName || ''
-  const logPath = join(dir, `${appName}.log`)
+  const logPath = join(dir, `${app}.log`)
 
   message = message.replace(stripColor(), '')
 
@@ -82,7 +73,7 @@ async function registry(message: string, appName?: string) {
   })
 }
 
-function format(message: string, keys: { [key: string]: string }) {
+export function format(message: string, keys: { [key: string]: string }) {
   const formatter = /(\$(?<key>[^ \n\t]+))/g
 
   const keysOfText = message.matchAll(formatter)
@@ -94,11 +85,7 @@ function format(message: string, keys: { [key: string]: string }) {
   return message;
 }
 
-function log<T extends string>(message: string, { forFormat, app, registryLog, settings, type }: LogType<T>) {
-  if(process.env.BACKEND_LOG !== "on")
-    return;
-
-  const method = 'info' ?  console.log : 'warn' ? console.warn : 'error' ? console.error : console.log
+function getLogFormated<T extends string>(message: string, { forFormat, app, registryLog, settings, type }: LogType<T>) {
   const formatColor = formatColorsLogTypes[type] || chalk.bgBlueBright
   const formatedType = formatColor(type)
   const formatedApp = chalk.bgMagentaBright(`[App::${app}]`)
@@ -108,11 +95,9 @@ function log<T extends string>(message: string, { forFormat, app, registryLog, s
     const formatedMessage = format(forFormat, { type: formatedType, date: date, app: formatedApp, message: formatColor(message) })
 
     if(registryLog)
-      registry(formatedMessage);
+      registry(formatedMessage, app);
 
-    method(formatedMessage)
-
-    return;
+    return formatedMessage;
   }
 
   const { functionName, userName, sessionId, ...adicionalSettings } = settings
@@ -129,29 +114,74 @@ function log<T extends string>(message: string, { forFormat, app, registryLog, s
   for(let [ key, value ] of Object.entries(adicionalSettings))
     formatedSettings[key] = chalk.blueBright(`[${key}::${value}]`);
   
-  const formatedMessage = format(forFormat, { ...formatedSettings, type: formatedType, date: date, app: formatedApp, message })
+  const formatedMessage = format(forFormat, { ...formatedSettings, type: formatedType, date: date, app: formatedApp, message: formatColor(message) })
 
   if(registryLog)
-    registry(formatedMessage);
+    registry(formatedMessage, app);
   
-  method(formatedMessage)
+  return formatedMessage;
 }
 
 export function info(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
-  return log(message, { type: 'info', app, forFormat, registryLog, settings });
+  if(global.logger.LOG)
+    return console.log(getLogFormated(message, { type: 'info', app, forFormat, registryLog, settings }));
+
+  return;
 }
 
 export function warn(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
-  return log(message, { type: 'warn', app, forFormat, registryLog, settings });
+  if(global.logger.LOG)
+    return console.warn(getLogFormated(message, { type: 'warn', app, forFormat, registryLog, settings }));
+
+  return;
 }
 
-export function err(message: string, { app, forFormat, registryLog, settings }: { app: string, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
-  return log(message, { type: 'error', app, forFormat, registryLog, settings });
+export function err(message: string, { app, error, forFormat, registryLog, settings }: { app: string, error?: Error, forFormat: string, registryLog?: boolean, settings?: LogSettings }): void {
+  if(global.logger.LOG)
+    return console.error(getLogFormated(message, { type: 'error', app, forFormat, registryLog, settings }), error??'');
+
+  return;
 }
 
 
-export default ({ app, forFormat, registryLog }: { app: string, forFormat: string, registryLog?: boolean}) => ({
-  info: (message: string, settings?: LogSettings) => info(message, { app, forFormat, registryLog, settings }),
-  warn: (message: string, settings?: LogSettings) => warn(message, { app, forFormat, registryLog, settings }),
-  error: (message: string, settings?: LogSettings) => err(message, { app, forFormat, registryLog, settings })
-})
+export default function Logger({ app, forFormat, registryLog }: { app: string, forFormat: string, registryLog?: boolean}) {
+  let printable = true
+
+  if(!process.env.BACKEND_LOG) {
+    console.warn('BACKEND_LOG not set, enabling logging by default')
+  
+    process.env.BACKEND_LOG = 'on'
+  }
+  
+  if(!process.env.REGISTRY_LOG) {
+    console.warn('REGISTRY_LOG not set, disabled logging by default')
+  
+    process.env.REGISTRY_LOG = "off"
+  }
+  
+  if(process.env.REGISTRY_LOG === "on" && !existsSync(dir)) {
+    mkdirSync(dir)
+  }
+
+  global.logger.LOG = process.env.BACKEND_LOG === 'on'
+  global.logger.REGISTRY = process.env.REGISTRY_LOG === 'on' && (registryLog ?? false)
+  
+  return {
+    info: (message: string, settings?: LogSettings) => printable ? info(message, { app, forFormat, registryLog: global.logger.REGISTRY, settings }) : null,
+    warn: (message: string, settings?: LogSettings) => printable ? warn(message, { app, forFormat, registryLog: global.logger.REGISTRY, settings }) : null,
+    error: (message: string, { settings, error }: { settings?: LogSettings, error?: Error }) => printable ? err(message, { app, error, forFormat, registryLog: global.logger.REGISTRY, settings }) : null,
+    setPrintable: (set: boolean) => printable = set,
+    setThisResgitryLog: (set: boolean) => {
+      registryLog = set
+
+      global.logger.REGISTRY = process.env.REGISTRY_LOG === 'on' && (registryLog ?? false)
+    },
+    setRegitryLogEnv: (set: 'on' | 'off') => {
+      process.env.REGISTRY_LOG = set
+
+      global.logger.REGISTRY = process.env.REGISTRY_LOG === 'on' && (registryLog ?? false)
+    }
+  };
+}
+
+export { Logger };
