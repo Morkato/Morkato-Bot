@@ -9,7 +9,7 @@
     "next:build": "next build",
     "next:start": "next start",
     "next:lint": "next lint",
-    "db:reconfigure": "node db_recofigure.js",
+    "db:reconfigure": "tsx db_recofigure",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:debug": "jest --debug"
