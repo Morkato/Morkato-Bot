@@ -1,4 +1,4 @@
-interface UserTokenResponse {
+export interface UserTokenResponse {
   access_token: string
   token_type: string
   expires_in: number
@@ -6,7 +6,7 @@ interface UserTokenResponse {
   scope: string
 }
 
-const extractCode = async (code: string): Promise<UserTokenResponse | null> => {
+export const extractCode = async (code: string): Promise<UserTokenResponse | null> => {
   const data = new URLSearchParams()
   
   data.append('client_id', process.env.CLIENT_ID)
@@ -24,7 +24,7 @@ const extractCode = async (code: string): Promise<UserTokenResponse | null> => {
   return response.status === 200 ? await response.json() : null;
 }
 
-const refreshToken = async (refresh_token: string): Promise<UserTokenResponse | null> => {
+export const refreshToken = async (refresh_token: string): Promise<UserTokenResponse | null> => {
   const data = new URLSearchParams()
   
   data.append('client_id', process.env.CLIENT_ID)
@@ -41,7 +41,7 @@ const refreshToken = async (refresh_token: string): Promise<UserTokenResponse | 
   return response.status === 200 ? await response.json() : null;
 }
 
-const getUserResponse = async (token: string): Promise<Response> => {
+export const getUserResponse = async (token: string): Promise<Response> => {
   return (await fetch('https://discord.com/api/v9/users/@me', { headers: { authorization: `Bearer ${token}` } }));
 }
 
