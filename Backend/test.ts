@@ -1,11 +1,9 @@
 (async () => {
   (await import('dotenv')).config()
 
-  const { getRespiration, createRespiration } = await import('models/arts')
+  const { getLanguage } = await import('languages')
 
-  const resp = await getRespiration('1', 'test', { userName: 'V1NI0456:1313' })
-
-  console.log(resp)
+  console.log(await getLanguage('en', '/'))
 })()
 
 // (async () => {

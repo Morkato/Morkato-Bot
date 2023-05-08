@@ -1,0 +1,18 @@
+{
+  "global": {
+    "title": "Morkato - Bot | $description",
+    "description": "Apenas um simples bot.",
+    "site_name": "Morkato Bot"
+  },
+
+  "routes": {
+    "/": {
+      "variables": {},
+      "head": {
+        "title": "$title",
+        "description": "$description"
+      },
+      "body": {}
+    }
+  }
+}
