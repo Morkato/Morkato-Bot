@@ -1,6 +1,6 @@
-import { NotFoundError } from '@/erros/index'
+import { NotFoundError } from 'erros/index'
 
-import query from '@/infra/database'
+import query from 'infra/database'
 
 export interface Guild {
   id: string

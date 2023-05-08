@@ -1,5 +1,10 @@
-import { ValidationError } from '@/erros'
+import type { DynamicKeyValue } from 'utils'
+
+import { ValidationError } from 'erros'
+
 import Joi, { AnySchema } from 'joi'
+
+import utils from 'utils'
 
 interface KeyOption {
   option: 0 | 1
@@ -9,8 +14,7 @@ interface KeyOption {
 
 type ChoiceKeyOption = KeyOption | 0 | 1
 
-export default function validator<T extends any = {}>(obj: any, keys: { [key: string]: ChoiceKeyOption }
-): T {
+export default function validator<T extends any = {}>(obj: any, keys: DynamicKeyValue<ChoiceKeyOption>): T {
   // Verifica se o "objeto" é um JSON valído.
 
   try {
@@ -21,13 +25,11 @@ export default function validator<T extends any = {}>(obj: any, keys: { [key: st
   
   // Filtra as opções. Exemplo { 'required' = { option: 'required' } }.
   
-  const filtereKeys = Object.fromEntries(Object.entries(keys).map(([key, val]) => [key, val === 0 || val === 1 ? { option: val } : val]))
+  const filtereKeys = utils.object.map(keys, ([key, val]) => val === 0 || val === 1 ? { option: val } : val)
 
   // Cria a Schema princípal.
   
-  const schema = Joi.object(Object.fromEntries(
-    Object.entries(filtereKeys).map(([key, value]) => [key, validators[key](value)])
-  )).required().min(1)
+  const schema = Joi.object(utils.object.map(filtereKeys, ([key, value]) => validators[key](value))).required().min(1)
 
   // Valida as informações
   
@@ -53,7 +55,6 @@ function createFlag<T extends any>(schema: AnySchema<T>) {
     else if(option.default !== undefined)
       schema = schema.default(option.default);
     
-      
     return schema;
   }
 }

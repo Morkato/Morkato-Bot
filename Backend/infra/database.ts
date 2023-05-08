@@ -1,4 +1,4 @@
-import { Client, PoolConfig, PoolClient, QueryResult } from 'pg'
+import { Client, PoolConfig, QueryResult } from 'pg'
 
 const configuration: PoolConfig = {
   user: process.env.DATABASE_USER,
