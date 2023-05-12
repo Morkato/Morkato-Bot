@@ -6,20 +6,20 @@ export interface UserTokenResponse {
   scope: string
 }
 
-export const extractCode = async (code: string): Promise<UserTokenResponse | null> => {
+export const extractCode = async (code: string, uri: string | URL): Promise<UserTokenResponse | null> => {
   const data = new URLSearchParams()
   
   data.append('client_id', process.env.CLIENT_ID)
   data.append('client_secret', process.env.CLIENT_SECRET)
   data.append('grant_type', 'authorization_code')
   data.append('code', code)
-  data.append('redirect_uri', process.env.URL + '/api/oauth2')
+  data.append('redirect_uri', uri.toString())
 
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
   }
 
-  const response = await fetch('https://discord.com/api/oauth2/token', { method: 'POST', headers: headers, body: data })  
+  const response = await fetch('https://discord.com/api/oauth2/token', { method: 'POST', headers: headers, body: data })
 
   return response.status === 200 ? await response.json() : null;
 }
