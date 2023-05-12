@@ -15,23 +15,15 @@ interface KeyOption {
 type ChoiceKeyOption = KeyOption | 0 | 1
 
 export default function validator<T extends any = {}>(obj: any, keys: DynamicKeyValue<ChoiceKeyOption>): T {
-  // Verifica se o "objeto" é um JSON valído.
-
   try {
     obj = JSON.parse(JSON.stringify(obj))
   } catch {
     throw new ValidationError({ message: "O body tem que ser um Json.", action: "Tente enviar um Json desssa vez." })
   }
   
-  // Filtra as opções. Exemplo { 'required' = { option: 'required' } }.
-  
   const filtereKeys = utils.object.map(keys, ([key, val]) => val === 0 || val === 1 ? { option: val } : val)
-
-  // Cria a Schema princípal.
   
   const schema = Joi.object(utils.object.map(filtereKeys, ([key, value]) => validators[key](value))).required().min(1)
-
-  // Valida as informações
   
   const { error, value } = schema.validate(obj)
 
@@ -59,7 +51,7 @@ function createFlag<T extends any>(schema: AnySchema<T>) {
   }
 }
 
-const validators: { [key: string]: any } = {
+const validators: { [key: string]: (option: KeyOption) => Joi.AnySchema<any> } = {
   name: createFlag(Joi.string()
     .trim()
     .regex(/^[\D0-9].+$/)

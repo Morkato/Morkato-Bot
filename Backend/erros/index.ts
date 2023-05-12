@@ -12,7 +12,7 @@ export interface ErrorParams {
   databaseErrorCode?: number
 }
 
-class BaseError extends Error {
+export class BaseError extends Error {
   action?: string
   statusCode?: number
   errorId?: string

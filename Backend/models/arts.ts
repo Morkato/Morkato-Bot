@@ -1,6 +1,10 @@
 import valid, { required, optional } from 'models/validator'
 import Logger, { LogSettings } from 'infra/logger'
-import { NotFoundError } from 'erros/index'
+
+import {
+  NotFoundError,
+  AlreadyExistsError
+} from 'erros/index'
 
 import query from 'infra/database'
 
@@ -110,6 +114,7 @@ async function getArtFromType<T extends number>(props: { name: string, guild_id:
     guild_id: required(),
     type: { option: required(), allow: [0, 1, 2] }
   })
+
   const expcted = {
     text: `
       SELECT
@@ -130,7 +135,7 @@ async function getArtFromType<T extends number>(props: { name: string, guild_id:
 
   if(results.rowCount === 0) {
     logger.error('Falha ao achar uma arte de um servidor filtrando pelo nome e tipo.\n', {settings: { functionName: 'getArtFromType<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{})} })
-    
+
     throw new NotFoundError({ message: "Tipo de arte: " + type + " Não existe no servidor id: \"" + guild_id + "\"." });
   }
 
@@ -210,8 +215,14 @@ async function createArt<T extends number>(art: {
     logger.info(`Foi criado uma arte em um servidor filtrado pelo tipo.`, { functionName: 'createArt<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{}) })
     
     return art;
-  } catch(err) {
-    throw err;
+  } catch {
+    logger.error('Erro ao tentar criar uma nova arte no servividor, pois já tem um nome igual a mesma.', { settings:{ functionName: 'createArt<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{}) } })
+
+    throw new AlreadyExistsError({
+      message: '400: Uma arte com o mesmo nome já existe.',
+      action: "Tente com outro nome.",
+      statusCode: 400
+    });
   }
 }
 
@@ -228,9 +239,6 @@ async function editArt<T extends number>(art: Art<T>, to: {
   const { name, role, embed_title, embed_description, embed_url } = valid<Art<T>>(to, {
     name: { option: optional(), default: art.name },
     role: { option: optional(), default: art.role, allow: null },
-    type: { option: optional(), default: art.type, allow: art.type },
-
-    guild_id: { option: optional(), default: art.guild_id, allow: art.guild_id },
 
     embed_title: { option: optional(), default: art.embed_title, allow: null },
     embed_description: { option: optional(), default: art.embed_description, allow: null },
@@ -261,6 +269,12 @@ async function editArt<T extends number>(art: Art<T>, to: {
   }
 
   const results = await query(expcted)
+
+  if(results.rowCount === 0) {
+    logger.error('Falha ao achar uma arte de um servidor filtrando pelo nome e tipo.\n', {settings: { functionName: 'getArtFromType<T>', Server: `${guild_id}`, art_type: `${type}`, art_name: name, ...(logOptions??{})} })
+    
+    throw new NotFoundError({ message: "Tipo de arte: " + type + " Não existe no servidor id: \"" + guild_id + "\"." });
+  }
 
   art = results.rows[0]
 
@@ -318,7 +332,7 @@ export async function getKekkijutsu(guild_id: string, name: string, logOptions?:
   return await getArtFromType({ guild_id, name, type: 2 }, { functionName: 'getKekkijutsu', art_type: 'Kekkijutsu', ...logOptions });
 }
 
-export async function getKekkijutstsFromGuild(guild_id: string, logOptions?: LogSettings): Promise<Kekkijutsu[]> {
+export async function getKekkijutsusFromGuild(guild_id: string, logOptions?: LogSettings): Promise<Kekkijutsu[]> {
   return await getArtsFromGuildAndType(guild_id, 2 , { functionName: 'getKekkijutsusFromGuild', art_type: 'Kekkijutsu', ...logOptions });
 }
 
@@ -401,7 +415,7 @@ export default Object.freeze({
   getRespirationsFromGuild,
   getKekkijutsus,
   getKekkijutsu,
-  getKekkijutstsFromGuild,
+  getKekkijutsusFromGuild,
 
   createRespiration,
   createKekkijutsu,

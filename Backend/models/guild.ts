@@ -1,6 +1,16 @@
 import { NotFoundError } from 'erros/index'
 
+import valid, { required } from 'models/validator'
+
 import query from 'infra/database'
+import Logger from 'infra/logger'
+
+
+const logger = Logger({
+  app: 'models:arts',
+  registryLog: true,
+  forFormat: '$user $app $func $Server \n\t$type : $message'
+})
 
 export interface Guild {
   id: string
@@ -47,27 +57,31 @@ export async function getGuild(id: string): Promise<Guild> {
   return results.rows[0];
 }
 
-export async function getGuilds(rows_id: number[]): Promise<Guild[]> {
+export async function getGuilds(rows_id: string[]): Promise<Guild[]> {
+  const placeholders = rows_id.map((_, i) => `$${i + 1}`).join(', ')
   const expected = {
     text: `
       SELECT
         *
-      FROM
+      FROM 
         guilds
       WHERE
-        id IN ($1)
-      LIMIT
-        $2
+        id IN (${placeholders})
+      LIMIT 
+        $${rows_id.length + 1}
     ;`,
-    values: [rows_id, rows_id.length]
-  }
+    values: [...rows_id, rows_id.length]
+  };
 
-  const results = await query(expected)
-
+  const results = await query(expected);
   return results.rows;
 }
 
-export async function createGuild({ id }: { id: string }): Promise<Guild> {
+export async function createGuild(guild: { id: string }): Promise<Guild> {
+  const { id } = valid<{ id: string }>(guild, {
+    id: required()
+  })
+
   const expected = {
     text: `
       INSERT INTO

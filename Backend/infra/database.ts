@@ -1,5 +1,7 @@
 import { Client, PoolConfig, QueryResult } from 'pg'
 
+export type QueryParams = string | { text: string, values?: (string | number | string[] | number[])[] }
+
 const configuration: PoolConfig = {
   user: process.env.DATABASE_USER,
   host: process.env.DATABASE_HOST,
@@ -8,35 +10,31 @@ const configuration: PoolConfig = {
   port: Number.parseInt(process.env.DATABASE_PORT)
 }
 
-const cache: { pool: Client | null } = {
-  pool: null
-}
-
-export default async function query(query: string | { text: string, values?: (string | number | string[] | number[])[] }): Promise<QueryResult> {
-  const client = await getPoolClient()
-  let response = null;
+export async function query(query: QueryParams, defaultClient?: Client) {
+  const client = defaultClient || await getClient()
+  const isClientVirtual = !defaultClient
 
   try {
-    response = await client.query(query)
+    const result = await client.query(query)
+
+    if(isClientVirtual)
+      await client.end();
+
+    return result;
   } catch(err) {
-    await client.end()
+    if(isClientVirtual)
+      await client.end();
 
     throw err;
   }
-
-  await client.end()
-
-  return response;
 }
 
+async function getClient() {
+  const client = new Client(configuration)
 
-async function getPoolClient(): Promise<Client> {
-  if(!cache.pool)
-    cache.pool = new Client(configuration);
-  
-  await cache.pool.connect()
-  
-  return cache.pool;
+  await client.connect()
+
+  return client;
 }
 
-export { query };
+export default query;
