@@ -1,5 +1,8 @@
+# Geral
 log
-*.log
+.log
+
+# Nodeks
 
 node_modules
 .next
@@ -9,3 +12,7 @@ node_modules
 .env
 
 Backend/.env
+
+# Python
+
+__pycache__

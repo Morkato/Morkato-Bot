@@ -8,21 +8,29 @@ import {
 } from 'models/arts'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { BaseError } from 'erros'
+import {
+  BaseError,
+  UnauthorizedError,
+  NotFoundError,
+  InternalServerError
+} from 'erros'
 
 import * as middleware_discord from '..'
+import { param } from 'middlewares/utils'
+
+export const authorization = middleware_discord.authorization
 
 export function guild(handle: (req: NextRequest, ctx: CustomContext, guild: Guild) => Promise<NextResponse>, catchError?: (err: Error | BaseError) => Promise<NextResponse> ) {
-  return middleware_discord.guild(async (req, ctx, guild) => {
+  return authorization(param(async (req, { params }, guild_id) => {
     let database_guild;
     try {
-      database_guild = await getGuild(guild.id)
+      database_guild = await getGuild(guild_id)
     } catch {
-      database_guild = await createGuild({ id: guild.id })
+      database_guild = await createGuild({ id: guild_id })
     }
 
-    return await handle(req, ctx, database_guild);
-  }, catchError)
+    return await handle(req, { params }, database_guild);
+  }, 'guild_id'), catchError)
 }
 
 export function guilds(handle: (req: NextRequest, ctx: CustomContext, guilds: Guild[]) => Promise<NextResponse>, catchError?: (err: Error | BaseError) => Promise<NextResponse>) {
@@ -46,7 +54,7 @@ export function respirations(handle: (req: NextRequest, ctx: CustomContext, resp
     const database_respirations = await getRespirationsFromGuild(guild.id, { userName: 'Bot:Admin' })
 
     return await handle(req, ctx, database_respirations)
-  })
+  }, catchError)
 }
 
 export function kekkijutsu(handle: (req: NextRequest, ctx: CustomContext, kekkijutsu: Kekkijutsu) => Promise<NextResponse>, catchError?: (err: Error | BaseError) => Promise<NextResponse>) {
