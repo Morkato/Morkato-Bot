@@ -13,7 +13,7 @@ import {
   UnauthorizedError,
   NotFoundError,
   InternalServerError
-} from 'erros'
+} from 'errors'
 
 import discord from 'utils/discordApi'
 

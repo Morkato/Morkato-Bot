@@ -7,7 +7,7 @@ import fetch, { RequestInit, Response, Headers } from 'node-fetch'
 import {
   InternalServerError,
   NotFoundError
-} from 'erros'
+} from 'errors'
 
 export type {
   Guild,

@@ -1,6 +1,6 @@
 import type { DynamicKeyValue } from 'utils'
 
-import { ValidationError } from 'erros'
+import { ValidationError } from 'errors'
 
 import Joi, { AnySchema } from 'joi'
 
@@ -44,8 +44,12 @@ function createFlag<T extends any>(schema: AnySchema<T>) {
       schema = schema.allow(...(option.allow instanceof Array<any> ? option.allow : [option.allow,]));
     if(option.option === 1)
       schema = schema.required();
-    else if(option.default !== undefined)
-      schema = schema.default(option.default);
+    else if(option.option === 0) {
+      schema = schema.optional()
+
+      if(option.default !== undefined)
+        schema = schema.default(option.default);
+    }
     
     return schema;
   }
@@ -78,8 +82,8 @@ const validators: { [key: string]: (option: KeyOption) => Joi.AnySchema<any> } =
     .trim()
     .regex(/^((https?:\/\/)([\D0-9]+)|(\/[\D0-9]+))$/)
   ),
-  type: createFlag(Joi.number()
-    .integer()
+  type: createFlag(Joi.string()
+    .uppercase()
   ),
   guild_id: (option: KeyOption) => validators.id(option),
   role: (option: KeyOption) => validators.id(option)

@@ -1,36 +1,20 @@
 (async () => {
   (await import('dotenv')).config()
+  const { getRespirationsFromGuild, getRespiration, createRespiration, editRespiration } = await import('models/arts')
+  const { getGuild } = await import('models/guild')
 
-  // const nodeF = (await import('node-fetch'))
+  const guild = await getGuild('971803172056219728')
+  const resp = await getRespiration(guild.id, "Água")
+  
+  console.log(resp)
 
-  // const { Headers } = nodeF
-  // const fetch = nodeF.default
+  const editedResp = await editRespiration(resp, {
+    embed_title: "Respiração: $name Pudim"
+  })
 
-  // const headers = new Headers()
-
-  // headers.set('authorization', process.env.BOT_TOKEN)
-
-  // const response = await fetch('http://localhost:3000/api/bot/guilds/971803172056219728/respirations/agua', { headers, method: "POST", body: JSON.stringify({
-  //   name: "agua",
-  //   role: null,
-
-  //   embed_title: "Test"
-  // }) })
-
-  // console.log(''
-  //   +  'Status: '
-  //   +  response.status
-  //   +  '\n'
-  //   +  'Body: '
-  // )
-
-  // console.log(await response.json())
+  console.log(editedResp)
 
 
-//   const { getLanguage } = await import('languages')
-//   const { utils } = await import('utils')
-//   const fetch = (await import('node-fetch')).default
-//   const { createGuild, getGuilds, getGuild } = await import('models/guild')
 
 // //   // console.log(await getGuild('1030300817175089203'))
 
@@ -40,13 +24,6 @@
 //     test: "AYooooo",
 //     user: "Anonymous"
 //   }
-
-//   const res = await fetch('http://localhost:3000/api/bot/guilds', { headers: {
-//     authorization: process.env.BOT_TOKEN
-//   }})
-
-//   console.log(res.status)
-//   console.log(await res.json())
 })()
 
 // (async () => {
