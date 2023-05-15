@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArtType {
+  ATTACK
+  RESPIRATION
+  KEKKIJUTSU
+}
+
+model Guild {
+  id         String @id
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  arts       Art[] @relation("guild")
+  
+  @@map("guilds")
+}
+
+model Art {
+  name              String
+  type              ArtType @default(ATTACK)
+  role              String?
+
+  guild             Guild   @relation("guild", fields: [guild_id], references: [id])
+  guild_id          String
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+  
+  attacks           Attack[] @relation("art")
+
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@id([name, guild_id])
+  @@index([role, guild_id], name: "unique_guild_and_role")
+
+  @@map("arts")
+}
+
+
+model Attack {
+  name       String
+
+  art        Art @relation("art", fields: [art_name, guild_id], references: [name, guild_id])
+  art_name   String
+  guild_id   String
+
+  roles String[] @default([])
+  required_roles Int @default(0)
+
+  damage Int @default(3000)
+  stamina Int @default(3000)
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  fields AttackField[] @relation("attack_field")
+
+  @@map("attacks")
+  @@id([name, guild_id])
+}
+
+model AttackField {
+  id String @default(uuid())
+
+  text String
+  attack Attack @relation("attack_field", fields: [attack_name, guild_id], references: [name, guild_id])
+  guild_id String
+  attack_name String
+  roles String[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("attacks_fields")
+  @@id([guild_id, id])
+}

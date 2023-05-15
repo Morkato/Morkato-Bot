@@ -37,8 +37,17 @@ class Respiration(commands.Cog):
       await ctx.reply(f'Uma nova arte chamada: **`{respiration}`** foi criada.')
     except Exception as err:
       await ctx.reply(f'Uma nova arte com o nome: {name} já existe.')
+    
+  @commands.command(aliases=['edit-resp'])
+  async def edit_respiration(self, ctx: commands.Context, /, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
 
-      raise err
+    respiration = guild.get_respiration(name)
+
+    if respiration is None:
+      await ctx.send('Essa resiração não existe.')
+
+      return
 
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Respiration(bot))
