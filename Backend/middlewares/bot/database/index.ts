@@ -13,7 +13,7 @@ import {
   UnauthorizedError,
   NotFoundError,
   InternalServerError
-} from 'erros'
+} from 'errors'
 
 import * as middleware_discord from '..'
 import { param } from 'middlewares/utils'
@@ -24,9 +24,12 @@ export function guild(handle: (req: NextRequest, ctx: CustomContext, guild: Guil
   return authorization(param(async (req, { params }, guild_id) => {
     let database_guild;
     try {
+      console.log('aqui')
       database_guild = await getGuild(guild_id)
     } catch {
+      console.log('aqui')
       database_guild = await createGuild({ id: guild_id })
+      console.log('aqui')
     }
 
     return await handle(req, { params }, database_guild);

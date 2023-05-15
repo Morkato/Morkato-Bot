@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   BaseError,
   UnauthorizedError
-} from 'erros'
+} from 'errors'
 
 export function param(handle: (req: NextRequest, ctx: CustomContext, param: string) => Promise<NextResponse>, param_key: string) {
   return async (req: NextRequest, { params }) => {
