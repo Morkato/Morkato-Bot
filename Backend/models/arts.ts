@@ -90,7 +90,7 @@ async function getAll(logOptions?: LogSettings): Promise<NotDefinedArt[]> {
 }
 
 async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Promise<NotDefinedArt[]> {
-  const settings = { functionName: 'getAllFromGuild', ...(logOptions??{}) }
+  const settings = { functionName: 'getAllFromGuild', ...logOptions }
 
   try {
     const arts = await client.art.findMany({
@@ -114,7 +114,7 @@ async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Prom
 
 
 async function getArtsFromType<Type extends ArtType>(type: Type, logOptions?: LogSettings): Promise<Art<Type>[]> {
-  const settings = { functionName: 'getArtsFromType<Type>', ...(logOptions??{}) }
+  const settings = { functionName: 'getArtsFromType<Type>', ...logOptions }
   
   try {
     const arts = await client.art.findMany({
@@ -138,7 +138,7 @@ async function getArtsFromType<Type extends ArtType>(type: Type, logOptions?: Lo
 
 
 async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, type: Type, logOptions?: LogSettings): Promise<Art<Type>[]> {
-  const settings = { functionName: 'getArtsFromGuildAndType<Type>', ...(logOptions??{}) }
+  const settings = { functionName: 'getArtsFromGuildAndType<Type>', ...logOptions }
   
   try {
     const arts = await client.art.findMany({
@@ -162,7 +162,7 @@ async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, t
 }
 
 async function getArtFromType<Type extends ArtType>(props: { name: string, guild_id: string, type: Type }, logOptions?: LogSettings): Promise<Art<Type>> {
-  const settings = { functionName: 'getArtFromType<T>', ...(logOptions??{})}
+  const settings = { functionName: 'getArtFromType<Type>', ...logOptions}
   
   const { name, guild_id, type } = valid<{ name: string, guild_id: string, type: ArtType }>(props, {
     name: required(),
