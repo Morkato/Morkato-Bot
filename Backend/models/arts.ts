@@ -15,14 +15,54 @@ const logger = Logger({
   forFormat: '$user $app $func $type : $message'
 })
 
+type AttackFields = {
+  id: string
+
+  text: string
+  roles: string[]
+
+  created_at: Date
+  updated_at: Date
+}
+
+type Attack = {
+  name: string
+
+  roles: string[]
+  required_roles: number
+
+  damage: number
+  stamina: number
+
+  embed_title: string | null
+  embed_description: string | null
+  embed_url: string | null
+
+  fields: AttackFields[]
+
+  created_at: Date
+  updated_at: Date
+}
+
 type ArtType = "ATTACK" | "RESPIRATION" | "KEKKIJUTSU"
 
-export interface Art<Type extends ArtType> {
+export type OriginalArt = {
   name: string
-  type: Type
+  type: ArtType
   role: string | null
-
+  
   guild_id: string
+
+  embed_title: string | null
+  embed_description: string | null
+  embed_url: string | null
+}
+
+export type Art = {
+  name: string
+  type: ArtType
+  role: string | null
+  
 
   embed_title: string | null
   embed_description: string | null
@@ -30,13 +70,12 @@ export interface Art<Type extends ArtType> {
 
   created_at: Date
   updated_at: Date
+
+  attacks: Attack[]
 }
 
-export interface Respiration extends Art<"RESPIRATION"> {  }
-
-export interface Kekkijutsu extends Art<"KEKKIJUTSU"> {  }
-
-export interface NotDefinedArt extends Art<ArtType> {  }
+export interface Respiration extends Art {  }
+export interface Kekkijutsu extends Art {  }
 
 const logMessages = {
   dataBaseError: () => "Erro: Parece que o Banco de Dados tem um erro não explícito.",
@@ -45,11 +84,11 @@ const logMessages = {
   successOnGetAllFromGuild: (id: string) => `Sucesso: Ao obter todas as artes do servidor ID: ${id}.`,
   successOnGetAllFromType: (type: ArtType) => `Sucesso: Ao obter todas as artes do Banco de Dados filtrando pelo tipo: ${type}.`,
   successOnGetAllFromGuildAndType: (id: string, type: ArtType) => `Sucesso: Ao obter todas as artes do servidor ID: ${id} filtrando pelo tipo: ${type}.`,
-  successOnGetArtFromGuildTypeAndName: (guild_id: string, { name, type }: NotDefinedArt) => `Sucesso: Ao obter a arte nome: ${name} e tipo: ${type} do servidor ID: ${guild_id}.`,
+  successOnGetArtFromGuildTypeAndName: (guild_id: string, { name, type }: Art) => `Sucesso: Ao obter a arte nome: ${name} e tipo: ${type} do servidor ID: ${guild_id}.`,
   
-  successOnCreateArt: (guild_id: string, { name, type }: NotDefinedArt) => `Sucesso: Ao criar uma nova arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
-  successOnEditArt: (guild_id: string, { name, type }: NotDefinedArt) => `Sucesso: Ao editar a arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
-  successOnDeleteArt: (guild_id: string, { name, type }: NotDefinedArt) => `Sucesso: Ao deletar a arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
+  successOnCreateArt: (guild_id: string, { name, type }: Art) => `Sucesso: Ao criar uma nova arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
+  successOnEditArt: (guild_id: string, { name, type }: Art) => `Sucesso: Ao editar a arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
+  successOnDeleteArt: (guild_id: string, { name, type }: Art) => `Sucesso: Ao deletar a arte com o nome: ${name} e tipo: ${type} no servidor ID: ${guild_id}.`,
 
   errorOnGetArtFromType: (guild_id: string, { name, type }: { name: string, type: ArtType }) => `Erro: Ao obter a arte nome: ${name} e tipo: ${type} do servidor ID: ${guild_id}.`,
   
@@ -70,11 +109,69 @@ const errors = {
   })
 }
 
-async function getAll(logOptions?: LogSettings): Promise<NotDefinedArt[]> {
-  const settings = { functionName: 'getAll', ...(logOptions??{}) }
+const attackFieldsSelect = {
+  id: true,
+
+  text: true,
+  roles: true,
+
+  created_at: true,
+  updated_at: true,
+
+  attack_name: false,
+  guild_id: false
+}
+
+const attackSelect = {
+  name: true,
+
+  roles: true,
+  required_roles: true,
+
+  damage: true,
+  stamina: true,
+
+  embed_title: true,
+  embed_description: true,
+  embed_url: true,
+
+  created_at: true,
+  updated_at: true,
+
+  fields: {
+    select: attackFieldsSelect
+  },
+
+  guild_id: false,
+  art_name: false
+}
+
+const artSelect = {
+  name: true,
+  type: true,
+  role: true,
+
+  embed_title: true,
+  embed_description: true,
+  embed_url: true,
+
+  attacks: {
+    select: attackSelect
+  },
+  
+  created_at: true,
+  updated_at: true,
+
+  guild_id: false
+}
+
+async function getAll(logOptions?: LogSettings): Promise<Art[]> {
+  const settings = { functionName: 'getAll', ...logOptions }
   
   try {
-    const arts = await client.art.findMany()
+    const arts = await client.art.findMany({
+      select: artSelect
+    })
 
     const logMessage = logMessages['successOnGetAll']
     logger.info(logMessage(), settings)
@@ -89,14 +186,15 @@ async function getAll(logOptions?: LogSettings): Promise<NotDefinedArt[]> {
   }
 }
 
-async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Promise<NotDefinedArt[]> {
+async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Promise<Art[]> {
   const settings = { functionName: 'getAllFromGuild', ...logOptions }
 
   try {
     const arts = await client.art.findMany({
       where: {
         guild_id
-      }
+      },
+      select: artSelect
     })
 
     const logMessage = logMessages['successOnGetAllFromGuild']
@@ -113,15 +211,16 @@ async function getAllFromGuild(guild_id: string, logOptions?: LogSettings): Prom
 }
 
 
-async function getArtsFromType<Type extends ArtType>(type: Type, logOptions?: LogSettings): Promise<Art<Type>[]> {
+async function getArtsFromType<Type extends ArtType>(type: Type, logOptions?: LogSettings): Promise<Art[]> {
   const settings = { functionName: 'getArtsFromType<Type>', ...logOptions }
   
   try {
     const arts = await client.art.findMany({
       where: {
         type
-      }
-    }) as Array<Art<Type>>
+      },
+      select: artSelect
+    })
 
     const logMessage = logMessages['successOnGetAllFromType']
     logger.info(logMessage(type), settings)
@@ -137,7 +236,7 @@ async function getArtsFromType<Type extends ArtType>(type: Type, logOptions?: Lo
 }
 
 
-async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, type: Type, logOptions?: LogSettings): Promise<Art<Type>[]> {
+async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, type: Type, logOptions?: LogSettings): Promise<Art[]> {
   const settings = { functionName: 'getArtsFromGuildAndType<Type>', ...logOptions }
   
   try {
@@ -145,8 +244,9 @@ async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, t
       where: {
         guild_id,
         type
-      }
-    }) as Array<Art<Type>>
+      },
+      select: artSelect
+    })
 
     const logMessage = logMessages['successOnGetAllFromGuildAndType']
     logger.info(logMessage(guild_id, type), settings)
@@ -161,7 +261,7 @@ async function getArtsFromGuildAndType<Type extends ArtType>(guild_id: string, t
   }
 }
 
-async function getArtFromType<Type extends ArtType>(props: { name: string, guild_id: string, type: Type }, logOptions?: LogSettings): Promise<Art<Type>> {
+async function getArtFromType<Type extends ArtType>(props: { name: string, guild_id: string, type: Type }, logOptions?: LogSettings): Promise<Art> {
   const settings = { functionName: 'getArtFromType<Type>', ...logOptions}
   
   const { name, guild_id, type } = valid<{ name: string, guild_id: string, type: ArtType }>(props, {
@@ -170,17 +270,19 @@ async function getArtFromType<Type extends ArtType>(props: { name: string, guild
     type: { option: required(), allow: ["ATTACK", "RESPIRATION", "KEKKIJUTSU"] }
   })
 
-  let art: Art<Type>;
+  let art: Art;
 
   try {
     art = await client.art.findFirst({
       where: {
-        name,
-        guild_id,
-        type
-      }
-    }) as Art<Type>
-  } catch {
+        name: { contains: name, mode: 'insensitive' },
+        guild_id
+      },
+      select: artSelect
+    })
+  } catch(err) {
+    console.error(err)
+
     const logMessage = logMessages['dataBaseError']
     logger.error(logMessage(), { settings })
 
@@ -202,25 +304,23 @@ async function getArtFromType<Type extends ArtType>(props: { name: string, guild
   return art;
 }
 
-async function createArt<Type extends ArtType>(art: {
+async function createArt(art: {
   name: string,
   role?: string | null,
-  type: Type
+  type: ArtType
 
-  guild_id: string,
+  guild_id: string
 
   embed_title?: string | null,
   embed_description?: string | null,
   embed_url?: string | null
-}, logOptions?: LogSettings): Promise<Art<Type>> {
-  const settings = { functionName: 'createArt<Type>', ...(logOptions??{}) }
+}, logOptions?: LogSettings): Promise<Art> {
+  const settings = { functionName: 'createArt', ...(logOptions??{}) }
   
-  const data = valid<Art<Type>>(art, {
+  const data = valid<OriginalArt>(art, {
     name: required(),
     type: required(),
     role: { option: optional(), default: null, allow: null },
-
-    guild_id: required(),
 
     embed_title: { option: optional(), default: null, allow: null },
     embed_description: { option: optional(), default: null, allow: null },
@@ -228,7 +328,7 @@ async function createArt<Type extends ArtType>(art: {
   })
 
   try {
-    const art = await client.art.create({ data }) as Art<Type>
+    const art = await client.art.create({ data: {...data}, select: artSelect }) as any
 
     const logMessage = logMessages['successOnCreateArt']
     logger.info(logMessage(art.guild_id, art), settings)
@@ -243,19 +343,26 @@ async function createArt<Type extends ArtType>(art: {
   }
 }
 
-async function editArt<Type extends ArtType>(art: Art<Type>, to: {
+async function editArt(guild_id: string, art: Art, to: {
   name?: string
   role?: string | null
 
   embed_title?: string | null
   embed_description?: string | null
   embed_url?: string | null
-}, logOptions?: LogSettings): Promise<Art<Type>> {
+}, logOptions?: LogSettings): Promise<Art> {
   const settings = { functionName: 'getArtFromType<Type>', ...(logOptions??{})}
 
-  const [ name, type, guild_id ] = [ art.name, art.type, art.guild_id ]
+  const [ name, type ] = [ art.name, art.type ]
   
-  const data = valid<Art<Type>>(to, {
+  const data = valid<{
+    name: string
+    role: string | null
+
+    embed_title: string | null
+    embed_description: string | null
+    embed_url: string | null
+  }>(to, {
     name: { option: optional(), default: art.name },
     role: { option: optional(), default: art.role, allow: null },
 
@@ -264,10 +371,10 @@ async function editArt<Type extends ArtType>(art: Art<Type>, to: {
     embed_url: { option: optional(), default: art.embed_url, allow: null }
   })
   
-  let editedArt: Art<Type>;
+  let editedArt: Art;
   
   try {
-    editedArt = await client.art.update({ data, where: { name_guild_id: { guild_id, name } } }) as Art<Type>
+    editedArt = await client.art.update({ data, where: { name_guild_id: { guild_id, name } }, select: artSelect }) as any
   } catch {
     const logMessage = logMessages['dataBaseError']
     logger.error(logMessage(), { settings })
@@ -290,10 +397,10 @@ async function editArt<Type extends ArtType>(art: Art<Type>, to: {
   return editedArt;
 }
 
-export async function deleteArt<Type extends ArtType>(art: Art<Type>, logOptions?: LogSettings): Promise<Art<Type>> {
+export async function deleteArt(art: Art, logOptions?: LogSettings): Promise<Art> {
   const settings = { functionName: 'getArtFromType<Type>', ...(logOptions??{})}
   
-  const { name, type, guild_id } = valid<Art<Type>>(art, {
+  const { name, type, guild_id } = valid<any>(art, {
     name: required(),
     type: { option: required(), allow: ["ATTACK", "RESPIRATION", "KEKKIJUTSU"] },
     role: required(),
@@ -305,14 +412,15 @@ export async function deleteArt<Type extends ArtType>(art: Art<Type>, logOptions
     embed_url: required()
   })
 
-  let deletedArt: Art<Type>;
+  let deletedArt: Art;
   
   try {
     deletedArt = await client.art.delete({
       where: {
         name_guild_id: { guild_id, name }
-      }
-    }) as Art<Type>
+      },
+      select: artSelect
+    })
   } catch {
     const logMessage = logMessages['dataBaseError']
     logger.error(logMessage(), { settings })
@@ -406,7 +514,7 @@ export async function createKekkijutsu({
   }, { functionName: 'createKekkijutsu', ...logOptions })
 }
 
-export async function editRespiration(resp: Respiration, to: {
+export async function editRespiration(guild_id: string, resp: Respiration, to: {
   name?: string
   role?: string | null
 
@@ -414,9 +522,9 @@ export async function editRespiration(resp: Respiration, to: {
   embed_description?: string | null
   embed_url?: string | null
 }, logOptions?: LogSettings): Promise<Respiration> {
-  return await editArt({ ...resp, type: "RESPIRATION" }, to, { functionName: 'editRespiration', ...logOptions })
+  return await editArt(guild_id, { ...resp, type: "RESPIRATION" }, to, { functionName: 'editRespiration', ...logOptions })
 }
-export async function editKekkijutsu(kekki: Kekkijutsu, to: {
+export async function editKekkijutsu(guild_id: string, kekki: Kekkijutsu, to: {
   name?: string
   role?: string | null
 
@@ -424,7 +532,7 @@ export async function editKekkijutsu(kekki: Kekkijutsu, to: {
   embed_description?: string | null
   embed_url?: string | null
 }, logOptions?: LogSettings): Promise<Kekkijutsu> {
-  return await editArt({ ...kekki, type: "KEKKIJUTSU" }, to, { functionName: 'editKekkijutsu', ...logOptions })
+  return await editArt(guild_id, { ...kekki, type: "KEKKIJUTSU" }, to, { functionName: 'editKekkijutsu', ...logOptions })
 }
 
 export const deleteRespiration = async (resp: Respiration) => await deleteArt({...resp, type: "RESPIRATION"}, { functionName: 'deleteRespiration', art_type: 'Respiration' })

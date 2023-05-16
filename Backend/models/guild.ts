@@ -81,10 +81,13 @@ export async function getGuild(id: string, logSettings?: LogSettings): Promise<G
   } catch {
     const logMessage = logMessages['dataBaseError']
     logger.error(logMessage(), { settings })
+
+    const error = errors['dataBaseError']
+    throw error();
   }
   
   if(!guild) {
-    const logMessage = logMessages['errorIfGuildNotExists']
+    const logMessage = logMessages['errorIfGuildNotExistsInDataBase']
     logger.error(logMessage(id), { settings })
     
     const error = errors['guildNotExistsError']

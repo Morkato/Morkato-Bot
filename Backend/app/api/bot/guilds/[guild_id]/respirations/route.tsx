@@ -1,14 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { authorization, respirations, guild_param } from 'middlewares/bot/database'
+import { respirations, createResp } from 'middlewares/bot'
+import { NextResponse } from 'next/server'
 
-import { createRespiration } from 'models/arts'
+export const GET = respirations(async (req, { params }, { respirations }) => NextResponse.json(respirations));
 
-export const GET = respirations(async (req, { params }, respirations) => NextResponse.json(respirations))
-
-export const POST = guild_param(async (req, { params }, guild_id) => {
-  const body = await req.json()
-
-  const respiration = await createRespiration({ ...body, guild_id: guild_id })
-  
-  return NextResponse.json(respiration)
-})
+export const POST = createResp(async (req, { params }, { respiration }) => NextResponse.json(respiration));

@@ -2,8 +2,6 @@ FROM node:alpine
 
 WORKDIR /usr/morkato-server
 
-COPY package*.json ./
-
 EXPOSE 3000
 
 CMD [ "yarn", "next:dev" ]
