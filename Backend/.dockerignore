@@ -11,9 +11,3 @@ node_modules
 .error
 
 .env
-
-Backend/.env
-
-# Python
-
-__pycache__
