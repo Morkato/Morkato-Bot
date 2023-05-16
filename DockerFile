@@ -2,12 +2,6 @@ FROM python:3
 
 WORKDIR /usr/morkato-bot
 
-COPY api/ ./api/
-COPY Commands/ ./Commands/
-COPY errors/ ./errors/
-COPY utils/ ./utils/
-COPY Index.py .
-
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 

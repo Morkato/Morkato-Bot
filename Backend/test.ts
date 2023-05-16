@@ -1,29 +1,11 @@
 (async () => {
   (await import('dotenv')).config()
-  const { getRespirationsFromGuild, getRespiration, createRespiration, editRespiration } = await import('models/arts')
   const { getGuild } = await import('models/guild')
+  const fetch = (await import('node-fetch')).default
 
-  const guild = await getGuild('971803172056219728')
-  const resp = await getRespiration(guild.id, "Água")
-  
-  console.log(resp)
+  const response = await fetch('http://localhost:80/api/bot/guilds/971803172056219728/respirations/água', { headers: { authorization: process.env.BOT_TOKEN } })
 
-  const editedResp = await editRespiration(resp, {
-    embed_title: "Respiração: $name Pudim"
-  })
-
-  console.log(editedResp)
-
-
-
-// //   // console.log(await getGuild('1030300817175089203'))
-
-//   const language = await getLanguage('pt-BR', '/')
-
-//   const format = {
-//     test: "AYooooo",
-//     user: "Anonymous"
-//   }
+  console.log(await response.json())
 })()
 
 // (async () => {

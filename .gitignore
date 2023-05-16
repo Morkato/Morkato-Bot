@@ -17,3 +17,8 @@ Backend/.env
 # Python
 
 __pycache__
+
+# Docker
+
+Voluemes/Bot
+Volumes/Backend
