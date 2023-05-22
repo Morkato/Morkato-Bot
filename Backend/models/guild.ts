@@ -5,7 +5,7 @@ import {
 } from 'errors'
 
 import Logger, { LogSettings } from 'infra/logger'
-import valid, { required } from 'models/validator'
+import valid from 'models/validator'
 
 import type { PrismaClient } from '@prisma/client'
 import client from 'infra/database'
@@ -57,10 +57,10 @@ export type Guild = {
 export function isValidGuild(possibilityGuild: any): boolean {
   try {
     const guild = valid<Guild>(possibilityGuild, {
-      id: required(),
+      id: 'required',
 
-      created_at: required(),
-      updated_at: required()
+      created_at: 'required',
+      updated_at: 'required'
     })
   
     return !!guild;
@@ -144,7 +144,7 @@ export async function createGuild(guild: { id: string }, logSettings?: LogSettin
   const settings = { functionName: 'createGuilds', ...logSettings }
   
   const { id } = valid<{ id: string }>(guild, {
-    id: required()
+    id: 'required'
   })
 
   try {
