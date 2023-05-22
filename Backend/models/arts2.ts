@@ -7,8 +7,8 @@ import {
   AlreadyExistsError
 } from 'errors'
 
-import valid, { required, optional } from 'models/validator'
 import Logger, { LogSettings } from 'infra/logger'
+import valid from 'models/validator'
 
 import { PrismaClient } from '@prisma/client'
 import unidecode from 'remove-accents'
@@ -127,6 +127,7 @@ const messages = {
 
   errorDataBase: () => `Erro: Infelizmente, nossos serviços não então disponíveis no momento. Pois o banco de dados está offiline.`,
   errorInValidGuild: () => `Erro: A informação do servidor fornecido está incorreta`,
+  errorInValidArt: () => `Erro: A informação do servidor fornecido está incorreta`,
   errorIfArtNotExists: ({ id }: Guild, art_name: string) => `Erro: A arte com o nome: ${art_name} não existe no servidor: ${id}.`,
   errorArtAlreadyExists: ({ id }: Guild, art_name: string) => `Erro: A arte com o nome: ${art_name} já existe no servidor: ${id}.`
 }
@@ -139,12 +140,38 @@ const errors = {
   errorInValidGuild: () => new ValidationError({
     message: messages.errorInValidGuild()
   }),
+  errorInValidArt: () => new ValidationError({
+    message: messages.errorInValidArt()
+  }),
   errorIfArtNotExists: (guild: Guild, art_name: string) => new NotFoundError({
     message: messages.errorIfArtNotExists(guild, art_name)
   }),
   errorIfArtAlreadyExists: (guild: Guild, art_name: string) => new AlreadyExistsError({
     message: messages.errorArtAlreadyExists(guild, art_name)
   })
+}
+
+export function isValidArt(art: Art<ArtType>) {
+  try {
+    const validateArt = valid(art, {
+      name: 'required',
+      type: 'required',
+      role: 'required',
+
+      embed_title: 'required',
+      embed_description: 'required',
+      embed_url: 'required',
+
+      created_at: 'required',
+      updated_at: 'required'
+    }, { params: {
+      type: [['ATTACK', 'RESPIRATION', 'KEKKIJUTSU']]
+    } })
+
+    return !!validateArt;
+  } catch {
+    return false;
+  }
 }
 
 export async function getArts<Type extends ArtType>({ guild, type }: { guild: Guild, type: Type }) {
@@ -219,15 +246,23 @@ export async function createArt<Type extends ArtType>({ guild, art }: { guild: G
     embed_title,
     embed_description,
     embed_url
-  } = valid<editeArt<Type>>(art, {
-    name: required(),
-    type: required(),
-    role: { option: optional(), allow: null, default: null },
+  } = valid(art, {
+    name: 'required',
+    type: 'required',
+    role: 'optional',
 
-    embed_title: { option: optional(), allow: null, default: null },
-    embed_description: { option: optional(), allow: null, default: null },
-    embed_url: { option: optional(), allow: null, default: null }
-  })
+    embed_title: 'optional',
+    embed_description: 'optional',
+    embed_url: 'optional'
+  }, {
+    params: {
+      type: [['ATTACK', 'RESPIRATION', 'KEKKIJUTSU']],
+      role: [null],
+      embed_title: [null],
+      embed_description: [null],
+      embed_url: [null]
+    }
+  }) as editeArt<Type>
 
   if(await getArt({ guild, name, type })) {
     const message = messages['errorArtAlreadyExists']
@@ -259,7 +294,7 @@ export async function createArt<Type extends ArtType>({ guild, art }: { guild: G
   }
 }
 
-export function editArt<Type extends ArtType>({ guild, art, to }: { guild: Guild, art: Art<Type>, to: editeArt<Type> }) {
+export async function editArt<Type extends ArtType>({ guild, art, to }: { guild: Guild, art: Art<Type>, to: editeArt<Type> }) {
   if(!isValidGuild(guild)) {
     const message = messages['errorInValidGuild']
     logger.error(message(), {})
@@ -268,7 +303,51 @@ export function editArt<Type extends ArtType>({ guild, art, to }: { guild: Guild
     throw error()
   }
 
-  
+  try {
+    if(!isValidArt(art)) {
+      const message = messages['errorInValidArt']
+      logger.error(message(), {})
+      
+      const error = errors['errorInValidArt']
+      throw error()
+    }
+    
+    const data = valid(to, {
+      name: 'optional',
+      type: 'optional',
+      role: 'optional',
+
+      embed_title: 'optional',
+      embed_description: 'optional',
+      embed_url: 'optional'
+    }, {
+      params: {
+        name: [art.name],
+        type: [['ATTACK', 'RESPIRATION', 'KEKKIJUTSU'], art.type],
+        role: [art.role],
+
+        embed_title: [art.embed_title],
+        embed_description: [art.embed_description],
+        embed_url: [art.embed_url]
+      }
+    }) as editeArt<Type>
+
+    const editedArt = await client.art.update({
+      data,
+      where: {
+        name_guild_id: { name: art.name, guild_id: guild.id }
+      },
+      select: selectMembersInArt
+    }) as Art<ArtType>
+
+    return editedArt as Art<Type>;
+  } catch {
+    const message = messages['errorDataBase']
+    logger.info(message())
+
+    const error = errors['errorDataBase']
+    throw error();
+  }
 }
 
 export default function Arts(prismaArts: PrismaClient['art']) {
