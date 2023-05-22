@@ -1,13 +1,14 @@
 from typing import Callable, Optional, TypeVar, Union, overload
 
 from discord.guild import Guild as discordGuild, Role
+from unidecode import unidecode
 
 from .types.guild import Guild as TypedGuild
 from .types.generic import Headers, Json
 
 from api import Response, Route, GUILD_ID, TOKEN, session
 
-from .respiration import Respiration, TypedRespiration
+from .art import Respiration, TypedRespiration
 
 T = TypeVar('T')
 
@@ -62,6 +63,8 @@ class Guild(GuildPayload):
   
   def get_respiration(self, resp_name: str) -> Union[Respiration, None]:
     return next((respiration for respiration in self.respirations if respiration.name.lower() == resp_name.lower()), None)
+  def get_art(self, resp_name: str) -> Union[Respiration, None]:
+    return next((art for art in self.respirations if unidecode(art.name.lower()) == unidecode(resp_name.lower())), None)
   def new_respiration(
     self, name: str, *,
     role: Optional[Role] = None,

@@ -1,5 +1,8 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "cSpell.language": "en,pt,pt_BR"
+  "cSpell.language": "en,pt,pt_BR",
+  
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2
 }

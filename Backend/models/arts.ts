@@ -304,18 +304,16 @@ async function getArtFromType<Type extends ArtType>(props: { name: string, guild
   return art;
 }
 
-async function createArt(art: {
+async function createArt(guild_id: string, art: {
   name: string,
   role?: string | null,
   type: ArtType
-
-  guild_id: string
 
   embed_title?: string | null,
   embed_description?: string | null,
   embed_url?: string | null
 }, logOptions?: LogSettings): Promise<Art> {
-  const settings = { functionName: 'createArt', ...(logOptions??{}) }
+  const settings = { functionName: 'createArt', ...logOptions }
   
   const data = valid<OriginalArt>(art, {
     name: required(),
@@ -328,15 +326,15 @@ async function createArt(art: {
   })
 
   try {
-    const art = await client.art.create({ data: {...data}, select: artSelect }) as any
+    const art = await client.art.create({ data: {...data, guild_id }, select: artSelect }) as any
 
     const logMessage = logMessages['successOnCreateArt']
-    logger.info(logMessage(art.guild_id, art), settings)
+    logger.info(logMessage(guild_id, art), settings)
     
     return art;
   } catch {
     const logMessage = logMessages['errorOnCreateArt']
-    logger.error(logMessage(art.guild_id, { name: art.name, type: art.type }), { settings })
+    logger.error(logMessage(guild_id, { name: art.name, type: art.type }), { settings })
 
     const error = errors['artAlreadyExists']
     throw error(data.guild_id, data)
@@ -468,22 +466,18 @@ export async function getKekkijutsusFromGuild(guild_id: string, logOptions?: Log
   return await getArtsFromGuildAndType(guild_id, "KEKKIJUTSU" , { functionName: 'getKekkijutsusFromGuild', ...logOptions });
 }
 
-export async function createRespiration({
+export async function createRespiration(guild_id: string, {
   name,
   role = null,
-
-  guild_id,
   
   embed_title = null,
   embed_description = null,
   embed_url = null
 }, logOptions?: LogSettings): Promise<Respiration> {
-  return await createArt({
+  return await createArt(guild_id, {
     name: name,
     type: "RESPIRATION",
     role: role,
-
-    guild_id: guild_id,
 
     embed_title: embed_title,
     embed_description: embed_description,
@@ -491,22 +485,18 @@ export async function createRespiration({
   }, { functionName: 'createRespirations', ...logOptions })
 }
 
-export async function createKekkijutsu({
+export async function createKekkijutsu(guild_id: string, {
   name,
   role = null,
-
-  guild_id,
   
   embed_title = null,
   embed_description = null,
   embed_url = null
 }, logOptions?: LogSettings): Promise<Kekkijutsu> {
-  return await createArt({
+  return await createArt(guild_id, {
     name: name,
     type: "KEKKIJUTSU",
     role: role,
-
-    guild_id: guild_id,
 
     embed_title: embed_title,
     embed_description: embed_description,

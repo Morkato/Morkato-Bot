@@ -51,6 +51,7 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 ALTER TABLE guilds ADD CONSTRAINT check_id CHECK (id ~ '^[0-9]+$');
 
 ALTER TABLE arts ADD CONSTRAINT check_name CHECK (check_text(name, 1, 32, '^[\D0-9]+$'));
+ALTER TABLE arts ADD CONSTRAINT check_art_name_is_type CHECK (NOT name ~ 'RESPIRATION|KEKKIJUTSU|ATTACK');
 ALTER TABLE arts ADD CONSTRAINT check_embed CHECK (check_embed(embed_title, embed_description, embed_url));
 ALTER TABLE arts ADD CONSTRAINT check_role CHECK (role IS NULL OR (role ~ '^[0-9]+$'));
 

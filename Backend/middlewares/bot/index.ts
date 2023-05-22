@@ -71,7 +71,7 @@ export function kekkijutsu(handle: (req: NextRequest, ctx: CustomContext, { guil
 
 export function createResp(handle: (req: NextRequest, ctx: CustomContext, { guild, respiration }: { guild: Guild, respiration: Respiration }) => Promise<NextResponse>, catchError?: (err: Error | BaseError) => Promise<NextResponse>) {
   return guild(async (req, ctx, { guild }) => {
-    return await handle(req, ctx, { guild, respiration: await createRespiration({ ...(await req.json()), guild_id: guild.id }) })
+    return await handle(req, ctx, { guild, respiration: await createRespiration(guild.id, await req.json()) })
   }, catchError)
 }
 
@@ -83,7 +83,7 @@ export function editResp(handle: (req: NextRequest, ctx: CustomContext, { guild,
 
 export function createKekki(handle: (req: NextRequest, ctx: CustomContext, { guild, kekkijutsu }: { guild: Guild, kekkijutsu: Kekkijutsu }) => Promise<NextResponse>, catchError?: (err: Error | BaseError) => Promise<NextResponse>) {
   return guild(async (req, ctx, { guild }) => {
-    return await handle(req, ctx, { guild, kekkijutsu: await createKekkijutsu({ ...(await req.json()), guild_id: guild.id }) })
+    return await handle(req, ctx, { guild, kekkijutsu: await createKekkijutsu(guild.id, await req.json()) })
   }, catchError)
 }
 

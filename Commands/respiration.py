@@ -8,21 +8,6 @@ class Respiration(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
   
-  @commands.command(aliases=['Resp'])
-  async def respiration(self, ctx: commands.Context, /, *, resp_name: Optional[str] = None) -> None:
-    guild = getGuild(ctx.guild)
-
-    if resp_name:
-      respiration = guild.get_respiration(resp_name)
-
-      if respiration is None:
-        await ctx.send('Essa resiração não existe.')
-
-        return
-      await ctx.send(embed=respiration.embed)
-      
-      return
-  
   @commands.command(aliases=['new-resp', 'create-resp'])
   async def new_resp(self, ctx: commands.Context, name: str, /, *, json: Optional[str] = None) -> None:
     guild = getGuild(ctx.guild)
@@ -34,7 +19,7 @@ class Respiration(commands.Cog):
     try:
       respiration = guild.new_respiration(**data)
 
-      await ctx.reply(f'Uma nova arte chamada: **`{respiration}`** foi criada.')
+      await ctx.reply(f'Uma nova arte chamada: **`{respiration.name}`** foi criada.')
     except Exception as err:
       await ctx.reply(f'Uma nova arte com o nome: {name} já existe.')
     
