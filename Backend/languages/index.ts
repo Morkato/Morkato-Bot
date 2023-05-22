@@ -25,14 +25,12 @@ export function getGenericLanguage(lang: LanguagesKey): (router: string) => Prom
   }
 }
 
-const languages: {
-  [key: string]: (router: string) => Promise<Route>
-} = {
+const languages = {
   en: getGenericLanguage('en'),
   "pt-BR": getGenericLanguage('pt-BR')
 }
 
-export default async function getLanguage(lang: LanguagesKey, route: string) {
+export default async function getLanguage(lang: keyof typeof languages, route: string) {
   const language = languages[lang]
 
   return await language(route);

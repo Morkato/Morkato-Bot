@@ -3,7 +3,8 @@
   const { getGuild } = await import('models/guild')
   const fetch = (await import('node-fetch')).default
 
-  const response = await fetch('http://localhost:80/api/bot/guilds/971803172056219728/respirations/água', { headers: { authorization: process.env.BOT_TOKEN } })
+  
+  const response = await fetch('http://localhost:80/api/bot/guilds/971803172056219728/respirations', { method: "PATCH", body: "{\"name\": \"Sol\"}", headers: { authorization: process.env.BOT_TOKEN, "content-type": "application/json" } })
 
   console.log(await response.json())
 })()

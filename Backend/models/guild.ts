@@ -7,6 +7,7 @@ import {
 import Logger, { LogSettings } from 'infra/logger'
 import valid, { required } from 'models/validator'
 
+import type { PrismaClient } from '@prisma/client'
 import client from 'infra/database'
 
 const logger = Logger({
@@ -53,6 +54,21 @@ export type Guild = {
   updated_at: Date
 }
 
+export function isValidGuild(possibilityGuild: any): boolean {
+  try {
+    const guild = valid<Guild>(possibilityGuild, {
+      id: required(),
+
+      created_at: required(),
+      updated_at: required()
+    })
+  
+    return !!guild;
+  } catch {
+    return false;
+  }
+}
+
 export const getAll = async (logSettings?: LogSettings): Promise<Guild[]> => {
   const settings = { functionName: 'getAll', ...logSettings }
   
@@ -77,8 +93,8 @@ export async function getGuild(id: string, logSettings?: LogSettings): Promise<G
   let guild: Guild;
   
   try {
-    guild =await client.guild.findUnique({ where: { id: id } })
-  } catch {
+    guild = await client.guild.findUnique({ where: { id: id } })
+  } catch(err) {
     const logMessage = logMessages['dataBaseError']
     logger.error(logMessage(), { settings })
 
@@ -170,12 +186,15 @@ export async function deleteGuild({ id }: Guild, logSettings?: LogSettings): Pro
   }
 }
 
-export default Object.freeze({
-  getAll,
-  getGuilds,
-  getGuild,
+export default function Guilds(prismaGuild: PrismaClient['guild']) {
+  return Object.assign(prismaGuild, getAll, {
+    getGuilds,
+    getGuild,
 
-  createGuild,
+    createGuild,
 
-  deleteGuild
-})
+    deleteGuild
+  })
+}
+
+const guilds = Guilds(client.guild)

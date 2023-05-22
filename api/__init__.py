@@ -5,7 +5,7 @@ TOKEN = config('BOT_TOKEN')
 
 CACHE = {}
 
-URL = Route('/', "http://localhost:3000")
+URL = Route('/', config('URL'))
 API = Route('/api/bot', URL)
 
 GUILDS = Route('/guilds', API)

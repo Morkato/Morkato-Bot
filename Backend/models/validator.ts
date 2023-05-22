@@ -38,10 +38,12 @@ export default function validator<T extends any = {}>(obj: any, keys: DynamicKey
   return value;
 }
 
-function createFlag<T extends any>(schema: AnySchema<T>) {
+function createFlag<T extends any>(schemaCall: () => AnySchema<T>) {
+  let schema = schemaCall()
+
   return (option: KeyOption) => {
     if(option.allow !== undefined)
-      schema = schema.allow(...(option.allow instanceof Array<any> ? option.allow : [option.allow,]));
+      schema = schema.allow(...(Array.isArray(option.allow) ? option.allow : [option.allow,]));
     if(option.option === 1)
       schema = schema.required();
     else if(option.option === 0) {
@@ -55,40 +57,43 @@ function createFlag<T extends any>(schema: AnySchema<T>) {
   }
 }
 
-const validators: { [key: string]: (option: KeyOption) => Joi.AnySchema<any> } = {
-  name: createFlag(Joi.string()
+const validators = {
+  name: createFlag(() => Joi.string()
     .trim()
     .regex(/^[\D0-9].+$/)
     .min(2)
     .max(32)
   ),
-  id: createFlag(Joi.string()
+  id: createFlag(() => Joi.string()
     .trim()
     .regex(/^[0-9]+$/)
   ),
-  embed_title: createFlag(Joi.string()
+  embed_title: createFlag(() => Joi.string()
     .trim()
     .regex(/^\D.+$/)
     .min(1)
     .max(96)
   ),
-  embed_description: createFlag(Joi.string()
+  embed_description: createFlag(() => Joi.string()
     .trim()
     .regex(/^\D.+$/)
     .min(1)
     .max(4096)
   ),
-  embed_url: createFlag(Joi.string()
+  embed_url: createFlag(() => Joi.string()
     .trim()
     .regex(/^((https?:\/\/)([\D0-9]+)|(\/[\D0-9]+))$/)
   ),
-  type: createFlag(Joi.string()
+  type: createFlag(() => Joi.string()
     .uppercase()
   ),
+  created_at: createFlag(() => Joi.date()
+    .allow(Joi.string())
+  ),
+  updated_at: (option: KeyOption) => validators.created_at(option),
   guild_id: (option: KeyOption) => validators.id(option),
   role: (option: KeyOption) => validators.id(option)
 }
-
 
 /*
   * The number 0 means that an element will be optional, while the 1 means Required.

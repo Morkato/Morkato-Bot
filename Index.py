@@ -28,26 +28,7 @@ class MyBot(commands.Bot):
       if file[-3:] == '.py':
         print(file[:-3].replace('/', '.'))
         await self.load_extension(file[:-3].replace('/', '.'))
-  async def on_command_error(self, ctx: commands.Context, exception: commands.CommandInvokeError) -> None:
-    if isinstance(exception, commands.CommandInvokeError):
-      exception = exception.original
-    if isinstance(exception, BaseError):
-      message = exception.message
-      action = exception.action
-      embeds = exception.embeds
-
-      if isinstance(exception, InternalServerError):
-        error = exception.error
-
-        await ctx.reply(f'**Opps! Rolou um erro inesperado: `{type(error).__name__}`. Olhe a mensagem: `{message}` Tente: `{action}` Perdoa-me pelo mail entendido .-. Aceite um :custard: pelo mal entendido.**', embeds=embeds)
-
-        return
-      
-      await ctx.reply(message, embeds=embeds)
-
-      return
-    
-    return await self.on_command_error(ctx, InternalServerError(exception, "Um erro desconhecido.", "Relatar ao meu desenvolvedor."))
+  
 
 def main() -> int:
   bot = MyBot()
