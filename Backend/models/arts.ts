@@ -1,4 +1,4 @@
-import valid, { required, optional } from 'models/validator'
+import valid, { required, optional } from 'models/validator (deprecated-2)'
 import Logger, { LogSettings } from 'infra/logger'
 
 import {
