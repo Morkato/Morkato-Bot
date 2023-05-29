@@ -5,16 +5,19 @@ import {
   ValidationError
 } from 'errors'
 
+
+type PermitSchema = { [key: string]: Joi.AnySchema | PermitSchema }
+
 export function makeContextSchemaField(
   field: Joi.AnySchema,
-  original: any,
+  original?: any,
   required?: boolean
 ) {
   if(required) {
     return field.required();
   }
 
-  if(original === undefined) {
+  if(original !== undefined) {
     field = field.default(original);
   }
 
@@ -22,28 +25,43 @@ export function makeContextSchemaField(
 }
 
 export function makeContextSchema<
-  S extends Record<string, Joi.AnySchema> = {},
+  S extends PermitSchema = {},
   Ks extends keyof S = keyof S
 >(
   schema: S,
   options?: {
-    default?: Partial<Record<Ks, unknown>>
-    required?: Partial<Record<Ks, boolean>>
+    default?: Partial<Record<Ks, { next?: unknown, default?: unknown }>>
+    required?: Partial<Record<Ks, boolean | { requiredFields?: unknown, required?: boolean }>>
   }
-) {
-  return Joi.object(utils.object.map(schema, ([key, field]) => makeContextSchemaField(field, options?.default[key], options?.required[key])))
+): Joi.ObjectSchema | Joi.ArraySchema {
+  options = options ?? {}
+
+  options.required = options.required ?? {}
+  options.default = options.default ?? {}
+  
+  return Joi.object(utils.object.map(schema, ([key, field]) => {
+    const defaultKey = options.default[key] ?? {}
+    const requiredKey = (typeof options.required[key] === 'boolean' ? { required: options.required[key] } : options.required[key]) ?? {}
+
+    const next = !!defaultKey.next
+    const defaultValue = defaultKey.default
+
+    const required = !!requiredKey.required
+    const requiredFields = requiredKey.requiredFields ?? {}
+
+    if(Joi.isSchema(field)) {
+      return makeContextSchemaField(field, defaultValue, required);
+    }
+    
+    const schema = makeContextSchema(field, { default: next ? defaultValue : {}, required: requiredFields })
+
+    return makeContextSchemaField(schema, utils.object.map(defaultValue, ([key, value]) => value.default), required)
+  }))
 }
 
-export default function validator<T, 
-  S extends Record<string, Joi.AnySchema> = {},
-  Ks extends keyof S = keyof S
->(
-  obj: Record<string, any>,
-  schema: S,
-  options?: {
-    default?: Partial<Record<Ks, unknown>>
-    required?: Partial<Record<Ks, boolean>>
-  }
+export function CompileSchema<T>(
+  schema: Joi.AnySchema,
+  obj: any
 ): T {
   try {
     obj = JSON.parse(JSON.stringify(obj))
@@ -51,9 +69,7 @@ export default function validator<T,
     throw new ValidationError({ message: "O body tem que ser um Json.", action: "Tente enviar um Json dessa vez." })
   }
 
-  const schemaFiltered = makeContextSchema(schema, options)
-
-  const { value, error } = schemaFiltered.validate(obj)
+  const { value, error } = schema.validate(obj)
 
   if(error) {
     throw new ValidationError({
@@ -65,4 +81,16 @@ export default function validator<T,
   }
 
   return value as T;
+}
+
+export default function validator<T, S extends PermitSchema = {}
+>(
+  obj: Record<string, any>,
+  schema: S,
+  options?: {
+    default?: Partial<Record<keyof S, { next?: boolean, default?: unknown }>>
+    required?: Partial<Record<keyof S, boolean | { requiredFields?: unknown, required?: boolean }>>
+  }
+): T {
+  return CompileSchema<T>(makeContextSchema(schema, options ?? {}), obj);
 }
