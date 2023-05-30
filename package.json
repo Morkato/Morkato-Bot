@@ -68,9 +68,10 @@
     "@babel/preset-env": "^7.21.4",
     "@babel/preset-react": "^7.18.6",
     "babel-plugin-styled-components": "^2.1.1",
+    "commitlint": "^17.6.5",
+    "husky": "latest",
     "tsc": "^2.0.4",
-    "tsx": "^3.12.6",
-    "husky": "latest"
+    "tsx": "^3.12.6"
   },
   "exports": [
     "./Backend/**"
