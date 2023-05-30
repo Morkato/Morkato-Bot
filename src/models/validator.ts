@@ -66,7 +66,7 @@ export function CompileSchema<T>(
   try {
     obj = JSON.parse(JSON.stringify(obj))
   } catch {
-    throw new ValidationError({ message: "O body tem que ser um Json.", action: "Tente enviar um Json dessa vez." })
+    throw new ValidationError({ message: "O body tem que ser um Json.", action: "Tente enviar um Json dessa vez." });
   }
 
   const { value, error } = schema.validate(obj)

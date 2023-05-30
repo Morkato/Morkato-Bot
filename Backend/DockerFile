@@ -1,7 +1,0 @@
-FROM node:alpine
-
-WORKDIR /usr/morkato-server
-
-EXPOSE 3000
-
-CMD [ "yarn", "next:dev" ]
