@@ -55,7 +55,7 @@ export function makeContextSchema<
     
     const schema = makeContextSchema(field, { default: next ? defaultValue : {}, required: requiredFields })
 
-    return makeContextSchemaField(schema, utils.object.map(defaultValue, ([key, value]) => value.default), required)
+    return makeContextSchemaField(schema, utils.object.map(defaultValue, ([key, value]) => value.default), required);
   }))
 }
 
