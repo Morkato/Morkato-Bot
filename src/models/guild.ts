@@ -1,14 +1,15 @@
+import type { PrismaClient } from '@prisma/client'
+
 import {
   NotFoundError,
   AlreadyExistsError,
   InternalServerError
 } from 'errors'
 
-import Logger, { LogSettings } from 'infra/logger'
-import valid from 'models/validator (deprecated-2)'
+import valid, { isValidGuild, catchIsValidGuild } from 'root:models/validator/guild'
+import Logger, { LogSettings } from 'root:infra/logger'
 
-import type { PrismaClient } from '@prisma/client'
-import client from 'infra/database'
+import client from 'root:infra/database'
 
 const logger = Logger({
   app: 'models:arts',
@@ -52,21 +53,6 @@ export type Guild = {
 
   created_at: Date
   updated_at: Date
-}
-
-export function isValidGuild(possibilityGuild: any): boolean {
-  try {
-    const guild = valid<Guild>(possibilityGuild, {
-      id: 'required',
-
-      created_at: 'required',
-      updated_at: 'required'
-    })
-  
-    return !!guild;
-  } catch {
-    return false;
-  }
 }
 
 export const getAll = async (logSettings?: LogSettings): Promise<Guild[]> => {
@@ -143,9 +129,11 @@ export async function getGuilds(rows_id: string[], logSettings?: LogSettings): P
 export async function createGuild(guild: { id: string }, logSettings?: LogSettings): Promise<Guild> {
   const settings = { functionName: 'createGuilds', ...logSettings }
   
-  const { id } = valid<{ id: string }>(guild, {
-    id: 'required'
-  })
+  const { id } = valid(guild, {
+    required: {
+      id: true
+    }
+  }) as typeof guild
 
   try {
     const guild = await client.guild.create({ data: { id } })
@@ -163,8 +151,12 @@ export async function createGuild(guild: { id: string }, logSettings?: LogSettin
   }
 }
 
-export async function deleteGuild({ id }: Guild, logSettings?: LogSettings): Promise<Guild> {
+export async function deleteGuild(guild: Guild, logSettings?: LogSettings): Promise<Guild> {
   const settings = { functionName: 'getGuild', ...logSettings }
+
+  catchIsValidGuild(guild)
+
+  const { id } = guild
   
   try {
     const guild = await client.guild.delete({
@@ -197,4 +189,4 @@ export default function Guilds(prismaGuild: PrismaClient['guild']) {
   })
 }
 
-const guilds = Guilds(client.guild)
+export { isValidGuild };
