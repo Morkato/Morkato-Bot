@@ -10,7 +10,6 @@ import {
 } from 'errors'
 
 import Logger, { LogSettings } from 'infra/logger'
-import valid from 'models/validator (deprecated-2)'
 
 import { PrismaClient } from '@prisma/client'
 import unidecode from 'remove-accents'
