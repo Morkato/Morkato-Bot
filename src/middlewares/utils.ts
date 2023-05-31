@@ -1,4 +1,4 @@
-import type { CustomContext } from "."
+import type { CustomContext, NextResult } from "."
 
 import { NextRequest, NextResponse } from "next/server"
 
@@ -11,15 +11,16 @@ export function param(handle: (req: NextRequest, ctx: CustomContext, param: stri
   return async (req: NextRequest, { params }) => {
     const param = params[param_key]
     
-    if(!param)
-      throw new UnauthorizedError({ message: `401: Parâmerto "${param_key}" é requerido.`, action: 'Tente novamente com o parâmerto "guild_id".' })
+    if(!param) {
+      throw new UnauthorizedError({ message: `401: Parâmetro "${param_key}" é requerido.`, action: `Tente novamente com o parâmetro "${param}".` })
+    }
 
     return handle(req, { params }, param);
   }
 }
 
 export async function defaultResponseError(error: Error | BaseError) {
-  if(error instanceof BaseError)
+  if(error instanceof BaseError) {
     return NextResponse.json({
       message: error.message,
       action: error.action,
@@ -27,18 +28,17 @@ export async function defaultResponseError(error: Error | BaseError) {
     }, {
       status: error.statusCode
     })
+  }
 
   return NextResponse.json({ error: error }, { status: 500 })
 }
 
-export function then<Params extends any[], Return>(handle: (...parmas: Params) => Return, catchError: (err: Error | BaseError) => Return): (...parmas: Params) => Promise<Return> {
+export function then<Params extends any[]>(handle: (...parmas: Params) => NextResult, catchError?: (err: Error | BaseError) => NextResult): (...parmas: Params) => NextResult {
   return async (...params: Params) => {
     try {
       return await handle(...params);
     } catch(err) {
-      console.error(err)
-
-      return await catchError(err);
+      return catchError ? await catchError(err) : await defaultResponseError(err);
     }
   }
 }

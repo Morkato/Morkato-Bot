@@ -6,10 +6,10 @@ import {
   InternalServerError
 } from 'errors'
 
-import valid, { isValidGuild, catchIsValidGuild } from 'root:models/validator/guild'
-import Logger, { LogSettings } from 'root:infra/logger'
+import valid, { isValidGuild, catchIsValidGuild, Guild } from 'models/validator/guild'
+import Logger, { LogSettings } from 'infra/logger'
 
-import client from 'root:infra/database'
+import client from 'infra/database'
 
 const logger = Logger({
   app: 'models:arts',
@@ -46,13 +46,6 @@ const errors = {
   guildAlreadyExistsError: (id: string) => new AlreadyExistsError({
     message: `400: ${logMessages.errorGuildAlreadyExistsInDataBase(id)}`
   })
-}
-
-export type Guild = {
-  id: string
-
-  created_at: Date
-  updated_at: Date
 }
 
 export const getAll = async (logSettings?: LogSettings): Promise<Guild[]> => {
@@ -188,5 +181,7 @@ export default function Guilds(prismaGuild: PrismaClient['guild']) {
     deleteGuild
   })
 }
+
+export type { Guild };
 
 export { isValidGuild };

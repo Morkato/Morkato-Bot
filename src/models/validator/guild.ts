@@ -1,7 +1,12 @@
-import type { Guild } from '../guild'
-
 import Joi from 'joi'
 import valid from '.'
+
+export type Guild = {
+  id: string
+
+  created_at: Date
+  updated_at: Date
+}
 
 const guildSchema = {
   id: Joi.string().regex(/^[0-9]+$/),
