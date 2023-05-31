@@ -51,7 +51,7 @@
     "kill-port": "^2.0.1",
     "next": "^13",
     "node-fetch": "^3.3.1",
-    "prisma": "^4.14.0",
+    "prisma": "^4.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remove-accents": "^0.4.4",
