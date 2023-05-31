@@ -1,5 +1,4 @@
-import { respiration, editResp } from 'middlewares/bot'
+import { respiration } from 'middlewares/bot/art'
 import { NextResponse } from 'next/server'
 
 export const GET = respiration(async (req, { params }, { respiration }) => NextResponse.json(respiration))
-export const POST = editResp(async (req, { params }, { respiration }) => NextResponse.json(respiration))
