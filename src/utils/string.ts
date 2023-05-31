@@ -1,7 +1,5 @@
-import type { DynamicKeyValue } from '.'
-
 export namespace string {
-  export function format(text: string, params: DynamicKeyValue<string>) {
+  export function format(text: string, params: Record<string, string>) {
     const regex = /(\$(?<key>\$|[^ \n\t]+))/g
   
     for(let { groups } of text.matchAll(regex)) {

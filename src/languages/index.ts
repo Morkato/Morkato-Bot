@@ -1,9 +1,7 @@
-import type { DynamicKeyValue } from "utils"
+import * as utils from 'utils'
 
-import utils from "utils"
-
-type Route = { variables: DynamicKeyValue<string>, head: DynamicKeyValue<string>, body: DynamicKeyValue<string> }
-type Language = { global: DynamicKeyValue<string>, routes: { [key: string]: Route } }
+type Route = { variables: Record<string, string>, head:Record<string, string>, body: Record<string, string> }
+type Language = { global: Record<string, string>, routes: { [key: string]: Route } }
 
 type LanguagesKey = "en" | "pt-BR"
 
