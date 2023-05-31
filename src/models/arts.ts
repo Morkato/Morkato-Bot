@@ -1,6 +1,6 @@
 import type { Art, ArtType, editeArt, Respiration, Kekkijutsu } from 'models/validator/art'
 
-import { Guild, isValidGuild } from 'models/validator/guild'
+import { Guild } from 'models/validator/guild'
 
 import {
   InternalServerError,

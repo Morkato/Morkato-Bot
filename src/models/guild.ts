@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
+import type { Guild } from './validator/guild'
 
 import {
   NotFoundError,
@@ -6,7 +7,6 @@ import {
   InternalServerError
 } from 'errors'
 
-import valid, { isValidGuild, catchIsValidGuild, Guild } from 'models/validator/guild'
 import Logger, { LogSettings } from 'infra/logger'
 
 import client from 'infra/database'
@@ -119,14 +119,8 @@ export async function getGuilds(rows_id: string[], logSettings?: LogSettings): P
 
 }
 
-export async function createGuild(guild: { id: string }, logSettings?: LogSettings): Promise<Guild> {
+export async function createGuild({ id }: { id: string }, logSettings?: LogSettings): Promise<Guild> {
   const settings = { functionName: 'createGuilds', ...logSettings }
-  
-  const { id } = valid(guild, {
-    required: {
-      id: true
-    }
-  }) as typeof guild
 
   try {
     const guild = await client.guild.create({ data: { id } })
@@ -146,8 +140,6 @@ export async function createGuild(guild: { id: string }, logSettings?: LogSettin
 
 export async function deleteGuild(guild: Guild, logSettings?: LogSettings): Promise<Guild> {
   const settings = { functionName: 'getGuild', ...logSettings }
-
-  catchIsValidGuild(guild)
 
   const { id } = guild
   
@@ -183,5 +175,3 @@ export default function Guilds(prismaGuild: PrismaClient['guild']) {
 }
 
 export type { Guild };
-
-export { isValidGuild };
