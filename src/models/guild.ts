@@ -9,8 +9,6 @@ import {
 
 import Logger, { LogSettings } from 'infra/logger'
 
-import client from 'infra/database'
-
 const logger = Logger({
   app: 'models:arts',
   registryLog: true,
@@ -23,7 +21,7 @@ const logMessages = {
   successGetAllGuildsInDataBase: () => "Sucesso: Ao obter todos os servidoes do discord no Banco de Dados.",
   successGetGuildFromIDInDataBase: (id: string) => `Sucesso: Ao obter um servidor do discord pelo ID: ${id}`,
   successGetGuildsFromIDInDataBase: (rows_ids: string[]) => {
-    const formateIDs =  rows_ids.map(id => `+\t${id}`).join('\n')
+    const formateIDs = rows_ids.map(id => `+\t${id}`).join('\n')
 
     return `Sucesso: Ao obter todos os possíveis servidores do discord filtrando pelos IDs:\n${formateIDs}`
   },
@@ -48,130 +46,119 @@ const errors = {
   })
 }
 
-export const getAll = async (logSettings?: LogSettings): Promise<Guild[]> => {
-  const settings = { functionName: 'getAll', ...logSettings }
-  
-  try {
-    const guilds = await client.guild.findMany();
+export default function Guilds(db: PrismaClient['guild']) {
+  return Object.assign(db, {
+    async getAll(logSettings?: LogSettings): Promise<Guild[]> {
+      const settings = { functionName: 'getAll', ...logSettings }
 
-    const logMessage = logMessages['successGetAllGuildsInDataBase']
-    logger.info(logMessage(), settings)
-  
-    return guilds;
-  } catch {
-    const logMessage = logMessages['errorGetAllGuildsInDataBase']
-    logger.error(logMessage(), { settings })
+      try {
+        const guilds = await db.findMany();
 
-    const error = errors['dataBaseError']
-    throw error()
-  }
-}
+        const logMessage = logMessages['successGetAllGuildsInDataBase']
+        logger.info(logMessage(), settings)
 
-export async function getGuild(id: string, logSettings?: LogSettings): Promise<Guild> {
-  const settings = { functionName: "getGuild", ...logSettings }
-  let guild: Guild;
-  
-  try {
-    guild = await client.guild.findUnique({ where: { id: id } })
-  } catch(err) {
-    const logMessage = logMessages['dataBaseError']
-    logger.error(logMessage(), { settings })
+        return guilds;
+      } catch {
+        const logMessage = logMessages['errorGetAllGuildsInDataBase']
+        logger.error(logMessage(), { settings })
 
-    const error = errors['dataBaseError']
-    throw error();
-  }
-  
-  if(!guild) {
-    const logMessage = logMessages['errorIfGuildNotExistsInDataBase']
-    logger.error(logMessage(id), { settings })
-    
-    const error = errors['guildNotExistsError']
-    throw error(id);
-  }
-  
-  const logMessage = logMessages['successGetGuildFromIDInDataBase']
-  logger.info(logMessage(id), settings)
-
-  return guild;
-  
-}
-
-export async function getGuilds(rows_id: string[], logSettings?: LogSettings): Promise<Guild[]> {
-  const settings = { functionName: 'getGuilds', ...logSettings }
-  
-  try {
-    const guilds = await client.guild.findMany({
-      take: rows_id.length,
-      where: { id: { in: rows_id } }
-    })
-
-    const logMessage = logMessages['successGetGuildsFromIDInDataBase']
-    logger.info(logMessage(rows_id), settings)
-
-    return guilds;
-  } catch {
-    const logMessage = logMessages['dataBaseError']
-    logger.error(logMessage(), { settings })
-
-    const error = errors['dataBaseError']
-    throw error()
-  }
-
-}
-
-export async function createGuild({ id }: { id: string }, logSettings?: LogSettings): Promise<Guild> {
-  const settings = { functionName: 'createGuilds', ...logSettings }
-
-  try {
-    const guild = await client.guild.create({ data: { id } })
-
-    const logMessage = logMessages['successOnCreateGuildInDataBase']
-    logger.info(logMessage(id), settings)
-
-    return guild;
-  } catch {
-    const logMessage = logMessages['errorGuildAlreadyExistsInDataBase']
-    logger.error(logMessage(id), { settings })
-
-    const error = errors['guildAlreadyExistsError']
-    throw error(id);
-  }
-}
-
-export async function deleteGuild(guild: Guild, logSettings?: LogSettings): Promise<Guild> {
-  const settings = { functionName: 'getGuild', ...logSettings }
-
-  const { id } = guild
-  
-  try {
-    const guild = await client.guild.delete({
-      where: {
-        id
+        const error = errors['dataBaseError']
+        throw error()
       }
-    })
-
-    const logMessage = logMessages['successOnDeleteGuildInDataBase']
-    logger.info(logMessage(id), settings)
-
-    return guild;
-  } catch {
-    const logMessage = logMessages['errorIfGuildNotExistsInDataBase']
-    logger.error(logMessage(id), { settings })
-
-    const error = errors['guildNotExistsError']
-    throw error(id);
-  }
-}
-
-export default function Guilds(prismaGuild: PrismaClient['guild']) {
-  return Object.assign(prismaGuild, getAll, {
-    getGuilds,
-    getGuild,
-
-    createGuild,
-
-    deleteGuild
+    },
+    async getGuild(id: string, logSettings?: LogSettings): Promise<Guild> {
+      const settings = { functionName: "getGuild", ...logSettings }
+      let guild: Guild;
+    
+      try {
+        guild = await db.findUnique({ where: { id: id } })
+      } catch (err) {
+        const logMessage = logMessages['dataBaseError']
+        logger.error(logMessage(), { settings })
+    
+        const error = errors['dataBaseError']
+        throw error();
+      }
+    
+      if (!guild) {
+        const logMessage = logMessages['errorIfGuildNotExistsInDataBase']
+        logger.error(logMessage(id), { settings })
+    
+        const error = errors['guildNotExistsError']
+        throw error(id);
+      }
+    
+      const logMessage = logMessages['successGetGuildFromIDInDataBase']
+      logger.info(logMessage(id), settings)
+    
+      return guild;
+    },
+    async getGuilds(rows_id: string[], logSettings?: LogSettings): Promise<Guild[]> {
+      const settings = { functionName: 'getGuilds', ...logSettings }
+    
+      try {
+        const guilds = await db.findMany({
+          take: rows_id.length,
+          where: { id: { in: rows_id } }
+        })
+    
+        const logMessage = logMessages['successGetGuildsFromIDInDataBase']
+        logger.info(logMessage(rows_id), settings)
+    
+        return guilds;
+      } catch {
+        const logMessage = logMessages['dataBaseError']
+        logger.error(logMessage(), { settings })
+    
+        const error = errors['dataBaseError']
+        throw error()
+      }
+    },
+    async createGuild({ id }: { id: string }, logSettings?: LogSettings): Promise<Guild> {
+      const settings = { functionName: 'createGuilds', ...logSettings }
+    
+      try {
+        const guild = await db.create({ data: { id } })
+    
+        const logMessage = logMessages['successOnCreateGuildInDataBase']
+        logger.info(logMessage(id), settings)
+    
+        return guild;
+      } catch {
+        const logMessage = logMessages['errorGuildAlreadyExistsInDataBase']
+        logger.error(logMessage(id), { settings })
+    
+        const error = errors['guildAlreadyExistsError']
+        throw error(id);
+      }
+    },
+    async deleteGuild(guild: Guild, logSettings?: LogSettings): Promise<Guild> {
+      const settings = { functionName: 'getGuild', ...logSettings }
+    
+      const { id } = guild
+    
+      try {
+        const guild = await db.delete({
+          where: {
+            id
+          }
+        })
+    
+        const logMessage = logMessages['successOnDeleteGuildInDataBase']
+        logger.info(logMessage(id), settings)
+    
+        return guild;
+      } catch {
+        const logMessage = logMessages['errorIfGuildNotExistsInDataBase']
+        logger.error(logMessage(id), { settings })
+    
+        const error = errors['guildNotExistsError']
+        throw error(id);
+      }
+    }
   })
 }
 
 export type { Guild };
+
+export { Guilds };

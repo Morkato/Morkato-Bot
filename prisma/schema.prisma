@@ -11,7 +11,6 @@ datasource db {
 }
 
 enum ArtType {
-  ATTACK
   RESPIRATION
   KEKKIJUTSU
 }
@@ -29,7 +28,8 @@ model Guild {
 
 model Art {
   name String
-  type ArtType @default(ATTACK)
+  key  String
+  type ArtType
   role String?
 
   guild    Guild  @relation("guild", fields: [guild_id], references: [id], onDelete: Cascade)
@@ -44,16 +44,17 @@ model Art {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@id([name, guild_id])
+  @@id([key, guild_id])
   @@index([role, guild_id], name: "unique_guild_and_role")
   @@map("arts")
 }
 
 model Attack {
   name String
+  key  String
 
-  art      Art    @relation("art", fields: [art_name, guild_id], references: [name, guild_id], onDelete: Cascade)
-  art_name String
+  art      Art    @relation("art", fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+  art_key  String
   guild_id String
 
   roles          String[] @default([])
@@ -72,18 +73,18 @@ model Attack {
 
   fields AttackField[] @relation("attack_field")
 
-  @@id([name, guild_id])
+  @@id([key, guild_id])
   @@map("attacks")
 }
 
 model AttackField {
   id String @default(uuid())
 
-  text        String
-  attack      Attack   @relation("attack_field", fields: [attack_name, guild_id], references: [name, guild_id], onDelete: Cascade)
-  guild_id    String
-  attack_name String
-  roles       String[]
+  text       String
+  attack     Attack   @relation("attack_field", fields: [attack_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+  guild_id   String
+  attack_key String
+  roles      String[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

@@ -51,11 +51,13 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 ALTER TABLE guilds ADD CONSTRAINT check_id CHECK (id ~ '^[0-9]+$');
 
 ALTER TABLE arts ADD CONSTRAINT check_name CHECK (check_text(name, 1, 32, '^[\D0-9]+$'));
-ALTER TABLE arts ADD CONSTRAINT check_art_name_is_type CHECK (NOT name ~ 'RESPIRATION|KEKKIJUTSU|ATTACK');
+ALTER TABLE arts ADD CONSTRAINT check_key CHECK (check_text(key, 1, 32, '^[\D0-9]+$'));
+ALTER TABLE arts ADD CONSTRAINT check_art_name_is_type CHECK (NOT name ~ 'RESPIRATION|KEKKIJUTSU');
 ALTER TABLE arts ADD CONSTRAINT check_embed CHECK (check_embed(embed_title, embed_description, embed_url));
 ALTER TABLE arts ADD CONSTRAINT check_role CHECK (role IS NULL OR (role ~ '^[0-9]+$'));
 
 ALTER TABLE attacks ADD CONSTRAINT check_name CHECK (check_text(name, 1, 32, '^[\D0-9]+$'));
+ALTER TABLE attacks ADD CONSTRAINT check_key CHECK (check_text(key, 1, 32, '^[\D0-9]+$'));
 ALTER TABLE attacks ADD CONSTRAINT check_roles CHECK (array_is_valid(roles, '^[0-9]+$'));
 ALTER TABLE attacks ADD CONSTRAINT check_required_roles CHECK (check_required_roles(required_roles, roles));
 ALTER TABLE attacks ADD CONSTRAINT check_damage CHECK (damage >= 0);
