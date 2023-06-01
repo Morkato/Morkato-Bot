@@ -134,7 +134,7 @@ export function artSchema({ original = {}, required = {}, attackParams = {} }: {
   })
 }
 
-export default function validate(obj: unknown, options: Parameters<typeof artSchema>[0]) {
+export default function validate(obj: Record<string, unknown>, options: Parameters<typeof artSchema>[0]) {
   try {
     obj = JSON.parse(JSON.stringify(obj))
   } catch {
@@ -157,7 +157,7 @@ export default function validate(obj: unknown, options: Parameters<typeof artSch
   return value;
 }
 
-export function validateArt(obj: unknown): Art<ArtType> {
+export function validateArt(obj: Record<string, unknown>): Art<ArtType> {
   return validate(obj, {
     required: {
       name: true,
@@ -208,7 +208,7 @@ export function validateArt(obj: unknown): Art<ArtType> {
   });
 }
 
-export function isValidArt(obj: unknown): obj is Art<ArtType> {
+export function isValidArt(obj: Record<string, unknown>): obj is Art<ArtType> {
   try {
     return !!validateArt(obj);
   } catch {
