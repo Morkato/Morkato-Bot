@@ -1,7 +1,8 @@
 from typing import Optional
 
+import requests
 from discord.ext import commands
-from utils import getGuild
+from decouple import config
 
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
@@ -22,6 +23,11 @@ class Art(commands.Cog):
         await ctx.send(embed=embed)
       
       return
+  @commands.command(name='request')
+  async def Request(self, ctx: commands.Context, /) -> None:
+    res = requests.get('http://localhost:80/api/bot/guilds/{0}/arts'.format(ctx.guild.id), headers= { 'authorization': config('BOT_TOKEN') })
 
+    await ctx.send(f'**`{res}`**')
+    await ctx.send(f'**`{res.text}`**')
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))

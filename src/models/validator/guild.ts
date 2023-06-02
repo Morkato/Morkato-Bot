@@ -23,7 +23,7 @@ function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: 
 
 export function guildSchema({ original = {}, required = {} } : { original?: Partial<Record<keyof Guild, unknown>>, required?: Partial<Record<keyof Guild, boolean>> }) {
   return Joi.object({
-    id: makeContext(Joi.string().trim().regex(/^[0-0]+$/), required['id'], original['id']),
+    id: makeContext(Joi.string().trim().regex(/^[0-9]+$/), required['id'], original['id']),
 
     created_at: makeContext(Joi.date().allow(Joi.string()), required['created_at'], original['created_at']),
     updated_at: makeContext(Joi.date().allow(Joi.string()), required['updated_at'], original['updated_at'])

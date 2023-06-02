@@ -114,9 +114,9 @@ export function toKey(text: string) {
 
 export default function Arts(prisma: PrismaClient['art']) {
   async function getArts(guild: Guild): Promise<Art<ArtType>[]> {
+    validateGuild(guild)
+
     try {
-      validateGuild(guild)
-      
       const arts = await prisma.findMany({ where: { guild }, select: selectMembersInArt }) as Array<Art<ArtType>>
   
       const message = messages['successOnGetAllArts']
@@ -132,10 +132,10 @@ export default function Arts(prisma: PrismaClient['art']) {
     }
   }
   async function getArt({ guild, name }: { guild: Guild, name: string }): Promise<Art<ArtType>> {
+    assertSchema(schemas.name.required(), name)
+    validateGuild(guild)
+    
     try {
-      assertSchema(schemas.name.required(), name)
-      validateGuild(guild)
-
       const art = await prisma.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select: selectMembersInArt }) as Art<ArtType>
   
       if(art) {
