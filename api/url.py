@@ -98,5 +98,5 @@ class SessionRoute(Session):
   def request(self, method: str | bytes, route: str | bytes, *args, **kwargs) -> Response:
     return super().request(method, str(Route(route, self.__route)), *args, **kwargs, headers=kwargs.get('headers', self.__defaultHeaders))
 
-def session(route: Route, /, defaultHeders: Optional[dict[str, Any]] = None) -> Session:
+def session(route: Route, /, defaultHeders: Optional[dict[str, Any]] = None) -> SessionRoute:
   return SessionRoute(route, defaultHeders)
