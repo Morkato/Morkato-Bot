@@ -1,8 +1,7 @@
 from typing import Optional
 
-import requests
 from discord.ext import commands
-from decouple import config
+from utils import getGuild
 
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
@@ -11,17 +10,22 @@ class Art(commands.Cog):
   async def Art(self, ctx: commands.Context, /, *, art_name: Optional[str] = None) -> None:
     guild = getGuild(ctx.guild)
 
-    if art_name and not art_name.lower() in ['respiration', 'kekkijutsu', 'attack']:
+    if art_name:
       art = guild.get_art(art_name)
 
       if art is None:
         await ctx.send('Essa arte não existe.')
 
         return
-      
+
       for embed in art.embeds:
         await ctx.send(embed=embed)
       
       return
+  @commands.command(name='attacks')
+  async def Attack(self, ctx: commands.Context, /) -> None:
+    guild = getGuild(ctx.guild)
+
+    await ctx.send(f'`{guild.attacks}`')
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
