@@ -2,6 +2,8 @@ import {
   ValidationError
 } from 'errors'
 
+import { assertSchema } from './utils'
+
 import Joi from 'joi'
 
 export type AttackField = {
@@ -134,27 +136,8 @@ export function artSchema({ original = {}, required = {}, attackParams = {} }: {
   })
 }
 
-export default function validate(obj: Record<string, unknown>, options: Parameters<typeof artSchema>[0]) {
-  try {
-    obj = JSON.parse(JSON.stringify(obj))
-  } catch {
-    throw new ValidationError({ message: "O body tem que ser um Json.", action: "Tente enviar um Json dessa vez." });
-  }
-
-  const schema = artSchema(options)
-
-  const { value, error } = schema.validate(obj)
-
-  if(error) {
-    throw new ValidationError({
-      message: error.details[0].message,
-      key: error.details[0].context.key || error.details[0].context.type || 'object',
-      errorLocationCode: 'MODEL:VALIDATOR:SCHEMA',
-      type: error.details[0].type
-    });
-  }
-
-  return value;
+export default function validate<T>(obj: Record<string, unknown>, options: Parameters<typeof artSchema>[0]) {
+  return assertSchema(artSchema(options), obj) as T;
 }
 
 export function validateArt(obj: Record<string, unknown>): Art<ArtType> {
