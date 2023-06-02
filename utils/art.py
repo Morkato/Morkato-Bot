@@ -10,6 +10,8 @@ from copy import deepcopy
 
 from .string import format
 
+import re
+
 if TYPE_CHECKING:
   from .guild import Guild
 
@@ -40,6 +42,11 @@ class Attack:
     self.embed_url = payload['embed_url']
 
     self.fields = payload['fields']
+  
+  def in_message(self, message: str) -> bool:
+    name = toKey(self.name.strip().replace(' ', '').replace('-', ''))
+    
+    return not not re.search("(( |-)+)?".join(letter for letter in name), message, re.IGNORECASE)
 
 class Art:
   def __init__(self, guild: Guild, payload: TypedArt) -> None:

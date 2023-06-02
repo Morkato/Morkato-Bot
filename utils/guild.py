@@ -1,6 +1,6 @@
 from typing import Callable, Optional, TypeVar, Union, overload
 
-from errors import NotFoundError
+from errors import NotFoundError, AlrearyExistsError
 
 from discord.guild import Guild as discordGuild
 from unidecode import unidecode
@@ -77,6 +77,20 @@ class Guild(GuildPayload):
       return Art(self, self.request_element('GET', f'/arts/{art_name}', call=check))
   def get_attack(self, attack_name: str) -> Union[Attack, None]:
     return next((art for art in self.attacks if toKey(art.name) == toKey(attack_name)), None)
+  def new_respiration(self, name: str) -> Art:
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        if res.status_code == 400:
+          raise AlrearyExistsError(message='Essa arte já existe.')
+        res.raise_for_status()
+      
+      return res.json()
+    art = Art(self, self.request_element('POST', '/arts', json={ "name": name, "type": 'RESPIRATION' }, call=check))
+
+    if self.cached.get('arts') is not None:
+      self.arts.append(art)
+
+    return art
 
 def get(guild: discordGuild) -> Guild:
   def check(res: requests.Response) -> TypedGuild:

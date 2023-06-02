@@ -2,6 +2,8 @@ from decouple import config
 
 from discord import Message, Intents
 from discord.ext import commands
+from utils import getGuild
+from utils.string import transformRegex
 from glob import glob
 
 from sys import exit
@@ -19,6 +21,14 @@ class MyBot(commands.Bot):
     print(f'Estou conectado, como : {self.user}')
     
   async def on_message(self, message: Message, /) -> None:
+    if message.content.strip().startswith('-'):
+      guild = getGuild(message.guild)
+
+      attacks = [ attack for attack in guild.attacks if attack.in_message(message.content.strip()) ]
+
+      if attacks:
+        await message.reply(f'**`{attacks}`**')
+    
     return await self.process_commands(message)
   async def on_edit_message(self, message: Message, /) -> None:
     return await self.on_message(message)

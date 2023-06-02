@@ -35,3 +35,11 @@ export function art(handle: (req: NextRequest, ctx: CustomContext, { guild, art 
     })(req, ctx)
   }, 'art_name')
 }
+
+export function forCreateArt(handle: (req: NextRequest, ctx: CustomContext, { guild, art }: { guild: Guild, art: Art<ArtType> }) => NextResult) {
+  return guild(async (req, ctx, guild) => {
+    const art = await arts.createArt({ guild, data: await req.json() })
+
+    return await handle(req, ctx, { guild, art })
+  })
+}

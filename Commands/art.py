@@ -27,5 +27,13 @@ class Art(commands.Cog):
     guild = getGuild(ctx.guild)
 
     await ctx.send(f'`{guild.attacks}`')
+  
+  @commands.command(name='new-resp')
+  async def New_Respiration(self, ctx: commands.Context, /, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    resp = guild.new_respiration(name)
+
+    await ctx.send(f'**Uma nova respiração chamada: {resp.name} foi criada!**')
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
