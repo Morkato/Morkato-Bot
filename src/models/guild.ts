@@ -1,5 +1,4 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Guild } from './validator/guild'
 
 import {
   NotFoundError,
@@ -7,7 +6,11 @@ import {
   InternalServerError
 } from 'errors'
 
+import { assertSchema, schemas } from './validator/utils'
+
 import Logger, { LogSettings } from 'infra/logger'
+import valid, { validateGuild, Guild } from './validator/guild'
+import Joi from 'joi'
 
 const logger = Logger({
   app: 'models:arts',
@@ -69,6 +72,8 @@ export default function Guilds(db: PrismaClient['guild']) {
     async getGuild(id: string, logSettings?: LogSettings): Promise<Guild> {
       const settings = { functionName: "getGuild", ...logSettings }
       let guild: Guild;
+
+      assertSchema(schemas.id.required(), id)
     
       try {
         guild = await db.findUnique({ where: { id: id } })
@@ -95,6 +100,8 @@ export default function Guilds(db: PrismaClient['guild']) {
     },
     async getGuilds(rows_id: string[], logSettings?: LogSettings): Promise<Guild[]> {
       const settings = { functionName: 'getGuilds', ...logSettings }
+
+      assertSchema(schemas.arrayId.required(), rows_id)
     
       try {
         const guilds = await db.findMany({
@@ -116,6 +123,8 @@ export default function Guilds(db: PrismaClient['guild']) {
     },
     async createGuild({ id }: { id: string }, logSettings?: LogSettings): Promise<Guild> {
       const settings = { functionName: 'createGuilds', ...logSettings }
+
+      assertSchema(schemas.id.required(), id)
     
       try {
         const guild = await db.create({ data: { id } })
@@ -134,6 +143,8 @@ export default function Guilds(db: PrismaClient['guild']) {
     },
     async deleteGuild(guild: Guild, logSettings?: LogSettings): Promise<Guild> {
       const settings = { functionName: 'getGuild', ...logSettings }
+
+      validateGuild(guild)
     
       const { id } = guild
     
