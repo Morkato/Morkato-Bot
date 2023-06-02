@@ -1,4 +1,4 @@
-import { 
+import valid, { 
   Art,
   ArtType,
   editeArt,
@@ -132,7 +132,7 @@ export default function Arts(prisma: PrismaClient['art']) {
     }
   }
   async function getArt({ guild, name }: { guild: Guild, name: string }): Promise<Art<ArtType>> {
-    assertSchema(schemas.name.required(), name)
+    name = assertSchema(schemas.name.required(), name)
     validateGuild(guild)
     
     try {
@@ -155,8 +155,29 @@ export default function Arts(prisma: PrismaClient['art']) {
       throw error();
     }
   }
+  async function createArt({ guild, data }: { guild: Guild, data: Partial<Art<ArtType>> }): Promise<Art<ArtType>> {
+    data = valid(data, {
+      required: {
+        name: true,
+        type: true
+      }
+    })
+    validateGuild(guild)
 
-  return { getArts, getArt };
+    try {
+      const art = await prisma.create({ data: { name: data.name, key: toKey(data.name), type: data.type, guild_id: guild.id }, select: selectMembersInArt })
+
+      return art;
+    } catch {
+      const message = messages['errorArtAlreadyExists']
+      logger.info(message(guild, data.name))
+
+      const error = errors['errorIfArtAlreadyExists']
+      throw error(guild, data.name);
+    }
+  }
+
+  return { getArts, getArt, createArt };
 }
 
 export type { Art, ArtType, editeArt, Respiration, Kekkijutsu };

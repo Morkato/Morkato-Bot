@@ -35,5 +35,6 @@ export const regex = {
 export const schemas = {
   id: Joi.string().regex(regex.id),
   arrayId: Joi.array().items(Joi.string().regex(regex.id)),
-  name: Joi.string().trim().min(1).max(32)
+  name: Joi.string().trim().min(1).max(32),
+  type: Joi.string().trim().allow('RESPIRATION', 'KEKKIJUTSU')
 }
