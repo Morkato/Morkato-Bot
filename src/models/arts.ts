@@ -109,7 +109,7 @@ const errors = {
 }
 
 export function toKey(text: string) {
-  return unidecode(text).trim().toLowerCase();
+  return unidecode(text).trim().toLowerCase().replace(' ', '-');
 }
 
 export default function Arts(prisma: PrismaClient['art']) {
