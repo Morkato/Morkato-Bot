@@ -5,6 +5,7 @@ from discord import Embed, Role
 
 from .types.art import Art as TypedArt, Respiration as TypedRespiration, Kekkijutsu as TypedKekkijutsu, Attack as TypedAttack
 from typing import Optional, TYPE_CHECKING
+from unidecode import unidecode
 from copy import deepcopy
 
 from .string import format
@@ -14,6 +15,9 @@ if TYPE_CHECKING:
 
 LIMIT_PAGE = config('LIMIT_PAGE', 10) or 10
 LIMIT_PAGE = int(LIMIT_PAGE)
+
+def toKey(text: str) -> str:
+  return unidecode(text).strip(' ').lower().replace(' ', '-')
 
 class Attack:
   def __init__(self, payload: TypedAttack) -> None:
@@ -82,76 +86,6 @@ class Art:
     if not self.attacks:
       return [embed,]
     
-    embeds = [ deepcopy(embed).add_field(name="Attacks", value='**%s**'%'\n'.join(f'{index} - {attack}' for index, attack in enumerate(self.attacks[i:i+LIMIT_PAGE], start=1))) for i in range(len(self.attacks)-1)]
+    embeds = [ deepcopy(embed).add_field(name="Attacks", value='**%s**'%'\n'.join(f'{index} - {attack}' for index, attack in enumerate(self.attacks[i:i+LIMIT_PAGE], start=1))) for i in range(len(self.attacks))]
 
     return embeds
-
-class Respiration(Art):
-  def __init__(self, guild: Guild, payload: TypedRespiration) -> None:
-    super().__init__(guild, payload)
-  
-  def edit(
-    self, *,
-    
-    name: Optional[str] = None,
-    role: Optional[Role] = None,
-
-    embed_title: Optional[str] = None,
-    embed_description: Optional[str] = None,
-    embed_url: Optional[str] = None
-  ) -> Respiration:
-    payload = {
-      "name": name or self.name,
-      "role": role or self.role_id,
-      "embed_title": embed_title or self.embed_title,
-      "embed_description": embed_description or self.embed_desprition,
-      "embed_url": embed_url or self.embed_url
-    }
-
-    def check(res) -> TypedRespiration:
-      if not res.status_code == 200:
-        res.raise_for_status()
-      
-      return res.json()
-    
-    data = self.guild.request_element('POST', f'/respirations/{self.name}', call=check, json=payload)
-
-    self._load_variables(data)
-
-    return self
-
-class Kekkijutsu(Art):
-  def __init__(self, guild: Guild, payload: TypedKekkijutsu) -> None:
-    super().__init__(payload)
-
-    self.guild = guild
-  
-  def edit(
-    self, *,
-    
-    name: Optional[str] = None,
-    role: Optional[Role] = None,
-
-    embed_title: Optional[str] = None,
-    embed_description: Optional[str] = None,
-    embed_url: Optional[str] = None
-  ) -> Respiration:
-    payload = {
-      "name": name or self.name,
-      "role": role or self.role_id,
-      "embed_title": embed_title or self.embed_title,
-      "embed_description": embed_description or self.embed_desprition,
-      "embed_url": embed_url or self.embed_url
-    }
-
-    def check(res) -> TypedRespiration:
-      if not res.status_code == 200:
-        res.raise_for_status()
-      
-      return res.json()
-    
-    data = self.guild.request_element('POST', f'/kekkijutsus/{self.name}', call=check, json=payload)
-
-    self._load_variables(data)
-
-    return self
