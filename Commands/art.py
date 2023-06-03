@@ -3,6 +3,8 @@ from typing import Optional
 from discord.ext import commands
 from utils import getGuild
 
+from json import loads
+
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
@@ -22,6 +24,13 @@ class Art(commands.Cog):
         await ctx.send(embed=embed)
       
       return
+  @commands.command(name='del-art')
+  async def Delete_Art(self, ctx: commands.Context, /, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    art = guild.del_art(name)
+
+    await ctx.send(f'A arte chamada **`{art.name}`** foi deletada.')
   @commands.command(name='attacks')
   async def Attack(self, ctx: commands.Context, /) -> None:
     guild = getGuild(ctx.guild)
@@ -34,9 +43,31 @@ class Art(commands.Cog):
 
     resp = guild.new_respiration(name)
 
-    await ctx.send(f'**Uma nova respiração chamada: `{resp.name}` foi criada!**')
+    await ctx.send(f'Uma nova respiração chamada: **`{resp.name}`** foi criada!')
 
-  @commands.command(name='edit-resp')
-  async def Edit_Respiration(self, ctx: commands.Context, /, *, name: str) -> None: ...
+  @commands.command(name='new-kekki')
+  async def New_Kekkijutsu(self, ctx: commands.Context, /, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    kekki = guild.new_kekkijutsu(name)
+
+    await ctx.send(f'Um novo kekkijutsu chamado **`{kekki.name}`** foi criado!')
+  
+  @commands.command(name='edit-art')
+  async def Edit_Art(self, ctx: commands.Context, /, name: str, *, json: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    art = guild.get_art(name)
+
+    if art is None:
+      await ctx.send('Essa arte não existe.')
+
+      return
+    
+    data = loads(json)
+
+    art = art.edit(**data)
+
+    await ctx.send('Editada')
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
