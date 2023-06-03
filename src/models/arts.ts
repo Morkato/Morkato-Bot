@@ -176,8 +176,40 @@ export default function Arts(prisma: PrismaClient['art']) {
       throw error(guild, data.name);
     }
   }
+  async function editArt({ guild, art, data }: { guild: Guild, art: Art<ArtType>, data: Omit<Partial<Art<ArtType>>, 'attacks'> }): Promise<Art<ArtType>> {
+    validateGuild(guild)
+    validateArt(art)
 
-  return { getArts, getArt, createArt };
+    try {
+      const editedArt = await prisma.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: data, select: selectMembersInArt })
+
+      return editedArt;
+    } catch {
+      const message = messages['errorIfArtNotExists']
+      logger.warn(message(guild, art.name))
+
+      const error = errors['errorIfArtNotExists']
+      throw error(guild, art.name);
+    }
+  }
+  async function delArt({ guild, art }: { guild: Guild, art: Art<ArtType> }): Promise<Art<ArtType>> {
+    validateGuild(guild)
+    validateArt(art)
+
+    try {
+      const deletedArt = await prisma.delete({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, select: selectMembersInArt })
+
+      return deletedArt;
+    } catch {
+      const message = messages['errorIfArtNotExists']
+      logger.warn(message(guild, art.name))
+
+      const error = errors['errorIfArtNotExists']
+      throw error(guild, art.name);
+    }
+  }
+
+  return { getArts, getArt, createArt, editArt, delArt };
 }
 
 export type { Art, ArtType, editeArt, Respiration, Kekkijutsu };
