@@ -3,8 +3,9 @@ from __future__ import annotations
 from decouple import config
 from discord import Embed, Role
 
-from .types.art import Art as TypedArt, Respiration as TypedRespiration, Kekkijutsu as TypedKekkijutsu, Attack as TypedAttack
-from typing import Optional, TYPE_CHECKING
+from .types.art import Art as TypedArt, Attack as TypedAttack
+from requests import Response
+from typing import Optional, Literal, TYPE_CHECKING
 from unidecode import unidecode
 from copy import deepcopy
 
@@ -25,6 +26,7 @@ class Attack:
   def __init__(self, payload: TypedAttack) -> None:
     
     self._load_variables(payload)
+  
   def __repr__(self) -> str:
     return self.name
 
@@ -53,6 +55,7 @@ class Art:
     self.guild = guild
 
     self._load_variables(payload)
+  
   def _load_variables(self, data: TypedArt) -> None:
     self.name = data['name']
     self.type = data['type']
@@ -65,6 +68,7 @@ class Art:
     self.attacks = self._load_attacks(data['attacks'])
   def _load_attacks(self, attacks: list[TypedAttack]) -> Attack:
     return [Attack(data) for data in attacks]
+  
   def __repr__(self) -> str:
     return f'Respiration(guild={self.guild} name={self.name})'
   
@@ -96,3 +100,52 @@ class Art:
     embeds = [ deepcopy(embed).add_field(name="Attacks", value='**%s**'%'\n'.join(f'{index} - {attack}' for index, attack in enumerate(self.attacks[i:i+LIMIT_PAGE], start=1))) for i in range(len(self.attacks))]
 
     return embeds
+  
+  def edit(
+    self, *,
+    name: Optional[str] = None,
+    type: Optional[Literal['RESPIRATION', 'KEKKIJUTSU']] = None,
+    role: Optional[Role] = None,
+
+    embed_title: Optional[str] = None,
+    embed_description: Optional[str] = None,
+    embed_url: Optional[str] = None
+  ) -> Art:
+    def check(res: Response):
+      if not res.status_code == 200:
+        res.raise_for_status()
+      
+      return res.json()
+
+    payload = {}
+
+    if name:
+      payload['name'] = name
+    if type:
+      payload['type'] = type
+    if role:
+      payload['role'] = str(role.id)
+    if embed_title:
+      payload['embed_title'] = embed_title
+    if embed_description:
+      payload['embed_description'] = embed_description
+    if embed_url:
+      payload['embed_url'] = embed_url
+
+    data = self.guild.request_element('POST', f'/arts/{toKey(self.name)}', json=payload, call=check)
+
+    self._load_variables(data)
+
+    return self
+  def delete(self) -> Art:
+    def check(res: Response) -> TypedArt:
+      if not res.status_code == 200:
+        res.raise_for_status()
+
+      return res.json()
+    
+    data = self.guild.request_element('DELETE', f'/arts/{toKey(self.name)}', call=check)
+
+    self._load_variables(data)
+
+    return self
