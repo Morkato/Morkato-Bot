@@ -34,6 +34,9 @@ class Art(commands.Cog):
 
     resp = guild.new_respiration(name)
 
-    await ctx.send(f'**Uma nova respiração chamada: {resp.name} foi criada!**')
+    await ctx.send(f'**Uma nova respiração chamada: `{resp.name}` foi criada!**')
+
+  @commands.command(name='edit-resp')
+  async def Edit_Respiration(self, ctx: commands.Context, /, *, name: str) -> None: ...
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
