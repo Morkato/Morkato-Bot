@@ -1,9 +1,9 @@
 from decouple import config
 
 from discord import Message, Intents
+from discord.ext.commands import CommandInvokeError
 from discord.ext import commands
 from utils import getGuild
-from utils.string import transformRegex
 from glob import glob
 
 from sys import exit
@@ -19,6 +19,13 @@ class MyBot(commands.Bot):
     )
   async def on_ready(self) -> None:
     print(f'Estou conectado, como : {self.user}')
+  
+  async def on_command_error(self, ctx: commands.Context, err: CommandInvokeError) -> None:
+    error = err.original
+
+    if isinstance(error, BaseError):
+      if not isinstance(error, InternalServerError):
+        await ctx.send(error.message)
     
   async def on_message(self, message: Message, /) -> None:
     if message.content.strip().startswith('-'):
