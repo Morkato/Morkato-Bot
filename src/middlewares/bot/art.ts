@@ -1,4 +1,4 @@
-import type { NextResult, NextFunction, NextRequest, CustomContext } from 'middlewares'
+import type { NextResult, NextRequest, CustomContext } from 'middlewares'
 import type { Guild } from 'models/validator/guild'
 
 import { param } from 'middlewares/utils'
