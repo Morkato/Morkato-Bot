@@ -106,7 +106,7 @@ export function attackSchema({ original = {}, required = {}, attackFieldParams =
   
     embed_title: makeContext(Joi.string().allow(null).trim().min(1).max(96), required['embed_title'], original['embed_title']),
     embed_description: makeContext(Joi.string().allow(null).trim().min(1).max(4096), required['embed_description'], original['embed_description']),
-    embed_url: makeContext(Joi.string().allow(null).trim().regex(/^(https?:\/\/|cdn:\/)[^\d \n\t\v\r\f\b]+$/), required['embed_url'], original['embed_url']),
+    embed_url: makeContext(Joi.string().allow(null).trim(), required['embed_url'], original['embed_url']),
   
     fields: makeContext(Joi.array().items(attackFieldSchema(attackFieldParams)), required['fields'], original['fields']),
     
@@ -127,7 +127,7 @@ export function artSchema({ original = {}, required = {}, attackParams = {} }: {
 
     embed_title: makeContext(Joi.string().allow(null).trim().min(1).max(96), required['embed_title'], original['embed_title']),
     embed_description: makeContext(Joi.string().allow(null).trim().min(1).max(4096), required['embed_description'], original['embed_description']),
-    embed_url: makeContext(Joi.string().allow(null).trim().regex(/^(https?:\/\/|cdn:\/)[^\d \n\t\v\r\f]+$/), required['embed_url'], original['embed_url']),
+    embed_url: makeContext(Joi.string().allow(null).trim(), required['embed_url'], original['embed_url']),
 
     attacks: makeContext(Joi.array().items(attackSchema(attackParams)), required['attacks'], original['attacks']),
 

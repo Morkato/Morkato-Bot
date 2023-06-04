@@ -54,7 +54,7 @@ class Art(commands.Cog):
     await ctx.send(f'Um novo kekkijutsu chamado **`{kekki.name}`** foi criado!')
   
   @commands.command(name='edit-art')
-  async def Edit_Art(self, ctx: commands.Context, /, name: str, *, json: str) -> None:
+  async def Edit_Art(self, ctx: commands.Context, /, *, name: str) -> None:
     guild = getGuild(ctx.guild)
 
     art = guild.get_art(name)
@@ -64,10 +64,45 @@ class Art(commands.Cog):
 
       return
     
-    data = loads(json)
+    await ctx.send(f'started event... Breaking in : 1min')
 
-    art = art.edit(**data)
+    payload = {}
 
-    await ctx.send('Editada')
+    while True:
+      message = await self.bot.wait_for('message', timeout=300, check=lambda message: message.author.id == ctx.author.id and message.channel.id == ctx.channel.id and message.guild.id == ctx.guild.id)
+
+      content = message.content.strip()
+
+      key, value = (content[:content.find('!')], content[content.find('!')+1:]) if not content.find('!') == -1 else (None, content)
+
+      if key is None and value.lower() == 'done':
+        if not payload:
+          await ctx.send('A arte abordada foi editada.')
+
+          return
+        
+        art.edit(**payload)
+
+        await ctx.send('A arte abordada foi editada.')
+
+      elif key == 'title':
+        payload['embed_title'] = value
+
+        await message.add_reaction('✅')
+
+        continue
+      elif key == 'description':
+        payload['embed_description'] = value
+
+        await message.add_reaction('✅')
+
+        continue
+      elif key == 'url':
+        payload['embed_url'] = value
+
+        await message.add_reaction('✅')
+
+        continue
+    
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))

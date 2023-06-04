@@ -46,7 +46,9 @@ export function forCreateArt(handle: (req: NextRequest, ctx: CustomContext, { gu
 
 export function forEditArt(handle: (req: NextRequest, ctx: CustomContext, { guild, beforeArt, afterArt }: { guild: Guild, beforeArt: Art<ArtType>, afterArt: Art<ArtType> }) => NextResult) {
   return art(async (req, ctx, { guild, art }) => {
+    console.log(art)
     const afterArt = await arts.editArt({ guild, art, data: await req.json() })
+    console.log(art)
 
     return await handle(req, ctx, { guild, beforeArt: art, afterArt });
   })
@@ -54,7 +56,7 @@ export function forEditArt(handle: (req: NextRequest, ctx: CustomContext, { guil
 
 export function forDelArt(handle: (req: NextRequest, ctx: CustomContext, { guild, art }: { guild: Guild, art: Art<ArtType> }) => NextResult) {
   return art(async (req, ctx, { guild, art }) => {
-    const deletedArt = arts.delArt({ guild, art })
+    const deletedArt = await arts.delArt({ guild, art })
 
     return await handle(req, ctx, { guild, art });
   })
