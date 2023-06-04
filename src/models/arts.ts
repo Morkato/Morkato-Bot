@@ -177,11 +177,16 @@ export default function Arts(prisma: PrismaClient['art']) {
     }
   }
   async function editArt({ guild, art, data }: { guild: Guild, art: Art<ArtType>, data: Omit<Partial<Art<ArtType>>, 'attacks'> }): Promise<Art<ArtType>> {
+    console.log('aqui 1')
     validateGuild(guild)
+    console.log('aqui 2')
     validateArt(art)
+    console.log('aqui 3')
 
     try {
+      console.log('aqui')
       const editedArt = await prisma.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: data, select: selectMembersInArt })
+      console.log('aqui')
 
       return editedArt;
     } catch {
