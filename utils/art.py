@@ -23,7 +23,8 @@ def toKey(text: str) -> str:
   return unidecode(text).strip(' ').lower().replace(' ', '-')
 
 class Attack:
-  def __init__(self, payload: TypedAttack) -> None:
+  def __init__(self, guild: Guild, payload: TypedAttack) -> None:
+    self.guild = guild
     
     self._load_variables(payload)
   
@@ -50,6 +51,21 @@ class Attack:
     
     return not not re.search("(( |-)+)?".join(letter for letter in name), message, re.IGNORECASE)
 
+  def edit(self): ...
+  def delete(self) -> Attack:
+    def check(res: Response) -> TypedAttack:
+      if not res.status_code == 200:
+        res.raise_for_status()
+
+      return res.json()
+
+    data = self.guild.request_element('DELETE', f'/attacks/{toKey(self.name)}')
+
+    self._load_variables(data)
+
+    return self
+    
+
 class Art:
   def __init__(self, guild: Guild, payload: TypedArt) -> None:
     self.guild = guild
@@ -66,8 +82,8 @@ class Art:
     self.embed_url = data['embed_url']
 
     self.attacks = self._load_attacks(data['attacks'])
-  def _load_attacks(self, attacks: list[TypedAttack]) -> Attack:
-    return [Attack(data) for data in attacks]
+  def _load_attacks(self, attacks: list[TypedAttack]) -> list[Attack]:
+    return [Attack(self.guild, data) for data in attacks]
   
   def __repr__(self) -> str:
     return f'Respiration(guild={self.guild} name={self.name})'
@@ -149,3 +165,20 @@ class Art:
     self._load_variables(data)
 
     return self
+
+  def new_attack(self, name: str) -> Attack:
+    def check(res: Response) -> TypedAttack:
+      if not res.status_code == 200:
+        res.raise_for_status()
+      
+      return res.json()
+    
+    payload = { "name": name }
+
+    data = self.guild.request_element('POST', f'/arts/{toKey(self.name)}/attacks', json=payload, call=check)
+
+    attack = Attack(self.guild, data)
+
+    self.attacks.append(attack)
+
+    return attack

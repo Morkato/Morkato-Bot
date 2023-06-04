@@ -8,6 +8,11 @@ import valid, {
   validateArt
 } from 'models/validator/art'
 
+import {
+  selectMembersInAttacksFields,
+  selectMembersInAttacks
+} from 'models/attacks'
+
 import { Guild, validateGuild } from 'models/validator/guild'
 
 import { assertSchema, schemas } from './validator/utils'
@@ -29,42 +34,7 @@ const logger = Logger({
   forFormat: "$app $func $date $type - $message"
 })
 
-const selectMembersInAttacksFields = {
-  select: {
-    id: true,
-    
-    text: true,
-    roles: true,
-
-    created_at: true,
-    updated_at: true
-  }
-}
-
-const selectMembersInAttacks = {
-  select: {
-    name: true,
-
-    roles: true,
-    required_roles: true,
-    required_exp: true,
-
-    damage: true,
-    stamina: true,
-
-
-    embed_title: true,
-    embed_description: true,
-    embed_url: true,
-
-    fields: selectMembersInAttacksFields,
-
-    created_at: true,
-    updated_at: true
-  }
-}
-
-const selectMembersInArt = {
+export const selectMembersInArt = {
   name: true,
   type: true,
   role: true,
@@ -73,7 +43,7 @@ const selectMembersInArt = {
   embed_description: true,
   embed_url: true,
 
-  attacks: selectMembersInAttacks,
+  attacks: { select: selectMembersInAttacks },
   
   created_at: true,
   updated_at: true
@@ -177,16 +147,11 @@ export default function Arts(prisma: PrismaClient['art']) {
     }
   }
   async function editArt({ guild, art, data }: { guild: Guild, art: Art<ArtType>, data: Omit<Partial<Art<ArtType>>, 'attacks'> }): Promise<Art<ArtType>> {
-    console.log('aqui 1')
     validateGuild(guild)
-    console.log('aqui 2')
     validateArt(art)
-    console.log('aqui 3')
 
     try {
-      console.log('aqui')
       const editedArt = await prisma.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: data, select: selectMembersInArt })
-      console.log('aqui')
 
       return editedArt;
     } catch {

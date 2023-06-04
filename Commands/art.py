@@ -103,6 +103,21 @@ class Art(commands.Cog):
         await message.add_reaction('✅')
 
         continue
+  
+  @commands.command(name='new-attack')
+  async def New_Attack(self, ctx: commands.Context, /, art_name: str, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    art = guild.get_art(art_name)
+
+    if art is None:
+      await ctx.send('Essa arte não existe.')
+
+      return
+    
+    attack = art.new_attack(name)
+
+    await ctx.send(f'Uma novo ataque chamado **`{attack}`** foi criado.')
     
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
