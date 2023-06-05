@@ -1,54 +1,13 @@
 import type { PrismaClient } from "@prisma/client"
 
 import { type Art, type ArtType, validateArt } from 'models/validator/art'
+import { selectMembersInAttacksFields } from 'models/attacks_fields'
 import { type Guild, validateGuild } from 'models/validator/guild'
+import { type Attack, validateAttack } from "./validator/attack"
 
 import { assertSchema, schemas } from "./validator/utils"
 
 import unidecode from 'remove-accents'
-import { validateAttack } from "./validator/attack"
-
-export type AttackField = {
-  id: string
-
-  text: string
-  roles: string[]
-
-  created_at: Date
-  updated_at: Date
-}
-
-export type Attack = {
-  name: string
-
-  roles: string[]
-  required_roles: number
-  required_exp: number
-
-  damage: number
-  stamina: number
-
-  embed_title: string | null
-  embed_description: string | null
-  embed_url: string | null
-
-  fields: AttackField[]
-
-  created_at: Date
-  updated_at: Date
-}
-
-export const selectMembersInAttacksFields = {
-  select: {
-    id: true,
-    
-    text: true,
-    roles: true,
-
-    created_at: true,
-    updated_at: true
-  }
-}
 
 export const selectMembersInAttacks = {
     name: true,
@@ -64,7 +23,7 @@ export const selectMembersInAttacks = {
     embed_description: true,
     embed_url: true,
 
-    fields: selectMembersInAttacksFields,
+    fields: { select: selectMembersInAttacksFields },
 
     created_at: true,
     updated_at: true
@@ -74,7 +33,7 @@ export function toKey(text: string) {
   return unidecode(text).trim().toLowerCase().replace(' ', '-');
 }
 
-export default function Arts(prisma: PrismaClient['attack']) {
+export default function Attacks(prisma: PrismaClient['attack']) {
   async function getAttacks({ guild, art }: { guild: Guild, art: Art<ArtType> }): Promise<Attack[]> {
     validateGuild(guild)
     validateArt(art)
@@ -122,4 +81,4 @@ export default function Arts(prisma: PrismaClient['attack']) {
   return { getAttacks, getAttack, createAttack, editAttack, delAttack };
 }
 
-export { Arts };
+export { Attacks, type Attack };
