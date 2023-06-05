@@ -49,7 +49,7 @@ export function attackFieldSchema({ original = {}, required = {} } : {
   required?: Partial<Record<keyof AttackField, boolean>>
 }) {
   return Joi.object({
-    id: makeContext(Joi.string().trim().regex(/^[0-9]+$/), required['id'], original['id']),
+    id: makeContext(Joi.string().trim(), required['id'], original['id']),
 
     text: makeContext(Joi.string().trim().min(1).max(132), required['text'], original['text']),
     roles: makeContext(Joi.array().items(Joi.string().trim().regex(/^[0-9]+$/)), required['roles'], original['roles']),

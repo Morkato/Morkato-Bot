@@ -1,7 +1,7 @@
 import re
 
 def format(text: str, /, **kwergs) -> str:
-  regex = re.compile(r"\$(?P<key>[^\d \t\n\/]+)")
+  regex = re.compile(r"\$(?P<key>[^\d \t\n]+)")
 
   expected = regex.finditer(text)
 

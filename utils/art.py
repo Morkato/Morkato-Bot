@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from decouple import config
-from discord import Embed, Role
+from discord import Member, Embed, Role
 
 from .types.art import Art as TypedArt, Attack as TypedAttack
 from requests import Response
@@ -10,6 +10,8 @@ from unidecode import unidecode
 from copy import deepcopy
 
 from .string import format
+
+from numerize.numerize import numerize as num_fmt
 
 import re
 
@@ -41,7 +43,7 @@ class Attack:
     self.stamina = payload['stamina']
 
     self.embed_title = payload['embed_title']
-    self.embed_description = payload['stamina']
+    self.embed_description = payload['embed_description']
     self.embed_url = payload['embed_url']
 
     self.fields = payload['fields']
@@ -51,7 +53,41 @@ class Attack:
     
     return not not re.search("(( |-)+)?".join(letter for letter in name), message, re.IGNORECASE)
 
-  def edit(self): ...
+  def edit(
+    self,
+    name:  Optional[str] = None,
+    embed_title: Optional[str] = None,
+    embed_description: Optional[str] = None,
+    embed_url: Optional[str] = None,
+    damage: Optional[int] = None,
+    stamina: Optional[int] = None
+  ) -> Attack:
+    def check(res: Response) -> TypedAttack:
+      if not res.status_code == 200:
+        res.raise_for_status()
+
+      return res.json()
+
+    payload = {}
+
+    if name:
+      payload['name'] = name
+    if embed_title:
+      payload['embed_title'] = embed_title
+    if embed_description:
+      payload['embed_description'] = embed_description
+    if embed_url:
+      payload['embed_url'] = embed_url
+    if damage:
+      payload['damage'] = damage
+    if stamina:
+      payload['stamina'] = stamina
+
+    data = self.guild.request_element('POST', f'/attacks/{toKey(self.name)}', json=payload, call=check)
+
+    self._load_variables(data)
+
+    return self
   def delete(self) -> Attack:
     def check(res: Response) -> TypedAttack:
       if not res.status_code == 200:
@@ -59,12 +95,46 @@ class Attack:
 
       return res.json()
 
-    data = self.guild.request_element('DELETE', f'/attacks/{toKey(self.name)}')
+    data = self.guild.request_element('DELETE', f'/attacks/{toKey(self.name)}', call=check)
 
     self._load_variables(data)
 
     return self
+
+  def embed_at(
+    self, member: Optional[Member] = None, *,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    url: Optional[str] = None,
+    damage: Optional[int] = None,
+    stamina: Optional[int] = None,
+  ) -> Embed:
+    title = title or self.embed_title or self.name
+    description = description or self.embed_description or 'No description'
+    url = url or self.embed_url
     
+    embed = Embed(
+      title=title,
+      description=description
+    )
+
+    if self.fields:
+      embed.add_field(name='Fields', value='\n'.join(format(
+        field['text'],
+        name=self.name,
+        long_damage=self.damage,
+        damage=num_fmt(self.damage),
+        long_stamina=self.stamina,
+        stamina=num_fmt(self.stamina)
+      ) for field in self.fields
+        if member is None
+          or not field['roles']
+          or next((True for role in member.roles if str(role.id) in field['roles']), False)))
+
+    if url:
+      embed.set_image(url=url)
+
+    return embed
 
 class Art:
   def __init__(self, guild: Guild, payload: TypedArt) -> None:
@@ -113,7 +183,7 @@ class Art:
     if not self.attacks:
       return [embed,]
     
-    embeds = [ deepcopy(embed).add_field(name="Attacks", value='**%s**'%'\n'.join(f'{index} - {attack}' for index, attack in enumerate(self.attacks[i:i+LIMIT_PAGE], start=1))) for i in range(len(self.attacks))]
+    embeds = [ deepcopy(embed).add_field(name="Attacks", value='**%s**'%'\n'.join(f'{index}° - *[Fala], `{attack}`*' for index, attack in enumerate(self.attacks[i:i+LIMIT_PAGE], start=i+1))) for i in range(0, len(self.attacks), 10)]
 
     return embeds
   

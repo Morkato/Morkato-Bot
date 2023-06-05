@@ -1,4 +1,4 @@
-from typing import Callable, Optional, TypeVar, Union, overload
+from typing import Callable, Literal, Optional, TypeVar, Union, overload
 
 from errors import NotFoundError, AlrearyExistsError
 
@@ -50,19 +50,24 @@ class Guild(GuildPayload):
   def arts(self) -> list[Art]:
     if self.cached.get('arts') is not None:
       return self.cached['arts']
-    
-    def check(res: requests.Response) -> list[TypedArt]:
-      if not res.status_code == 200:
-        res.raise_for_status()
-      return res.json()
 
-    self.cached['arts'] = [ Art(self, data) for data in  self.request_element('GET', '/arts', call=check)]
+    self.cached['arts'] = self.get_arts()
 
     return self.arts
   @property
   def attacks(self) -> list[Attack]:
     return [ attack for art in self.arts for attack in art.attacks ]
 
+  def get_arts(self, map: Optional[Literal['RESPIRATION', 'KEKKIJUTSU']] = None) -> list[Art]:
+    def check(res: requests.Response) -> list[TypedArt]:
+      if not res.status_code == 200:
+        res.raise_for_status()
+      return res.json()
+    
+    if map is None:
+      return [ Art(self, data) for data in self.request_element('GET', '/arts', call=check) ]
+    
+    return [ Art(self, data) for data in self.request_element('GET', f'/arts?map={map}', call=check) ]
   def get_art(self, art_name: str) -> Union[Art, None]:
     if self.cached.get('arts') is not None:
       return next((art for art in self.arts if toKey(art.name) == toKey(art_name)), None)
@@ -95,7 +100,23 @@ class Guild(GuildPayload):
     return Art(self, data)
 
   def get_attack(self, attack_name: str) -> Union[Attack, None]:
-    return next((art for art in self.attacks if toKey(art.name) == toKey(attack_name)), None)
+    if self.cached.get('arts') is not None:
+      return next((art for art in self.attacks if toKey(art.name) == toKey(attack_name)), None)
+    
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        if not res.status_code == 404:
+          res.raise_for_status()
+        return
+
+      return res.json()
+    
+    data = self.request_element('GET', f'/attacks/{toKey(attack_name)}', call=check)
+
+    if not data:
+      return
+
+    return Attack(self, data)
   
   def new_respiration(self, name: str) -> Art:
     def check(res: requests.Response):
