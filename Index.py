@@ -28,13 +28,16 @@ class MyBot(commands.Bot):
         await ctx.send(error.message)
     
   async def on_message(self, message: Message, /) -> None:
+    if message.author.bot:
+      return
     if message.content.strip().startswith('-'):
       guild = getGuild(message.guild)
 
       attacks = [ attack for attack in guild.attacks if attack.in_message(message.content.strip()) ]
 
       if attacks:
-        await message.reply(f'**`{attacks}`**')
+        for attack in attacks:
+          await message.channel.send(embed=attack.embed_at(message.author))
     
     return await self.process_commands(message)
   async def on_edit_message(self, message: Message, /) -> None:
