@@ -1,16 +1,8 @@
+import { type AttackField, attackFieldSchema } from './attack_field'
+
 import { assertSchema } from './utils'
 
 import Joi from 'joi'
-
-export type AttackField = {
-  id: string
-
-  text: string
-  roles: string[]
-
-  created_at: Date
-  updated_at: Date
-}
 
 export type Attack = {
   name: string
@@ -42,21 +34,6 @@ function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: 
   }
 
   return schema.optional();
-}
-
-export function attackFieldSchema({ original = {}, required = {} } : {
-  original?: Partial<AttackField>,
-  required?: Partial<Record<keyof AttackField, boolean>>
-}) {
-  return Joi.object({
-    id: makeContext(Joi.string().trim(), required['id'], original['id']),
-
-    text: makeContext(Joi.string().trim().min(1).max(132), required['text'], original['text']),
-    roles: makeContext(Joi.array().items(Joi.string().trim().regex(/^[0-9]+$/)), required['roles'], original['roles']),
-
-    created_at: makeContext(Joi.date().allow(Joi.string()), required['created_at'], original['created_at']),
-    updated_at: makeContext(Joi.date().allow(Joi.string()), required['updated_at'], original['updated_at'])
-  })
 }
 
 export function attackSchema({ original = {}, required = {}, attackFieldParams = {} }: {
