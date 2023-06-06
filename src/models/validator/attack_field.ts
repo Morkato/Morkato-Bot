@@ -32,7 +32,7 @@ export function attackFieldSchema({ original = {}, required = {} } : {
     id: makeContext(Joi.string().trim(), required['id'], original['id']),
 
     text: makeContext(Joi.string().trim().min(1).max(132), required['text'], original['text']),
-    roles: makeContext(Joi.array().items(Joi.string().trim().regex(/^[0-9]+$/)), required['roles'], original['roles']),
+    roles: makeContext(Joi.array().items(Joi.string().trim()), required['roles'], original['roles']),
 
     created_at: makeContext(Joi.date().allow(Joi.string()), required['created_at'], original['created_at']),
     updated_at: makeContext(Joi.date().allow(Joi.string()), required['updated_at'], original['updated_at'])
