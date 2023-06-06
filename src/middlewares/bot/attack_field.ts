@@ -38,3 +38,11 @@ export function forCreateAttackField(handle: (req: NextRequest, ctx: CustomConte
     return await handle(req, ctx, { guild, attack, field });
   })
 }
+
+export function forEditAttackField(handle: (req: NextRequest, ctx: CustomContext, { guild, beforeField, afterField }: { guild: Guild, beforeField: AttackField, afterField: AttackField }) => NextResult) {
+  return attackField(async (req, ctx, { guild, field }) => {
+    const editedField = await attacks_fields.editField({ guild, field, data: await req.json() })
+
+    return await handle(req, ctx, { guild, beforeField: field, afterField: editedField });
+  })
+}
