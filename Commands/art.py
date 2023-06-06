@@ -15,6 +15,8 @@ class Art(commands.Cog):
 
     art = guild.get_art(art_name)
 
+    await ctx.send(f'**`{art.attacks}`**')
+
     if art is None:
       await ctx.send('Essa arte não existe.')
 
@@ -82,6 +84,8 @@ class Art(commands.Cog):
         art.edit(**payload)
 
         await ctx.send('A arte abordada foi editada.')
+
+        return
 
       elif key == 'title':
         payload['embed_title'] = value
@@ -166,6 +170,7 @@ class Art(commands.Cog):
 
       if key is None and value.lower() == 'done':
         if not payload:
+          print(attack)
           await ctx.send('A arte abordada foi editada.')
 
           return
@@ -173,6 +178,8 @@ class Art(commands.Cog):
         attack.edit(**payload)
 
         await ctx.send('A arte abordada foi editada.')
+
+        return
 
       elif key == 'title':
         payload['embed_title'] = value
@@ -192,9 +199,32 @@ class Art(commands.Cog):
         await message.add_reaction('✅')
 
         continue
+      
+      elif key == 'damage':
+        try: payload['damage'] = int(value)
+        except:
+          await message.add_reaction('❌')
+
+          continue
+
+        await message.add_reaction('✅')
+
+        continue
+      elif key == 'stamina':
+        try:
+          payload['stamina'] = int(value)
+        except:
+          await message.add_reaction('❌')
+
+          continue
+
+        await message.add_reaction('✅')
+
+        continue
+
   
   @commands.command(name='add-field')
-  async def Add_Field(self, ctx: commands.Context, name: str, roles: commands.Greedy[discord.Role], text: str) -> None:
+  async def Add_Field(self, ctx: commands.Context, name: str, roles: commands.Greedy[discord.Role]) -> None:
     guild = getGuild(ctx.guild)
 
     attack = guild.get_attack(name)
@@ -204,9 +234,37 @@ class Art(commands.Cog):
       
       return
     
-    field = attack.add_field(text=text, roles=roles or None)
+    message = await self.bot.wait_for('message', timeout=300)
+    
+    if message.content.strip() == '':
+      return
+
+    field = attack.add_field(text=message.content, roles=roles or None)
 
     await ctx.send(f'Uma nova flag foi adicionada no ataque **`{attack}`** com o ID: **`{field.id}`**')
+  
+  @commands.command(name='fields')
+  async def Fields(self, ctx: commands.Context, *, name: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    attack = guild.get_attack(name)
+
+    if not attack:
+      await ctx.send('Esse ataque não existe.')
+      
+      return
+    
+    fields = attack.fields
+
+    await ctx.send('\n'.join(f'Field ID: **`{field.id}`**' for field in fields))
+  
+  @commands.command(name='del-field')
+  async def Del_Field(self, ctx: commands.Context, *, id: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    field = guild.del_field(id)
+
+    await ctx.send(f'Foi deletado com sucesso, o field com ID: **`{field.id}`**')
     
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))

@@ -11,7 +11,7 @@ import { guild } from './guild'
 import client from 'infra/database'
 
 const attacks_fields = AttacksFields(client.attackField)
-const attackField_key = 'attackFieldId'
+const attackField_key = 'field_id'
 
 export function attacksFields(handle: (req: NextRequest, ctx: CustomContext, { guild, attack, fields }: { guild: Guild, attack: Attack, fields: AttackField[] }) => NextResult) {
   return attack(async (req, ctx, { guild, attack }) => {
@@ -22,18 +22,17 @@ export function attacksFields(handle: (req: NextRequest, ctx: CustomContext, { g
 }
 
 export function attackField(handle: (req: NextRequest, ctx: CustomContext, { guild, field }: { guild: Guild, field: AttackField }) => NextResult) {
-  return param(async (req, ctx, id) => {
+  return param(async (req, ctx, field_id) => {
     return await guild(async (req, ctx, guild) => {
-      const field = await attacks_fields.getField({ guild, id })
+      const field = await attacks_fields.getField({ guild, id: field_id })
 
       return await handle(req, ctx, { guild, field });
     })(req, ctx)
-  }, attackField_key)
+  }, 'field_id')
 }
 
 export function forCreateAttackField(handle: (req: NextRequest, ctx: CustomContext, { guild, attack, field }: { guild: Guild, attack: Attack, field: AttackField }) => NextResult) {
   return attack(async (req, ctx, { guild, attack }) => {
-    console.log('aqui')
     const field = await attacks_fields.createField({ guild, attack, data: await req.json() })
 
     return await handle(req, ctx, { guild, attack, field });
@@ -50,6 +49,7 @@ export function forEditAttackField(handle: (req: NextRequest, ctx: CustomContext
 
 export function forDelAttackField(handle: (req: NextRequest, ctx: CustomContext, { guild, field }: { guild: Guild, field: AttackField }) => NextResult) {
   return attackField(async (req, ctx, { guild, field }) => {
+    console.log(field)
     const deletedField = await attacks_fields.delField({ guild, field })
 
     return await handle(req, ctx, { guild, field: deletedField });

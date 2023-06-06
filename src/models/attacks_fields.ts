@@ -33,7 +33,7 @@ export default function attacksFields(prisma: PrismaClient['attackField']) {
     return fields;
   }
   async function getField({ guild, id }: { guild: Guild, id: string }): Promise<AttackField> {
-    assertSchema(schemas.id.required(), id)
+    assertSchema(schemas.uuid.required(), id)
     validateGuild(guild)
 
     const field = await prisma.findUnique({ where: { guild_id_id: { guild_id: guild.id, id } }, select: selectMembersInAttacksFields })
@@ -62,7 +62,9 @@ export default function attacksFields(prisma: PrismaClient['attackField']) {
     validateGuild(guild)
     validateAttackField(field)
 
+    console.log(field)
     const deletedField = await prisma.delete({ where: { guild_id_id: { guild_id: guild.id, id: field.id } }, select: selectMembersInAttacksFields })
+    console.log('aqui')
 
     return deletedField;
   }

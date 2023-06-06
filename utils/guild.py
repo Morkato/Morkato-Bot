@@ -156,7 +156,7 @@ class Guild(GuildPayload):
 
       return res.json()
     
-    data = self.request_element('DELETE', f'/fields/{self.id}', call=check)
+    data = self.request_element('DELETE', f'/fields/{id}', call=check)
 
     return Field(self, data)
 

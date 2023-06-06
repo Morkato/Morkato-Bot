@@ -12,6 +12,8 @@ BEGIN
     IF NOT (roles[i] ~ re) THEN
       RETURN FALSE;
     END IF;
+
+    i := i + 1;
   END LOOP;
   
   RETURN TRUE;
