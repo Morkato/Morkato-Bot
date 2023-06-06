@@ -33,6 +33,7 @@ export function attackField(handle: (req: NextRequest, ctx: CustomContext, { gui
 
 export function forCreateAttackField(handle: (req: NextRequest, ctx: CustomContext, { guild, attack, field }: { guild: Guild, attack: Attack, field: AttackField }) => NextResult) {
   return attack(async (req, ctx, { guild, attack }) => {
+    console.log('aqui')
     const field = await attacks_fields.createField({ guild, attack, data: await req.json() })
 
     return await handle(req, ctx, { guild, attack, field });
@@ -44,5 +45,13 @@ export function forEditAttackField(handle: (req: NextRequest, ctx: CustomContext
     const editedField = await attacks_fields.editField({ guild, field, data: await req.json() })
 
     return await handle(req, ctx, { guild, beforeField: field, afterField: editedField });
+  })
+}
+
+export function forDelAttackField(handle: (req: NextRequest, ctx: CustomContext, { guild, field }: { guild: Guild, field: AttackField }) => NextResult) {
+  return attackField(async (req, ctx, { guild, field }) => {
+    const deletedField = await attacks_fields.delField({ guild, field })
+
+    return await handle(req, ctx, { guild, field: deletedField });
   })
 }

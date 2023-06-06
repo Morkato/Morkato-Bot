@@ -3,7 +3,7 @@ from __future__ import annotations
 from decouple import config
 from discord import Member, Embed, Role
 
-from .types.art import Art as TypedArt, Attack as TypedAttack
+from .types.art import Art as TypedArt, Attack as TypedAttack, AttackField
 from requests import Response
 from typing import Optional, Literal, TYPE_CHECKING
 from unidecode import unidecode
@@ -23,6 +23,45 @@ LIMIT_PAGE = int(LIMIT_PAGE)
 
 def toKey(text: str) -> str:
   return unidecode(text).strip(' ').lower().replace(' ', '-')
+
+class Field:
+  def __init__(self, guild: Guild, data: AttackField) -> None:
+    self.guild = guild
+
+    self._load_variables(data)
+  def __repr__(self) -> str:
+    return self.text
+  def __str__(self) -> str:
+    return repr(self)
+  
+  def _load_variables(self, data: AttackField) -> None:
+    self.id = data['id']
+    self.text = data['text']
+    self.roles = data['roles']
+
+  def edit(self, *, text: Optional[str] = None, roles: Optional[list[Role]] = None) -> Field:
+    def check(res: Response) -> Field:
+      if not res.status_code == 200:
+        res.raise_for_status()
+
+      return res.json()
+
+    payload = {}
+
+    if text:
+      payload['text'] = text
+    
+    if roles:
+      payload['roles'] = roles
+    
+    if not payload:
+      return self
+    
+    data = self.guild.request_element('POST', f'/fields/{self.id}', json=payload, call=check)
+
+    self._load_variables(data)
+
+    return self
 
 class Attack:
   def __init__(self, guild: Guild, payload: TypedAttack) -> None:
@@ -46,7 +85,7 @@ class Attack:
     self.embed_description = payload['embed_description']
     self.embed_url = payload['embed_url']
 
-    self.fields = payload['fields']
+    self.fields = [ Field(self.guild, data) for data in payload['fields'] ]
   
   def in_message(self, message: str) -> bool:
     name = toKey(self.name.strip().replace(' ', '').replace('-', ''))
@@ -82,6 +121,9 @@ class Attack:
       payload['damage'] = damage
     if stamina:
       payload['stamina'] = stamina
+
+    if not payload:
+      return self
 
     data = self.guild.request_element('POST', f'/attacks/{toKey(self.name)}', json=payload, call=check)
 
@@ -120,7 +162,7 @@ class Attack:
 
     if self.fields:
       embed.add_field(name='Fields', value='\n'.join(format(
-        field['text'],
+        str(field),
         name=self.name,
         long_damage=self.damage,
         damage=num_fmt(self.damage),
@@ -128,13 +170,33 @@ class Attack:
         stamina=num_fmt(self.stamina)
       ) for field in self.fields
         if member is None
-          or not field['roles']
-          or next((True for role in member.roles if str(role.id) in field['roles']), False)))
+          or not field.roles
+          or next((True for role in member.roles if str(role.id) in field.roles), False)))
 
     if url:
       embed.set_image(url=url)
 
     return embed
+  
+  def add_field(self, text: str, roles: Optional[list[Role]] = None) -> Field:
+    def check(res: Response) -> AttackField:
+      if not res.status_code == 200:
+        res.raise_for_status()
+
+      return res.json()
+    
+    payload = { 'text': text }
+
+    if roles:
+      payload['roles'] = [ str(role.id) for role in roles ]
+
+    data = self.guild.request_element('POST', f'/attacks/{toKey(self.name)}/fields', json=payload, call=check)
+
+    field = Field(self.guild, data)
+
+    self.fields.append(field)
+
+    return field
 
 class Art:
   def __init__(self, guild: Guild, payload: TypedArt) -> None:

@@ -4,6 +4,8 @@ from utils.commands import message_page_embeds
 from discord.ext import commands
 from utils import getGuild
 
+import discord
+
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
@@ -190,6 +192,21 @@ class Art(commands.Cog):
         await message.add_reaction('✅')
 
         continue
+  
+  @commands.command(name='add-field')
+  async def Add_Field(self, ctx: commands.Context, name: str, roles: commands.Greedy[discord.Role], text: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    attack = guild.get_attack(name)
+
+    if not attack:
+      await ctx.send('Esse ataque não existe.')
+      
+      return
+    
+    field = attack.add_field(text=text, roles=roles or None)
+
+    await ctx.send(f'Uma nova flag foi adicionada no ataque **`{attack}`** com o ID: **`{field.id}`**')
     
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))

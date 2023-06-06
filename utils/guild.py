@@ -9,7 +9,7 @@ from decouple import config
 from .types.guild import Guild as TypedGuild
 from .types.generic import Json
 
-from .art import Attack, Art, TypedArt, toKey
+from .art import Attack, Art, TypedArt, Field, toKey
 
 import requests
 
@@ -146,6 +146,20 @@ class Guild(GuildPayload):
       self.arts.append(art)
 
     return art
+
+  def del_field(self, id: str) -> Field:
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        if not res.status_code == 404:
+          res.raise_for_status()
+        return
+
+      return res.json()
+    
+    data = self.request_element('DELETE', f'/fields/{self.id}', call=check)
+
+    return Field(self, data)
+
 
 def get(guild: discordGuild) -> Guild:
   def check(res: requests.Response) -> TypedGuild:
