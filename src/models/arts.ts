@@ -9,7 +9,6 @@ import valid, {
 } from 'models/validator/art'
 
 import {
-  selectMembersInAttacksFields,
   selectMembersInAttacks
 } from 'models/attacks'
 
@@ -43,7 +42,7 @@ export const selectMembersInArt = {
   embed_description: true,
   embed_url: true,
 
-  attacks: { select: selectMembersInAttacks },
+  attacks: { select: selectMembersInAttacks, orderBy: { created_at: 'asc' } },
   
   created_at: true,
   updated_at: true
@@ -87,7 +86,7 @@ export default function Arts(prisma: PrismaClient['art']) {
     validateGuild(guild)
 
     try {
-      const arts = await prisma.findMany({ where: { guild }, select: selectMembersInArt }) as Array<Art<ArtType>>
+      const arts = await prisma.findMany({ where: { guild }, select: selectMembersInArt, orderBy: { created_at: 'asc' } }) as Array<Art<ArtType>>
   
       const message = messages['successOnGetAllArts']
       logger.info(message({ guild }))

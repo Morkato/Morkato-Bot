@@ -21,6 +21,7 @@ class MyBot(commands.Bot):
     print(f'Estou conectado, como : {self.user}')
   
   async def on_command_error(self, ctx: commands.Context, err: CommandInvokeError) -> None:
+    print(err)
     error = err.original
 
     if isinstance(error, BaseError):

@@ -43,8 +43,10 @@ export default function Attacks(prisma: PrismaClient['attack']) {
     return attacks;
   }
   async function getAttack({ guild, name }: { guild: Guild, name: string }): Promise<Attack> {
+    console.log('ATTACK: aqui')
     assertSchema(schemas.name.required(), name)
     validateGuild(guild)
+    console.log('ATTACK: aqui2')
 
     const attack = await prisma.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select: selectMembersInAttacks })
 
