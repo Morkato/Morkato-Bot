@@ -16,6 +16,8 @@ import { Guild, validateGuild } from 'models/validator/guild'
 
 import { assertSchema, schemas } from './validator/utils'
 
+import { toKey } from 'utils'
+
 import {
   InternalServerError,
   ValidationError,
@@ -75,10 +77,6 @@ const errors = {
   errorIfArtAlreadyExists: (guild: Guild, art_name: string) => new AlreadyExistsError({
     message: messages.errorArtAlreadyExists(guild, art_name)
   })
-}
-
-export function toKey(text: string) {
-  return unidecode(text).trim().toLowerCase().replace(' ', '-');
 }
 
 export default function Arts(prisma: PrismaClient['art']) {

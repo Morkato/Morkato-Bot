@@ -6,8 +6,8 @@ import { type Attack, validateAttack } from "./validator/attack"
 import { type Guild, validateGuild } from './validator/guild'
 
 
-import unidecode from 'remove-accents'
 import { assertSchema, schemas } from "./validator/utils"
+import { toKey } from 'utils'
 
 export const selectMembersInAttacksFields = {
   id: true,
@@ -17,10 +17,6 @@ export const selectMembersInAttacksFields = {
 
   created_at: true,
   updated_at: true
-}
-
-export function toKey(text: string) {
-  return unidecode(text).trim().toLowerCase().replace(' ', '-');
 }
 
 export default function attacksFields(prisma: PrismaClient['attackField']) {

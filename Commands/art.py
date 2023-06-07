@@ -4,6 +4,8 @@ from utils.commands import message_page_embeds
 from discord.ext import commands
 from utils import getGuild
 
+from requests import Response
+
 import discord
 
 class Art(commands.Cog):
@@ -68,6 +70,8 @@ class Art(commands.Cog):
 
     payload = {}
 
+    embed_message = await ctx.send(embed=next(iter(art.embed_at())))
+
     while True:
       message = await self.bot.wait_for('message', timeout=300, check=lambda message: message.author.id == ctx.author.id and message.channel.id == ctx.channel.id and message.guild.id == ctx.guild.id)
 
@@ -92,19 +96,19 @@ class Art(commands.Cog):
 
         await message.add_reaction('✅')
 
-        continue
       elif key == 'description':
         payload['embed_description'] = value
 
         await message.add_reaction('✅')
 
-        continue
       elif key == 'url':
         payload['embed_url'] = value
 
         await message.add_reaction('✅')
 
-        continue
+      await message.delete()
+
+      embed_message = await embed_message.edit(embed=next(iter(art.embed_at(title=payload.get('embed_title'), description=payload.get('embed_description'), url=payload.get('embed_url')))))
   
   @commands.command(aliases=['a'])
   async def Attack(self, ctx: commands.Context, /, *, name: str) -> None:
@@ -160,6 +164,8 @@ class Art(commands.Cog):
       return
     
     payload = {}
+
+    original_message = await ctx.send(embed=attack.embed_at())
     
     while True:
       message = await self.bot.wait_for('message', timeout=300, check=lambda message: message.author.id == ctx.author.id and message.channel.id == ctx.channel.id and message.guild.id == ctx.guild.id)
@@ -170,7 +176,6 @@ class Art(commands.Cog):
 
       if key is None and value.lower() == 'done':
         if not payload:
-          print(attack)
           await ctx.send('A arte abordada foi editada.')
 
           return
@@ -186,19 +191,15 @@ class Art(commands.Cog):
 
         await message.add_reaction('✅')
 
-        continue
       elif key == 'description':
         payload['embed_description'] = value
 
         await message.add_reaction('✅')
 
-        continue
       elif key == 'url':
         payload['embed_url'] = value
 
         await message.add_reaction('✅')
-
-        continue
       
       elif key == 'damage':
         try: payload['damage'] = int(value)
@@ -209,7 +210,6 @@ class Art(commands.Cog):
 
         await message.add_reaction('✅')
 
-        continue
       elif key == 'stamina':
         try:
           payload['stamina'] = int(value)
@@ -219,9 +219,17 @@ class Art(commands.Cog):
           continue
 
         await message.add_reaction('✅')
+      else: continue
+    
+      await message.delete()
 
-        continue
-
+      original_message = await original_message.edit(embed=attack.embed_at(
+        title=payload.get('embed_title'),
+        description=payload.get('embed_description'),
+        url=payload.get('embed_url'),
+        damage=payload.get('damage'),
+        stamina=payload.get('stamina'))
+      )
   
   @commands.command(name='add-field')
   async def Add_Field(self, ctx: commands.Context, name: str, roles: commands.Greedy[discord.Role]) -> None:
@@ -265,6 +273,39 @@ class Art(commands.Cog):
     field = guild.del_field(id)
 
     await ctx.send(f'Foi deletado com sucesso, o field com ID: **`{field.id}`**')
+  
+  @commands.command(name='inspect-field')
+  async def Inspect_Field(self, ctx: commands.Context, *, id: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    field = guild.get_field(id)
+
+    if not field:
+      await ctx.send('Não existe nenhuma flag com esse ID')
+
+      return
+    
+    text = str(field).replace('`', '\\`').replace('*', '\\*')
+
+    await ctx.send(f'ID: **`{field.id}`**\nTexto: **`{text}`**\nVisível para: **`{field.roles}`**')
+
+  @commands.command(name='edit-text-field-by-id')
+  async def Edit_Field_By_ID(self, ctx: commands.Context, *, id: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    field = guild.get_field(id)
+
+    if not field:
+      await ctx.send('Não existe nenhuma flag com esse ID')
+
+      return
+    
+    message = await self.bot.wait_for('message', timeout=300, check=lambda message: message.author.id == ctx.author.id and message.channel.id == ctx.channel.id and message.guild.id == ctx.guild.id)
+
+    field.edit(text=message.content)
+
+    await ctx.send('A flag abordada foi editada.')
+
     
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))

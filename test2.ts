@@ -1,4 +1,4 @@
-import AttacksFields from 'models/attacks_fields'
+import AttacksFields from 'base:models/fields'
 import Guilds from 'models/guild'
 import Arts from 'models/arts'
 
@@ -14,7 +14,7 @@ async function main() {
 
   for(let art of artss) {
     for(let attack of art.attacks) {
-      await fields.createField({ guild, attack, data: { text: '**•「💨」$stamina de Fôlego**', roles:['971804637315350558'] } })
+      await fields.createField({ guild, attack, data: { text: '**•「❤️」$damage de Dano**', roles:[] } })
     }
   }
   

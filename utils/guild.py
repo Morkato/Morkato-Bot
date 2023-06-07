@@ -147,6 +147,19 @@ class Guild(GuildPayload):
 
     return art
 
+  def get_field(self, id: str) -> Union[Field, None]:
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        return
+      
+      return res.json()
+    
+    data = self.request_element('GET', f'/fields/{id}', call=check)
+
+    if not data:
+      return
+    
+    return Field(self, data)
   def del_field(self, id: str) -> Field:
     def check(res: requests.Response):
       if not res.status_code == 200:
