@@ -1,13 +1,13 @@
 import type { PrismaClient } from "@prisma/client"
 
 import { type Art, type ArtType, validateArt } from 'models/validator/art'
-import { selectMembersInAttacksFields } from 'models/attacks_fields'
+import { selectMembersInAttacksFields } from 'models/fields'
 import { type Guild, validateGuild } from 'models/validator/guild'
 import { type Attack, validateAttack } from "./validator/attack"
 
 import { assertSchema, schemas } from "./validator/utils"
 
-import unidecode from 'remove-accents'
+import { toKey } from 'utils'
 
 export const selectMembersInAttacks = {
     name: true,
@@ -27,10 +27,6 @@ export const selectMembersInAttacks = {
 
     created_at: true,
     updated_at: true
-}
-
-export function toKey(text: string) {
-  return unidecode(text).trim().toLowerCase().replace(' ', '-');
 }
 
 export default function Attacks(prisma: PrismaClient['attack']) {
@@ -66,6 +62,8 @@ export default function Attacks(prisma: PrismaClient['attack']) {
   async function editAttack({ guild, attack, data }: { guild: Guild, attack: Attack, data: Omit<Partial<Attack>, 'fields'> }): Promise<Attack> {
     validateAttack(attack)
     validateGuild(guild)
+
+    console.log(toKey(attack.name))
 
     const editedAttack = await prisma.update({ where: { key_guild_id: { key: toKey(attack.name), guild_id: guild.id } }, data, select: selectMembersInAttacks })
 

@@ -52,7 +52,7 @@ class Field:
       payload['text'] = text
     
     if roles:
-      payload['roles'] = roles
+      payload['roles'] = [ str(role.id) for role in roles ]
     
     if not payload:
       return self
@@ -101,6 +101,26 @@ class Attack:
     damage: Optional[int] = None,
     stamina: Optional[int] = None
   ) -> Attack:
+    """
+      Método para editar a o ataque.
+
+      :param name: ``Edita o nome do ataque.``
+      :param embed_title: ``Edita o título da embed do ataque.``
+      :param embed_description: ``Edita a descrição da embed do ataque.``
+      :param embed_url: ``Edita o link da imagem da embed do ataque.``
+
+      :return Attack:
+
+      exceptions:
+
+        HTTPError: Raised if status code not is 200.
+
+      Exemple:
+
+      >>> attack = .Attack(....)
+      >>> attack.edit(embed_title="Pudim")
+    """
+
     def check(res: Response) -> TypedAttack:
       if not res.status_code == 200:
         res.raise_for_status()
@@ -126,6 +146,9 @@ class Attack:
       return self
 
     data = self.guild.request_element('POST', f'/attacks/{toKey(self.name)}', json=payload, call=check)
+    
+    if isinstance(data, Response):
+      return data
 
     self._load_variables(data)
 
@@ -154,24 +177,25 @@ class Attack:
     title = title or self.embed_title or self.name
     description = description or self.embed_description or 'No description'
     url = url or self.embed_url
-    
+    stamina = stamina or self.stamina
+
     embed = Embed(
-      title=title,
-      description=description
+      title=format(title, name=self.name),
+      description=format(description, name=self.name)
     )
 
-    if self.fields:
+    fields = [ field for field in self.fields if not field.roles or next((True for role in member.roles if str(role.id) in field.roles), False) ] if member else self.fields
+    
+    print(damage if damage is not None else self.damage)
+    if fields:
       embed.add_field(name='Fields', value='\n'.join(format(
         str(field),
         name=self.name,
-        long_damage=self.damage,
-        damage=num_fmt(self.damage),
-        long_stamina=self.stamina,
-        stamina=num_fmt(self.stamina)
-      ) for field in self.fields
-        if member is None
-          or not field.roles
-          or next((True for role in member.roles if str(role.id) in field.roles), False)))
+        long_damage=damage if damage is not None else self.damage,
+        damage=num_fmt(damage if damage is not None else self.damage),
+        long_stamina=stamina,
+        stamina=num_fmt(stamina)
+      ) for field in fields))
 
     if url:
       embed.set_image(url=url)

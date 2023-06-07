@@ -2,7 +2,7 @@ import type { NextResult, NextRequest, CustomContext } from 'middlewares'
 import type { Attack } from 'models/attacks'
 import type { Guild } from 'models/guild'
 
-import AttacksFields, { type AttackField } from 'models/attacks_fields'
+import AttacksFields, { type AttackField } from 'base:models/fields'
 
 import { attack } from 'middlewares/bot/attack'
 import { param } from 'middlewares'
