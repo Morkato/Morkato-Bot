@@ -4,21 +4,20 @@ import Arts from 'models/arts'
 
 import client from 'infra/database'
 
-const fields = AttacksFields(client.attackField)
-const guilds = Guilds(client.guild)
-const arts = Arts(client.art)
+import b from './b.json'
 
 async function main() {
-  const guild = await guilds.getGuild('971803172056219728')
-  const artss = await arts.getArts(guild)
+  const guild = b[0]
 
-  for(let art of artss) {
+  const id = guild.id
+
+  const arts = guild.arts
+
+  for(let art of arts) {
     for(let attack of art.attacks) {
-      await fields.createField({ guild, attack, data: { text: '**•「❤️」$damage de Dano**', roles:[] } })
+      await client.attack.create({ data: attack })
     }
   }
-  
-  console.log('Tudo certo.')
 
   return 0
 }

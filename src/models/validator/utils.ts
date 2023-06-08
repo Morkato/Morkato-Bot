@@ -4,7 +4,7 @@ import {
   ValidationError
 } from 'errors'
 
-export function assertSchema<T>(
+export function assert<T>(
   schema: Joi.AnySchema,
   obj: any
 ): T {
@@ -26,6 +26,18 @@ export function assertSchema<T>(
   }
 
   return value as T;
+}
+
+export function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: any) {
+  if(required) {
+    return schema.required();
+  }
+
+  if(typeof original !== 'undefined') {
+    schema = schema.default(original)
+  }
+
+  return schema.optional();
 }
 
 export const regex = {

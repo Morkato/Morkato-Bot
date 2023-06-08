@@ -1,6 +1,4 @@
-import { type AttackField, attackFieldSchema } from './attack_field'
-
-import { assertSchema } from './utils'
+import { makeContext, assert } from './utils'
 
 import Joi from 'joi'
 
@@ -18,28 +16,13 @@ export type Attack = {
   embed_description: string | null
   embed_url: string | null
 
-  fields: AttackField[]
-
   created_at: Date
   updated_at: Date
 }
 
-function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: any) {
-  if(required) {
-    return schema.required();
-  }
-
-  if(typeof original !== 'undefined') {
-    schema = schema.default(original)
-  }
-
-  return schema.optional();
-}
-
-export function attackSchema({ original = {}, required = {}, attackFieldParams = {} }: {
+export function attackSchema({ original = {}, required = {} }: {
   original?: Partial<Attack>,
-  required?: Partial<Record<keyof Attack, boolean>>,
-  attackFieldParams?: Parameters<typeof attackFieldSchema>[0]
+  required?: Partial<Record<keyof Attack, boolean>>
 }) {
   return Joi.object({
     name: makeContext(Joi.string().trim().min(1).max(32), required['name'], original['name']),
@@ -54,8 +37,6 @@ export function attackSchema({ original = {}, required = {}, attackFieldParams =
     embed_title: makeContext(Joi.string().allow(null).trim().min(1).max(96), required['embed_title'], original['embed_title']),
     embed_description: makeContext(Joi.string().allow(null).trim().min(1).max(4096), required['embed_description'], original['embed_description']),
     embed_url: makeContext(Joi.string().allow(null).trim(), required['embed_url'], original['embed_url']),
-  
-    fields: makeContext(Joi.array().items(attackFieldSchema(attackFieldParams)), required['fields'], original['fields']),
     
     created_at: makeContext(Joi.date().allow(Joi.string()), required['created_at'], original['created_at']),
     updated_at: makeContext(Joi.date().allow(Joi.string()), required['updated_at'], original['updated_at'])
@@ -63,10 +44,10 @@ export function attackSchema({ original = {}, required = {}, attackFieldParams =
 }
 
 export default function validate<T>(obj: Record<string, unknown>, options: Parameters<typeof attackSchema>[0]) {
-  return assertSchema(attackSchema(options), obj) as T;
+  return assert(attackSchema(options), obj) as T;
 }
 
-export function validateAttack(obj: Record<string, unknown>): Attack {
+export function assertAttack(obj: Record<string, unknown>): Attack {
   return validate(obj, {
     required: {
       name: true,
@@ -82,28 +63,15 @@ export function validateAttack(obj: Record<string, unknown>): Attack {
       embed_description: true,
       embed_url: true,
 
-      fields: true,
-
       created_at: true,
       updated_at: true
-    },
-    attackFieldParams: {
-      required: {
-        id: true,
-
-        text: true,
-        roles: true,
-        
-        created_at: true,
-        updated_at: true
-      }
     }
   });
 }
 
 export function isValidAttack(obj: Record<string, unknown>): obj is Attack {
   try {
-    return !!validateAttack(obj);
+    return !!assertAttack(obj);
   } catch {
     return false;
   }
