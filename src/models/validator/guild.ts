@@ -1,4 +1,4 @@
-import { assertSchema } from './utils'
+import { assert } from './utils'
 
 import Joi from 'joi'
 
@@ -31,10 +31,10 @@ export function guildSchema({ original = {}, required = {} } : { original?: Part
 }
 
 export default function validate<T>(obj: Record<string, unknown>, options: Parameters<typeof guildSchema>[0]) {
-  return assertSchema(guildSchema(options), obj) as T;
+  return assert(guildSchema(options), obj) as T;
 }
 
-export function validateGuild(obj: Record<string, unknown>): Guild {
+export function assertGuild(obj: Record<string, unknown>): Guild {
   return validate(obj, {
     required: {
       id: true,
@@ -47,7 +47,7 @@ export function validateGuild(obj: Record<string, unknown>): Guild {
 
 export function isValidGuild(obj: Record<string, unknown>): obj is Guild {
   try {
-    return !!validateGuild(obj);
+    return !!assertGuild(obj);
   } catch {
     return false;
   }

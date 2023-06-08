@@ -1,17 +1,13 @@
-import {
-  ValidationError
-} from 'errors'
-
 import { Attack, attackSchema } from './attack'
 
-import { assertSchema } from './utils'
+import { makeContext, assert } from './utils'
 
 import Joi from 'joi'
 
 export type ArtType = "RESPIRATION" | "KEKKIJUTSU"
-export type Art<Type extends ArtType> = {
+export type Art = {
   name: string
-  type: Type
+  type: ArtType
   role: string | null
 
   embed_title: string | null
@@ -24,31 +20,13 @@ export type Art<Type extends ArtType> = {
   updated_at: Date
 }
 
-export type editeArt<Type extends ArtType> = Partial<Omit<Art<Type>, 'attacks' | 'created_at' | 'updated_at'>>
-
-export interface Respiration extends Art<"RESPIRATION"> {  }
-export interface Kekkijutsu extends Art<"KEKKIJUTSU"> {  }
-
-export interface editeRespiration extends editeArt<"RESPIRATION"> {  }
-export interface editeKekkijutsu extends editeArt<"KEKKIJUTSU"> {  }
+export type editeArt = Partial<Omit<Art, 'attacks' | 'created_at' | 'updated_at'>>
 
 const allowedTypes = ['RESPIRATION', 'KEKKIJUTSU']
 
-function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: any) {
-  if(required) {
-    return schema.required();
-  }
-
-  if(typeof original !== 'undefined') {
-    schema = schema.default(original)
-  }
-
-  return schema.optional();
-}
-
 export function artSchema({ original = {}, required = {}, attackParams = {} }: {
-  original?: Partial<Art<ArtType>>,
-  required?: Partial<Record<keyof Art<ArtType>, boolean>>,
+  original?: Partial<Art>,
+  required?: Partial<Record<keyof Art, boolean>>,
   attackParams?: Parameters<typeof attackSchema>[0]
 }) {
   return Joi.object({
@@ -67,11 +45,11 @@ export function artSchema({ original = {}, required = {}, attackParams = {} }: {
   })
 }
 
-export default function validate<T>(obj: Record<string, unknown>, options: Parameters<typeof artSchema>[0]) {
-  return assertSchema(artSchema(options), obj) as T;
+export default function validate<T = Record<string, any>>(obj: Record<string, unknown>, options: Parameters<typeof artSchema>[0]) {
+  return assert(artSchema(options), obj) as T;
 }
 
-export function validateArt(obj: Record<string, unknown>): Art<ArtType> {
+export function assertArt(obj: Record<string, unknown>): Art {
   return validate(obj, {
     required: {
       name: true,
@@ -102,8 +80,6 @@ export function validateArt(obj: Record<string, unknown>): Art<ArtType> {
         embed_description: true,
         embed_url: true,
 
-        fields: true,
-
         created_at: true,
         updated_at: true
       },
@@ -122,9 +98,9 @@ export function validateArt(obj: Record<string, unknown>): Art<ArtType> {
   });
 }
 
-export function isValidArt(obj: Record<string, unknown>): obj is Art<ArtType> {
+export function isValidArt(obj: Record<string, unknown>): obj is Art {
   try {
-    return !!validateArt(obj);
+    return !!assertArt(obj);
   } catch {
     return false;
   }

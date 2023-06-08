@@ -1,84 +1,115 @@
-import type { PrismaClient } from "@prisma/client"
+import type { PrismaClient, Prisma } from "@prisma/client"
 
-import { type Art, type ArtType, validateArt } from 'models/validator/art'
-import { selectMembersInAttacksFields } from 'models/fields'
-import { type Guild, validateGuild } from 'models/validator/guild'
-import { type Attack, validateAttack } from "./validator/attack"
+import { type Guild,  assertGuild }  from 'models/validator/guild'
+import { type Art,    assertArt }    from 'models/validator/art'
+import { type Attack, assertAttack } from "./validator/attack"
 
-import { assertSchema, schemas } from "./validator/utils"
+import { assert, schemas } from "./validator/utils"
 
 import { toKey } from 'utils'
 
-export const selectMembersInAttacks = {
-    name: true,
+import {
+  NotFoundError,
+  AlreadyExistsError
+} from 'errors'
 
-    roles: true,
-    required_roles: true,
-    required_exp: true,
+export const select: Prisma.AttackSelect = {
+  name: true,
 
-    damage: true,
-    stamina: true,
+  roles: true,
+  required_roles: true,
+  required_exp: true,
 
-    embed_title: true,
-    embed_description: true,
-    embed_url: true,
+  damage: true,
+  stamina: true,
 
-    fields: { select: selectMembersInAttacksFields },
+  embed_title: true,
+  embed_description: true,
+  embed_url: true,
 
-    created_at: true,
-    updated_at: true
+  created_at: true,
+  updated_at: true
+}
+
+const errors = {
+  errorIfAttackNotExists: ({ id }: Guild, name: string) => new NotFoundError({
+    message: `Erro: O ataque com o nome: ${name} não existe no servidor: ${id}.`
+  }),
+  errorIfAttackAlreadyExists: ({ id }: Guild, name: string) => new AlreadyExistsError({
+    message: `Erro: O ataque com o nome: ${name} já existe no servidor: ${id}.`
+  })
 }
 
 export default function Attacks(prisma: PrismaClient['attack']) {
-  async function getAttacks({ guild, art }: { guild: Guild, art: Art<ArtType> }): Promise<Attack[]> {
-    validateGuild(guild)
-    validateArt(art)
+  async function getAll({ guild, art }: { guild: Guild, art: Art }): Promise<Attack[]> {
+    assertGuild(guild)
+    assertArt(art)
 
-    const attacks = await prisma.findMany({ where: { guild_id: guild.id, art_key: toKey(art.name) }, select: selectMembersInAttacks  })
+    const attacks = await prisma.findMany({ where: { guild_id: guild.id, art_key: toKey(art.name) }, select, orderBy: { created_at: 'asc' }  })
 
-    return attacks;
+    return attacks as Attack[];
   }
-  async function getAttack({ guild, name }: { guild: Guild, name: string }): Promise<Attack> {
-    console.log('ATTACK: aqui')
-    assertSchema(schemas.name.required(), name)
-    validateGuild(guild)
-    console.log('ATTACK: aqui2')
+  async function get({ guild, name }: { guild: Guild, name: string }): Promise<Attack> {
+    name = assert(schemas.name.required(), name)
+    assertGuild(guild)
 
-    const attack = await prisma.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select: selectMembersInAttacks })
+    const attack = await prisma.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select })
 
-    return attack;
+    if(!attack) {
+      const error = errors['errorIfAttackNotExists']
+
+      throw error(guild, name);
+    }
+
+    return attack as Attack;
   }
-  async function createAttack({ guild, art, name }: { guild: Guild, art: Art<ArtType>, name: string }) {
-    assertSchema(schemas.name.required(), name)
-    validateGuild(guild)
-    validateArt(art)
+  async function create({ guild, art, name }: { guild: Guild, art: Art, name: string }) {
+    name = assert(schemas.name.required(), name)
+    assertGuild(guild)
+    assertArt(art)
 
-    const attack = await prisma.create({ data: { art_key: toKey(art.name), guild_id: guild.id, name, key: toKey(name) }, select: selectMembersInAttacks })
+    try {
+      const attack = await prisma.create({ data: { art_key: toKey(art.name), guild_id: guild.id, name, key: toKey(name) }, select })
 
-    art.attacks.push(attack)
+      art.attacks.push(attack as Attack)
 
-    return attack;
+      return attack as Attack;
+    } catch {
+      const error = errors['errorIfAttackAlreadyExists']
+
+      throw error(guild, name);
+    }
   }
-  async function editAttack({ guild, attack, data }: { guild: Guild, attack: Attack, data: Omit<Partial<Attack>, 'fields'> }): Promise<Attack> {
-    validateAttack(attack)
-    validateGuild(guild)
+  async function edit({ guild, attack, data }: { guild: Guild, attack: Attack, data: Omit<Partial<Attack>, 'fields'> }): Promise<Attack> {
+    assertAttack(attack)
+    assertGuild(guild)
 
-    console.log(toKey(attack.name))
+    try {
+      const editedAttack = await prisma.update({ where: { key_guild_id: { key: toKey(attack.name), guild_id: guild.id } }, data, select })
 
-    const editedAttack = await prisma.update({ where: { key_guild_id: { key: toKey(attack.name), guild_id: guild.id } }, data, select: selectMembersInAttacks })
+      return editedAttack as Attack;
+    } catch {
+      const error = errors['errorIfAttackNotExists']
 
-    return editedAttack;
+      throw error(guild, attack.name);
+    }
   }
-  async function delAttack({ guild, attack }: { guild: Guild, attack: Attack }): Promise<Attack> {
-    validateAttack(attack)
-    validateGuild(guild)
+  async function del({ guild, attack }: { guild: Guild, attack: Attack }): Promise<Attack> {
+    assertAttack(attack)
+    assertGuild(guild)
 
-    const deletedAttack = await prisma.delete({ where: { key_guild_id: { key: toKey(attack.name), guild_id: guild.id } }, select: selectMembersInAttacks })
+    try {
+      const deletedAttack = await prisma.delete({ where: { key_guild_id: { key: toKey(attack.name), guild_id: guild.id } }, select })
 
-    return deletedAttack;
+      return deletedAttack as Attack;
+    } catch {
+      const error = errors['errorIfAttackNotExists']
+
+      throw error(guild, attack.name);
+    }
   }
 
-  return { getAttacks, getAttack, createAttack, editAttack, delAttack };
+  return { getAll, get, create, edit, del };
 }
 
 export { Attacks, type Attack };

@@ -21,9 +21,9 @@ model Guild {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  arts       Art[]        @relation()
-  Field      Field[]
-  GroupField GroupField[]
+  arts          Art[]        @relation()
+  fields        Field[]
+  groups_fields GroupField[]
 
   @@map("guilds")
 }
@@ -47,7 +47,6 @@ model Art {
   updated_at DateTime @updatedAt
 
   @@id([key, guild_id])
-  @@index([role, guild_id], name: "unique_guild_and_role")
   @@map("arts")
 }
 
@@ -55,7 +54,9 @@ model Attack {
   name String
   key  String
 
-  art      Art    @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+  art    Art         @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+  fields GroupField? @relation(fields: [fields_key, guild_id], references: [key, guild_id])
+
   art_key  String
   guild_id String
 
@@ -70,7 +71,7 @@ model Attack {
   embed_description String?
   embed_url         String?
 
-  fields_id String
+  fields_key String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -81,6 +82,8 @@ model Attack {
 
 model Field {
   name String
+
+  group GroupField? @relation(fields: [group_key, guild_id], references: [key, guild_id])
 
   guild Guild @relation(fields: [guild_id], references: [id])
 
@@ -93,6 +96,8 @@ model Field {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  group_key String?
+
   @@id([guild_id, name])
   @@map("attacks_fields")
 }
@@ -101,10 +106,14 @@ model GroupField {
   name String
   key  String
 
-  guild Guild @relation(fields: [guild_id], references: [id])
+  guild   Guild    @relation(fields: [guild_id], references: [id])
+  attacks Attack[]
 
   attack_key String?
   guild_id   String
 
+  fields Field[]
+
   @@id([guild_id, key])
+  @@map("group_fields")
 }

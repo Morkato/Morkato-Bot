@@ -19,8 +19,6 @@ class Attack(TypedDict):
   embed_description: Union[str, None]
   embed_url: Union[str, None]
 
-  fields: List[AttackField]
-
 class Art(TypedDict):
   name: str
   type: Literal['RESPIRATION', 'KEKKIJUTSU', 'ATTACK']

@@ -1,41 +1,29 @@
 import valid, { 
-  Art,
-  ArtType,
-  editeArt,
-  Respiration,
-  Kekkijutsu,
+  type Art,
+  type ArtType,
+  type editeArt,
 
-  validateArt
-} from 'models/validator/art'
+  assertArt
+} from './validator/art'
 
 import {
-  selectMembersInAttacks
+  select as selectMembersInAttacks
 } from 'models/attacks'
 
-import { Guild, validateGuild } from 'models/validator/guild'
+import { Guild, assertGuild } from 'models/validator/guild'
 
-import { assertSchema, schemas } from './validator/utils'
+import { assert, schemas } from './validator/utils'
 
 import { toKey } from 'utils'
 
 import {
-  InternalServerError,
-  ValidationError,
   NotFoundError,
   AlreadyExistsError
 } from 'errors'
 
-import unidecode from 'remove-accents'
-import Logger from 'infra/logger'
+import { PrismaClient, Prisma } from '@prisma/client'
 
-import { PrismaClient } from '@prisma/client'
-
-const logger = Logger({
-  app: "models:arts",
-  forFormat: "$app $func $date $type - $message"
-})
-
-export const selectMembersInArt = {
+export const select: Prisma.ArtSelect = {
   name: true,
   type: true,
   role: true,
@@ -50,133 +38,129 @@ export const selectMembersInArt = {
   updated_at: true
 }
 
-const messages = {
-  successOnGetAllArts: ({ guild: { id } }: { guild: Guild }) => `Sucesso: Ao obter todos as artes da guilda ID ${id}`,
-
-  errorDataBase: () => `Erro: Infelizmente, nossos serviços não então disponíveis no momento. Pois o banco de dados está offiline.`,
-  errorInValidGuild: () => `Erro: A informação do servidor fornecido está incorreta`,
-  errorInValidArt: () => `Erro: A informação do servidor fornecido está incorreta`,
-  errorIfArtNotExists: ({ id }: Guild, art_name: string) => `Erro: A arte com o nome: ${art_name} não existe no servidor: ${id}.`,
-  errorArtAlreadyExists: ({ id }: Guild, art_name: string) => `Erro: A arte com o nome: ${art_name} já existe no servidor: ${id}.`
-}
-
 const errors = {
-  errorDataBase: () => new InternalServerError({
-    message: messages.errorDataBase(),
-    statusCode: 500
+  errorIfArtNotExists: ({ id }: Guild, name: string) => new NotFoundError({
+    message: `Erro: A arte com o nome: ${name} não existe no servidor: ${id}.`
   }),
-  errorInValidGuild: () => new ValidationError({
-    message: messages.errorInValidGuild()
-  }),
-  errorInValidArt: () => new ValidationError({
-    message: messages.errorInValidArt()
-  }),
-  errorIfArtNotExists: (guild: Guild, art_name: string) => new NotFoundError({
-    message: messages.errorIfArtNotExists(guild, art_name)
-  }),
-  errorIfArtAlreadyExists: (guild: Guild, art_name: string) => new AlreadyExistsError({
-    message: messages.errorArtAlreadyExists(guild, art_name)
+  errorIfArtAlreadyExists: ({ id }: Guild, name: string) => new AlreadyExistsError({
+    message: `Erro: A arte com o nome: ${name} já existe no servidor: ${id}.`
   })
 }
 
-export default function Arts(prisma: PrismaClient['art']) {
-  async function getArts(guild: Guild): Promise<Art<ArtType>[]> {
-    validateGuild(guild)
+export default function Arts(db: PrismaClient['art']) {
+  async function getAll(guild: Guild): Promise<Art[]> {
+    assertGuild(guild)
 
-    try {
-      const arts = await prisma.findMany({ where: { guild }, select: selectMembersInArt, orderBy: { created_at: 'asc' } }) as Array<Art<ArtType>>
-  
-      const message = messages['successOnGetAllArts']
-      logger.info(message({ guild }))
-  
-      return arts;
-    } catch {
-      const message = messages['errorDataBase']
-      logger.error(message(), {})
-  
-      const error = errors['errorInValidGuild']
-      throw error();
-    }
+    const arts = await db.findMany({ where: { guild }, select })
+
+    return arts as Art[];
   }
-  async function getArt({ guild, name }: { guild: Guild, name: string }): Promise<Art<ArtType>> {
-    name = assertSchema(schemas.name.required(), name)
-    validateGuild(guild)
+  async function get({ guild, name }: { guild: Guild, name: string }): Promise<Art> {
+    name = assert(schemas.name.required(), name)
+    assertGuild(guild)
     
-    try {
-      const art = await prisma.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select: selectMembersInArt }) as Art<ArtType>
-  
-      if(art) {
-        return art;
-      }
-  
-      const message = messages['errorIfArtNotExists']
-      logger.warn(message(guild, name))
-  
+    const art = await db.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select })
+
+    if(!art) {
       const error = errors['errorIfArtNotExists']
+
       throw error(guild, name);
-    } catch {
-      const message = messages['errorDataBase']
-      logger.info(message())
-  
-      const error = errors['errorDataBase']
-      throw error();
     }
+
+    return art as Art;
   }
-  async function createArt({ guild, data }: { guild: Guild, data: Partial<Art<ArtType>> }): Promise<Art<ArtType>> {
-    data = valid(data, {
+  async function create({ guild, data }: { guild: Guild, data: Partial<Omit<Art, 'attacks'>> }): Promise<Art> {
+    const {
+      name,
+      type,
+      role,
+
+      embed_title,
+      embed_description,
+      embed_url
+    } = valid(data, {
       required: {
         name: true,
         type: true
       }
     })
-    validateGuild(guild)
+    assertGuild(guild)
 
     try {
-      const art = await prisma.create({ data: { name: data.name, key: toKey(data.name), type: data.type, guild_id: guild.id }, select: selectMembersInArt })
+      const art = await db.create({ data: {
+        name,
+        type,
+        role,
 
-      return art;
+        embed_title,
+        embed_description,
+        embed_url,
+
+        key: toKey(name),
+        guild_id: guild.id
+      }, select })
+
+      return art as Art;
     } catch {
-      const message = messages['errorArtAlreadyExists']
-      logger.info(message(guild, data.name))
-
       const error = errors['errorIfArtAlreadyExists']
+      
       throw error(guild, data.name);
     }
   }
-  async function editArt({ guild, art, data }: { guild: Guild, art: Art<ArtType>, data: Omit<Partial<Art<ArtType>>, 'attacks'> }): Promise<Art<ArtType>> {
-    validateGuild(guild)
-    validateArt(art)
+  async function editArt({ guild, art, data }: { guild: Guild, art: Art, data: Omit<Partial<Art>, 'attacks'> }): Promise<Art> {
+    assertGuild(guild)
+    assertArt(art)
+
+    let {
+      name,
+      type,
+      role,
+      key,
+
+      embed_title,
+      embed_description,
+      embed_url
+    } = valid(data, {})
+
+    if(name) {
+      key = toKey(name)
+    }
 
     try {
-      const editedArt = await prisma.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: data, select: selectMembersInArt })
+      const editedArt = await db.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: {
+        name,
+        type,
+        role,
+        key,
 
-      return editedArt;
+        embed_title,
+        embed_description,
+        embed_url
+      }, select })
+
+      return editedArt as Art;
     } catch {
-      const message = messages['errorIfArtNotExists']
-      logger.warn(message(guild, art.name))
-
       const error = errors['errorIfArtNotExists']
+      
       throw error(guild, art.name);
     }
   }
-  async function delArt({ guild, art }: { guild: Guild, art: Art<ArtType> }): Promise<Art<ArtType>> {
-    validateGuild(guild)
-    validateArt(art)
+  async function delArt({ guild, art }: { guild: Guild, art: Art }): Promise<Art> {
+    assertGuild(guild)
+    assertArt(art)
 
     try {
-      const deletedArt = await prisma.delete({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, select: selectMembersInArt })
+      const deletedArt = await db.delete({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, select })
 
-      return deletedArt;
+      return deletedArt as Art;
     } catch {
-      const message = messages['errorIfArtNotExists']
-      logger.warn(message(guild, art.name))
-
       const error = errors['errorIfArtNotExists']
+
       throw error(guild, art.name);
     }
   }
 
-  return { getArts, getArt, createArt, editArt, delArt };
+  return { getAll, get, create, editArt, delArt };
 }
 
-export type { Art, ArtType, editeArt, Respiration, Kekkijutsu };
+export type { Art, ArtType, editeArt };

@@ -176,13 +176,13 @@ class Art(commands.Cog):
 
       if key is None and value.lower() == 'done':
         if not payload:
-          await ctx.send('A arte abordada foi editada.')
+          await ctx.send('O ataque abordada foi editada.')
 
           return
         
         attack.edit(**payload)
 
-        await ctx.send('A arte abordada foi editada.')
+        await ctx.send('O ataque abordada foi editada.')
 
         return
 
@@ -230,82 +230,6 @@ class Art(commands.Cog):
         damage=payload.get('damage'),
         stamina=payload.get('stamina'))
       )
-  
-  @commands.command(name='add-field')
-  async def Add_Field(self, ctx: commands.Context, name: str, roles: commands.Greedy[discord.Role]) -> None:
-    guild = getGuild(ctx.guild)
-
-    attack = guild.get_attack(name)
-
-    if not attack:
-      await ctx.send('Esse ataque não existe.')
-      
-      return
-    
-    message = await self.bot.wait_for('message', timeout=300)
-    
-    if message.content.strip() == '':
-      return
-
-    field = attack.add_field(text=message.content, roles=roles or None)
-
-    await ctx.send(f'Uma nova flag foi adicionada no ataque **`{attack}`** com o ID: **`{field.id}`**')
-  
-  @commands.command(name='fields')
-  async def Fields(self, ctx: commands.Context, *, name: str) -> None:
-    guild = getGuild(ctx.guild)
-
-    attack = guild.get_attack(name)
-
-    if not attack:
-      await ctx.send('Esse ataque não existe.')
-      
-      return
-    
-    fields = attack.fields
-
-    await ctx.send('\n'.join(f'Field ID: **`{field.id}`**' for field in fields))
-  
-  @commands.command(name='del-field')
-  async def Del_Field(self, ctx: commands.Context, *, id: str) -> None:
-    guild = getGuild(ctx.guild)
-
-    field = guild.del_field(id)
-
-    await ctx.send(f'Foi deletado com sucesso, o field com ID: **`{field.id}`**')
-  
-  @commands.command(name='inspect-field')
-  async def Inspect_Field(self, ctx: commands.Context, *, id: str) -> None:
-    guild = getGuild(ctx.guild)
-
-    field = guild.get_field(id)
-
-    if not field:
-      await ctx.send('Não existe nenhuma flag com esse ID')
-
-      return
-    
-    text = str(field).replace('`', '\\`').replace('*', '\\*')
-
-    await ctx.send(f'ID: **`{field.id}`**\nTexto: **`{text}`**\nVisível para: **`{field.roles}`**')
-
-  @commands.command(name='edit-text-field-by-id')
-  async def Edit_Field_By_ID(self, ctx: commands.Context, *, id: str) -> None:
-    guild = getGuild(ctx.guild)
-
-    field = guild.get_field(id)
-
-    if not field:
-      await ctx.send('Não existe nenhuma flag com esse ID')
-
-      return
-    
-    message = await self.bot.wait_for('message', timeout=300, check=lambda message: message.author.id == ctx.author.id and message.channel.id == ctx.channel.id and message.guild.id == ctx.guild.id)
-
-    field.edit(text=message.content)
-
-    await ctx.send('A flag abordada foi editada.')
-
     
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Art(bot))
