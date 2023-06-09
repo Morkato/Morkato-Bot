@@ -82,17 +82,6 @@ export function assertArt(obj: Record<string, unknown>): Art {
 
         created_at: true,
         updated_at: true
-      },
-      attackFieldParams: {
-        required: {
-          id: true,
-
-          text: true,
-          roles: true,
-          
-          created_at: true,
-          updated_at: true
-        }
       }
     }
   });

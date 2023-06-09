@@ -1,18 +1,24 @@
 import re
 
-def format(text: str, /, **kwergs) -> str:
-  regex = re.compile(r"\$(?P<key>[^\d \t\n]+)")
+import re
 
-  expected = regex.finditer(text)
+def format(text: str, /, *args, **kwargs) -> str:
+  captured_variables = re.compile(r'\$(?P<key>[a-zA-Z_]+)').finditer(text)
 
-  for match in expected:
-    if match['key'] == '$':
-      text = text.replace('$$', '$')
+  for captured in captured_variables:
+    key = captured['key']
 
-      continue
-    text = text.replace(f'${match["key"]}', kwergs.get(match['key'], F'${match["key"]}'))
+    if re.match('^[0-9]+$', key):
+      try: value = args[int(key)]
+      except: value = args[int(key) - len(args)]
+    else:
+      value = kwargs.get(key, '')
 
-  return text
+    start, end = captured.span()
+
+    text = text.replace(f'${key}', value)
+
+  return text.replace('$$', '$')
 
 letters = {
   ' ': '( -)+',

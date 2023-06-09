@@ -1,9 +1,13 @@
+import { type Variable, variableSchema } from './variables'
+
 import { assert } from './utils'
 
 import Joi from 'joi'
 
 export type Guild = {
   id: string
+
+  vars: Variable[]
 
   created_at: Date
   updated_at: Date
@@ -21,10 +25,12 @@ function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: 
   return schema.optional();
 }
 
-export function guildSchema({ original = {}, required = {} } : { original?: Partial<Record<keyof Guild, unknown>>, required?: Partial<Record<keyof Guild, boolean>> }) {
+export function guildSchema({ original = {}, required = {}, varParams = {}} : { original?: Partial<Record<keyof Guild, unknown>>, required?: Partial<Record<keyof Guild, boolean>>, varParams?: Parameters<typeof variableSchema>[0] }) {
   return Joi.object({
     id: makeContext(Joi.string().trim().regex(/^[0-9]+$/), required['id'], original['id']),
 
+    vars: makeContext(Joi.array().items(variableSchema(varParams)), required['vars'], original['vars']),
+    
     created_at: makeContext(Joi.date().allow(Joi.string()), required['created_at'], original['created_at']),
     updated_at: makeContext(Joi.date().allow(Joi.string()), required['updated_at'], original['updated_at'])
   });
@@ -39,8 +45,20 @@ export function assertGuild(obj: Record<string, unknown>): Guild {
     required: {
       id: true,
 
+      vars: true,
+
       created_at: true,
       updated_at: true
+    },
+    varParams: {
+      required: {
+        name: true,
+        text: true,
+        visibleCaseIfNotAuthorizerMember: true,
+
+        roles: true,
+        required_roles: true
+      }
     }
   });
 }

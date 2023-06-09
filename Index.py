@@ -11,7 +11,7 @@ from sys import exit
 from errors import InternalServerError, BaseError
 
 class MyBot(commands.Bot):
-  def __init__(self, command_prefix: str = 'man!', case_insensitive: bool = True) -> None:
+  def __init__(self, command_prefix: str = '!', case_insensitive: bool = True) -> None:
     super(commands.Bot, self).__init__(
       command_prefix=command_prefix,
       intents=Intents.all(),
