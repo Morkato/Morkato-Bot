@@ -4,10 +4,6 @@ from utils.commands import message_page_embeds
 from discord.ext import commands
 from utils import getGuild
 
-from requests import Response
-
-import discord
-
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
@@ -16,13 +12,13 @@ class Art(commands.Cog):
     guild = getGuild(ctx.guild)
 
     art = guild.get_art(art_name)
-
-    await ctx.send(f'**`{art.attacks}`**')
-
+    
     if art is None:
       await ctx.send('Essa arte não existe.')
 
       return
+    
+    await ctx.send(f'**`{art.attacks}`**')
 
     await message_page_embeds(ctx, self.bot, art.embeds)
 

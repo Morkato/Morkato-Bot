@@ -21,9 +21,8 @@ model Guild {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  arts          Art[]        @relation()
-  fields        Field[]
-  groups_fields GroupField[]
+  arts Art[]       @relation()
+  vars Varialble[]
 
   @@map("guilds")
 }
@@ -54,8 +53,7 @@ model Attack {
   name String
   key  String
 
-  art    Art         @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
-  fields GroupField? @relation(fields: [fields_key, guild_id], references: [key, guild_id])
+  art Art @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
 
   art_key  String
   guild_id String
@@ -80,40 +78,21 @@ model Attack {
   @@map("attacks")
 }
 
-model Field {
-  name String
-
-  group GroupField? @relation(fields: [group_key, guild_id], references: [key, guild_id])
-
+model Varialble {
   guild Guild @relation(fields: [guild_id], references: [id])
 
   guild_id String
 
-  text           String
-  roles          String[]
+  name                             String
+  text                             String
+  visibleCaseIfNotAuthorizerMember Boolean @default(false)
+
   required_roles Int      @default(1)
+  roles          String[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  group_key String?
-
   @@id([guild_id, name])
-  @@map("attacks_fields")
-}
-
-model GroupField {
-  name String
-  key  String
-
-  guild   Guild    @relation(fields: [guild_id], references: [id])
-  attacks Attack[]
-
-  attack_key String?
-  guild_id   String
-
-  fields Field[]
-
-  @@id([guild_id, key])
-  @@map("group_fields")
+  @@map("guild_varialbles")
 }

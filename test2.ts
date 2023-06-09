@@ -1,10 +1,11 @@
-import AttacksFields from 'base:models/fields'
 import Guilds from 'models/guild'
 import Arts from 'models/arts'
 
 import client from 'infra/database'
 
-import b from './b.json'
+import b from '/home/marcus/Downloads/Backup.json'
+
+
 
 async function main() {
   const guild = b[0]
@@ -13,9 +14,22 @@ async function main() {
 
   const arts = guild.arts
 
-  for(let art of arts) {
-    for(let attack of art.attacks) {
-      await client.attack.create({ data: attack })
+  for(let {
+    name,
+    type,
+    role,
+    key,
+    guild_id,
+    embed_title,
+    embed_description,
+    embed_url,
+
+    created_at,
+    updated_at,
+    attacks
+  } of arts) {
+    for(let a of attacks) {
+      await client.attack.create({ data: a })
     }
   }
 

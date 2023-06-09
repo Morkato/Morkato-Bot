@@ -2,14 +2,14 @@ from typing import Callable, Literal, Optional, TypeVar, Union, overload
 
 from errors import NotFoundError, AlrearyExistsError
 
-from discord.guild import Guild as discordGuild
-from unidecode import unidecode
+from discord.guild import Guild as discordGuild, Role
 from decouple import config
 
 from .types.guild import Guild as TypedGuild
 from .types.generic import Json
 
 from .art import Attack, Art, TypedArt, toKey
+from .vars import Variable
 
 import requests
 
@@ -22,6 +22,8 @@ class GuildPayload:
     self.discord = discordGuild
 
     self.id = payload['id']
+
+    self.vars = [ Variable(self, data) for data in payload['vars'] ]
     
     self.created_at = payload['created_at']
     self.updated_at = payload['updated_at']
@@ -146,6 +148,30 @@ class Guild(GuildPayload):
       self.arts.append(art)
 
     return art
+
+  def new_var(self, *, name: str, text: str, roles: Optional[list[Role]] = None, required_roles: Optional[int] = None) -> Variable:
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        if not res.status_code == 404:
+          res.raise_for_status()
+        res.raise_for_status()
+
+      return res.json()
+    
+    payload = { 'name': name, 'text': text }
+
+    if roles:
+      payload['roles'] = [ str(role.id) for role in roles ]
+    if required_roles:
+      payload['required_roles'] = required_roles
+
+    data = self.request_element('POST', '/vars', json=payload, call=check)
+
+    var = Variable(self, data)
+
+    self.vars.append(var)
+
+    return var
 
 def get(guild: discordGuild) -> Guild:
   def check(res: requests.Response) -> TypedGuild:

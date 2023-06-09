@@ -50,15 +50,15 @@ const errors = {
 export default function Arts(db: PrismaClient['art']) {
   async function getAll(guild: Guild): Promise<Art[]> {
     assertGuild(guild)
-
-    const arts = await db.findMany({ where: { guild }, select })
+    
+    const arts = await db.findMany({ where: { guild_id: guild.id }, select, orderBy: { created_at: 'asc' } })
 
     return arts as Art[];
   }
   async function get({ guild, name }: { guild: Guild, name: string }): Promise<Art> {
     name = assert(schemas.name.required(), name)
     assertGuild(guild)
-    
+
     const art = await db.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select })
 
     if(!art) {
