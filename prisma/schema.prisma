@@ -92,7 +92,7 @@ model Varialble {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-
+}
   @@id([guild_id, name])
   @@map("guild_varialbles")
 }
