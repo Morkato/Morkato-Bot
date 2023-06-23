@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { then, bot } from 'middlewares'
+import { then, bot } from 'app/middlewares'
 
 const { guild } = bot.guild
 

@@ -1,8 +1,12 @@
 from typing import Optional
 
 from utils.commands import message_page_embeds
+from discord import app_commands
 from discord.ext import commands
+from utils.string import toKey
 from utils import getGuild
+
+import discord
 
 class Art(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
@@ -118,6 +122,19 @@ class Art(commands.Cog):
       return
 
     await ctx.send(embed=attack.embed_at(ctx.author))
+
+  @app_commands.command(name='a')
+  async def slash_Attack(self, interaction: discord.Interaction, name: str) -> None:
+    guild = getGuild(interaction.guild)
+
+    attack = guild.get_attack(name)
+
+    if not attack:
+      await interaction.response.send_message('Esse ataque não existe.', silent=True)
+
+      return
+    
+    await interaction.response.send_message(embed=attack.embed_at(member=interaction.user))
   @commands.command(name='new-attack')
   async def New_Attack(self, ctx: commands.Context, /, art_name: str, *, name: str) -> None:
     guild = getGuild(ctx.guild)

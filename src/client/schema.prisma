@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArtType {
+  RESPIRATION
+  KEKKIJUTSU
+}
+
+model Guild {
+  id String @id
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  arts Art[]       @relation()
+  vars Varialble[]
+
+  @@map("guilds")
+}
+
+model Art {
+  name String
+  key  String
+  type ArtType
+  role String?
+
+  guild    Guild  @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  guild_id String
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+
+  attacks Attack[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([key, guild_id])
+  @@map("arts")
+}
+
+model Attack {
+  name String
+  key  String
+
+  art Art @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+
+  art_key  String
+  guild_id String
+
+  roles          String[] @default([])
+  required_roles Int      @default(0)
+  required_exp   Int      @default(0)
+
+  damage  Int @default(3000)
+  stamina Int @default(3000)
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+
+  fields_key String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([key, guild_id])
+  @@map("attacks")
+}
+
+model Varialble {
+  guild Guild @relation(fields: [guild_id], references: [id])
+
+  guild_id String
+
+  name                             String
+  text                             String
+  visibleCaseIfNotAuthorizerMember Boolean @default(false)
+
+  required_roles Int      @default(1)
+  roles          String[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([guild_id, name])
+  @@map("guild_varialbles")
+}

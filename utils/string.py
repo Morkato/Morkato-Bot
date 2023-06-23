@@ -1,4 +1,4 @@
-import re
+from unidecode import unidecode
 
 import re
 
@@ -32,3 +32,6 @@ def transformRegex(text: str, case_insensitive: bool = False) -> re.Pattern:
   pattern = re.compile('\\b' + '( +)?'.join(letter for letter in text) + '\\b', flags)
 
   return pattern
+
+def toKey(text: str) -> str:
+  return unidecode(text).strip(' ').lower().replace(' ', '-')

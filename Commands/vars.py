@@ -10,11 +10,13 @@ class Vars(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
   
-  @commands.command(name='guild-vars')
+  @commands.command(name='vars')
   async def Guild_Vars(self, ctx: commands.Context, /) -> None:
     guild = getGuild(ctx.guild)
 
-    await ctx.send(f'**`{guild.vars}`**')
+    vars = '\n'.join(f'{var.name.upper()}={repr(var.text)}' for var in guild.vars)
+
+    await ctx.send(f'```{vars}```')
   
   @commands.command(name='new-var')
   async def New_Var(self, ctx: commands.Context, /, name: str, roles: commands.Greedy[discord.Role]) -> None:

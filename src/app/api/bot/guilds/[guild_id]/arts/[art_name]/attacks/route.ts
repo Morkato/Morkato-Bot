@@ -9,7 +9,7 @@
 *  :return [Guild: Object]:
 */
 
-import { forCreateAttack } from "middlewares/bot/attack"
+import { forCreateAttack } from "app/middlewares/bot/attack"
 import { NextResponse } from "next/server"
 
 export const POST = forCreateAttack(async (req, { params }, { attack }) => NextResponse.json(attack))
