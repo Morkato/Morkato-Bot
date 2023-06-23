@@ -1,6 +1,10 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient, Prisma } from 'client'
 
-export const prisma = new PrismaClient({
+declare global {
+  let client: PrismaClient | undefined;
+}
+
+export const prisma = globalThis.client ?? new PrismaClient({
   log: ['query', 'info', 'warn', 'error']
 })
 
@@ -14,6 +18,8 @@ function middleware(model: Prisma.MiddlewareParams['model'], action: Prisma.Midd
   }
 }
 
-
+if (!globalThis.client) {
+  globalThis.client = prisma
+}
 
 export default prisma;
