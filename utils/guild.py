@@ -120,34 +120,26 @@ class Guild(GuildPayload):
 
     return Attack(self, data)
   
+  def new_art(self, *, name: str, type: Literal['RESPIRATION', 'KEKKIJUTSU']) -> Art:
+    def check(res: requests.Response):
+      if not res.status_code == 200:
+        if res.status_code == 400:
+          raise AlrearyExistsError(message='Essa arte já existe.')
+        res.raise_for_status()
+      
+      return res.json()
+    
+    art = Art(self, self.request_element('POST', '/arts', json={ "name": name, "type": type }, call=check))
+
+    if self.cached.get('arts') is not None:
+      self.arts.append(art)
+
+    return art
+  
   def new_respiration(self, name: str) -> Art:
-    def check(res: requests.Response):
-      if not res.status_code == 200:
-        if res.status_code == 400:
-          raise AlrearyExistsError(message='Essa arte já existe.')
-        res.raise_for_status()
-      
-      return res.json()
-    art = Art(self, self.request_element('POST', '/arts', json={ "name": name, "type": 'RESPIRATION' }, call=check))
-
-    if self.cached.get('arts') is not None:
-      self.arts.append(art)
-
-    return art
+    return self.new_art(name=name, type='RESPIRATION')
   def new_kekkijutsu(self, name: str) -> Art:
-    def check(res: requests.Response):
-      if not res.status_code == 200:
-        if res.status_code == 400:
-          raise AlrearyExistsError(message='Essa arte já existe.')
-        res.raise_for_status()
-      
-      return res.json()
-    art = Art(self, self.request_element('POST', '/arts', json={ "name": name, "type": 'KEKKIJUTSU' }, call=check))
-
-    if self.cached.get('arts') is not None:
-      self.arts.append(art)
-
-    return art
+    return self.new_art(name=name, type='KEKKIJUTSU')
 
   def new_var(self, *, name: str, text: str, roles: Optional[list[Role]] = None, required_roles: Optional[int] = None) -> Variable:
     def check(res: requests.Response):

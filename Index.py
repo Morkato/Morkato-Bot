@@ -32,7 +32,7 @@ class MyBot(commands.Bot):
 
       if self.channel:
         await self.channel.send('**`Starting websocket...`**')
-        await self.channel.send('**Starting from `ws://morkato-bot.vercel.app` with authorization `admin`**')
+        await self.channel.send('**Starting from `wss://morkato-bot.vercel.app` with authorization `admin`**')
         await self.channel.send('**Push context guild data**')
 
         await self.channel.send(f'**Successfully getting all guilds `{[getGuild(guild)]}`**')
@@ -50,7 +50,9 @@ class MyBot(commands.Bot):
 
       return
     
-    await ctx.send(f'**`{error}`: {getattr(error, "message", "No message")}**')
+    print(err)
+
+    await ctx.send('Desculpe-me, mas o servidor que está me hospedando se encontra off nesse momento <@510948690354110464> err')
     
   async def on_message(self, message: Message, /) -> None:
     if message.author.bot:
@@ -62,14 +64,14 @@ class MyBot(commands.Bot):
   
   async def setup_hook(self) -> None:
     for file in glob('Commands/*.py'):
-      if file[-3:] == '.py':
+      if file[-3:] == '.py' and not '_utils.' in file:
         print(file[:-3].replace('/', '.'))
         await self.load_extension(file[:-3].replace('/', '.'))
 
   async def close(self) -> None:
     if not self.is_closed():
       
-      return super(commands.Bot, self).close()
+      return await super(commands.Bot, self).close()
   
 
 def main() -> int:

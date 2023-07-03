@@ -25,7 +25,7 @@ export function attackSchema({ original = {}, required = {} }: {
   required?: Partial<Record<keyof Attack, boolean>>
 }) {
   return Joi.object({
-    name: makeContext(Joi.string().trim().min(1).max(32), required['name'], original['name']),
+    name: makeContext(Joi.string().trim().min(1).max(32).regex(/^[^-+>@&$].+[^-+>@&$]$/), required['name'], original['name']),
   
     roles: makeContext(Joi.array().items(Joi.string().trim().regex(/^[0-9]+$/)), required['roles'], original['roles']),
     required_roles: makeContext(Joi.number().integer(), required['required_roles'], original['required_roles']),

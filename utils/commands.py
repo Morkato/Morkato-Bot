@@ -1,5 +1,13 @@
+from __future__ import annotations
+
+from typing import Callable, Coroutine, Union, Any, TYPE_CHECKING
+
 from discord.ext import commands
 import discord
+
+if TYPE_CHECKING:
+  from .guild import Guild
+  from .string import Context
 
 async def message_page_embeds(ctx: commands.Context, bot: commands.Bot, embeds: list[discord.Embed]) -> None:
   message = await ctx.send(embed=embeds[0])
@@ -32,3 +40,27 @@ async def message_page_embeds(ctx: commands.Context, bot: commands.Bot, embeds: 
       await message.remove_reaction('⏩', user)
 
     await message.edit(embed=embeds[index])
+
+async def command_by_flag(
+  *, flag_gether: Callable[[str], Union[
+    Callable[[
+      Context,
+      Guild
+    ], Coroutine[Any, Any, None]],
+    None
+  ]],
+  ctx: commands.Context,
+  text: str
+) -> None:
+  context = Context(ctx, parse_params(text))
+
+  flag = context.get_param('param') or 'DEFAULT'
+
+  event = flag_gether(flag)
+
+  if not event:
+    await ctx.send('Que flag é essa?')
+
+    return
+  
+  await event(context, getGuild(ctx.guild))

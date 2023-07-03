@@ -30,7 +30,7 @@ export function artSchema({ original = {}, required = {}, attackParams = {} }: {
   attackParams?: Parameters<typeof attackSchema>[0]
 }) {
   return Joi.object({
-    name: makeContext(Joi.string().trim().min(1).max(32), required['name'], original['name']),
+    name: makeContext(Joi.string().trim().min(1).max(32).regex(/^[^-+>@&$].+[^-+>@&$]$/), required['name'], original['name']),
     type: makeContext(Joi.string().valid(...allowedTypes), required['type'], original['type']),
     role: makeContext(Joi.string().allow(null).trim().regex(/^[0-9]+$/), required['role'], original['role']),
 

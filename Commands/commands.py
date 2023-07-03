@@ -1,7 +1,10 @@
 from typing import (Mapping, Sequence)
 from discord.ext import commands
+from utils.string import format, parse_params
+from utils import getGuild
 from types import ModuleType
 from copy import deepcopy
+from random import choice
 
 import traceback
 import re
@@ -23,7 +26,7 @@ def __load__(
     raise ImportPermissionError(name)
   return __import__(name, globals, locals, fromlist, level)
 
-commandRegex = re.compile("```(?P<key>[A-Za-z0-9]+)\n(?P<code>[A-Za-záàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ0-9.,\(\)/\"\'\\\^\:;!@#\$%&`\*\=\+\-\<\>~\[\]\{\}$?_\s]+)```")
+commandRegex = re.compile("```(?P<key>[A-Za-z0-9]+)\n(?P<code>[A-Za-záàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ0-9.,\(\)/\"\'\\\\|\^\:;!@#\$%&`\*\=\+\-\<\>~\[\]\{\}$?_\s]+)```")
 importModules = {
   "__builtins__": {
     "__import__": __load__,
@@ -46,7 +49,10 @@ importModules = {
     "super": super,
     "type": type,
     "map": map,
-    "next": next
+    "next": next,
+    "print": print,
+    'round': round,
+    'len': len
   }
 }
 
@@ -83,6 +89,21 @@ class Commands(commands.Cog):
         await main(ctx)
       except:
         await ctx.reply(f"```{traceback.format_exc()}```")
+    
+  @commands.command(name='choice')
+  async def Choice(self, ctx: commands.Context, /, *, text: str) -> None:
+    guild = getGuild(ctx.guild)
+
+    vars = { v.name: v.text for v in guild.vars }
+    text = format(text, **vars)
+
+    item = choice(text.split(','))
+
+    await ctx.send(f'Yo {ctx.author.mention} eu escolhi: **`{item.strip()}`** :D')
+  
+  @commands.command(name='parse')
+  async def Parse(self, ctx: commands.Context, /, *, text: str) -> None:
+    await ctx.send(f'**`{parse_params(text)}`**')
 
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Commands(bot))
