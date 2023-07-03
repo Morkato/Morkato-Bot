@@ -12,4 +12,6 @@
 import { forCreateAttack } from "app/middlewares/bot/attack"
 import { NextResponse } from "next/server"
 
-export const POST = forCreateAttack(async (req, { params }, { attack }) => NextResponse.json(attack))
+import { then } from "app/middlewares/utils" 
+
+export const POST = then(forCreateAttack(async (req, { params }, { attack }) => NextResponse.json(attack)))

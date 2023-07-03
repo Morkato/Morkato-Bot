@@ -136,16 +136,16 @@ class Attack:
     title = title or self.embed_title or self.name
     description = description or self.embed_description or 'No description'
     url = url or self.embed_url
-    damage = damage or self.damage
-    stamina = stamina or self.stamina
+    damage = str(damage or self.damage)
+    stamina = str(stamina or self.stamina)
 
     vars = self.guild.vars if not member else [ var for var in self.guild.vars if next((True for role in member.roles if not var.roles_id or str(role.id) in var.roles_id), False) ]
 
-    keys = { var.name: format(var.text, name=self.name, damage=num_fmt(damage), stamina=num_fmt(stamina)) for var in vars }
+    keys = { var.name: format(var.text, name=self.name, damage=damage, stamina=stamina) for var in vars }
     
     embed = Embed(
       title=format(title, name=self.name),
-      description=format(description, **keys, name=self.name, damage=num_fmt(self.damage), stamina=num_fmt(self.stamina)).strip()
+      description=format(description, **keys, name=self.name, damage=damage, stamina=stamina).strip()
     )
 
     if url:
@@ -173,7 +173,7 @@ class Art:
     return [Attack(self.guild, data) for data in attacks]
   
   def __repr__(self) -> str:
-    return f'Respiration(guild={self.guild} name={self.name})'
+    return self.name
   
   @property
   def embeds(self) -> list[Embed]:

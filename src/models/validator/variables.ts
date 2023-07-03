@@ -18,8 +18,8 @@ export type Variable = {
 
 export function variableSchema({ original = {}, required = {} }: { original?: Partial<Variable>, required?: Partial<Record<keyof Variable, boolean>>}) {
   return Joi.object({
-    name: makeContext(Joi.string().trim().min(1).regex(/^[a-z0-9_-]+$/i), required['name'], original['name']),
-    text: makeContext(Joi.string().trim().min(1).max(128), required['text'], original['text']),
+    name: makeContext(Joi.string().trim().min(1).regex(/^[^-+>@&$][a-z0-9_]+[^-+>@&$]$/i), required['name'], original['name']),
+    text: makeContext(Joi.string().trim().min(1).max(1024), required['text'], original['text']),
     visibleCaseIfNotAuthorizerMember: makeContext(Joi.boolean(), required['visibleCaseIfNotAuthorizerMember'], original['visibleCaseIfNotAuthorizerMember']),
 
     required_roles: makeContext(Joi.number().integer(), required['required_roles'], original['required_roles']),

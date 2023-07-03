@@ -2,7 +2,7 @@ from utils.commands import message_page_embeds
 from utils import Guild, getGuild
 from discord.ext import commands
 
-from utils.string import format
+from utils.string import format_variables as format
 
 import discord
 
@@ -30,6 +30,11 @@ class Vars(commands.Cog):
   
   @commands.command(name='format-text')
   async def Format_Text(self, ctx: commands.Context, /, *, text) -> None:
+    if text == '!$(exit())':
+      await ctx.send('Agora não, valeu?')
+
+      return
+    
     guild = getGuild(ctx.guild)
 
     keys = { var.name: var.text for var in guild.vars }
