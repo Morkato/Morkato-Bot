@@ -4,6 +4,7 @@ declare global {
   let client: PrismaClient | undefined;
 }
 
+// @ts-ignore
 export const prisma = globalThis.client ?? new PrismaClient({
   log: ['query', 'info', 'warn', 'error']
 })
@@ -18,8 +19,10 @@ function middleware(model: Prisma.MiddlewareParams['model'], action: Prisma.Midd
   }
 }
 
+// @ts-ignore
 if (!globalThis.client) {
-  globalThis.client = prisma
+  // @ts-ignore
+  globalThis.client = prisma 
 }
 
 export default prisma;

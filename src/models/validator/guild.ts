@@ -25,7 +25,7 @@ function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: 
   return schema.optional();
 }
 
-export function guildSchema({ original = {}, required = {}, varParams = {}} : { original?: Partial<Record<keyof Guild, unknown>>, required?: Partial<Record<keyof Guild, boolean>>, varParams?: Parameters<typeof variableSchema>[0] }) {
+export function guildSchema({ original = {}, required = {}, varParams = {}} : { original?: Partial<Record<keyof Guild, unknown>>, required?: Partial<Record<keyof Guild, any>>, varParams?: Parameters<typeof variableSchema>[0] }) {
   return Joi.object({
     id: makeContext(Joi.string().trim().regex(/^[0-9]+$/), required['id'], original['id']),
 

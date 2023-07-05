@@ -1,81 +1,11 @@
 from decouple import config
 
-from discord.ext.commands import CommandInvokeError
-from discord import Message, Intents
-from discord.ext import commands
-from utils import getGuild
-from glob import glob
+from morkato.bot import Client
 
 from sys import exit
 
-from errors import InternalServerError, BaseError
-
-import discord
-
-class MyBot(commands.Bot):
-  def __init__(self, command_prefix: str = '!', case_insensitive: bool = True) -> None:
-    super(commands.Bot, self).__init__(
-      command_prefix=command_prefix,
-      intents=Intents.all(),
-      case_insensitive=case_insensitive
-    )
-
-    self.channel: discord.TextChannel | None = None
-    
-  async def on_ready(self) -> None:
-    await self.tree.sync()
-
-    guild = self.get_guild(971803172056219728)
-
-    if guild:
-      self.channel = guild.get_channel(1120029460436090901)
-
-      if self.channel:
-        await self.channel.send('**`Starting websocket...`**')
-        await self.channel.send('**Starting from `wss://morkato-bot.vercel.app` with authorization `admin`**')
-        await self.channel.send('**Push context guild data**')
-
-        await self.channel.send(f'**Successfully getting all guilds `{[getGuild(guild)]}`**')
-        await self.channel.send('Websocket will be closed when shutting down the bot')
-    
-    print(f'Estou conectado, como : {self.user}')
-  
-  async def on_command_error(self, ctx: commands.Context, err: CommandInvokeError) -> None:
-    if not isinstance(err, CommandInvokeError):
-      raise err
-    error = err.original
-
-    if isinstance(error, BaseError):
-      await ctx.send(error.message)
-
-      return
-    
-    print(err)
-
-    await ctx.send('Desculpe-me, mas o servidor que está me hospedando se encontra off nesse momento <@510948690354110464> err')
-    
-  async def on_message(self, message: Message, /) -> None:
-    if message.author.bot:
-      return
-    
-    return await self.process_commands(message)
-  async def on_edit_message(self, message: Message, /) -> None:
-    return await self.on_message(message)
-  
-  async def setup_hook(self) -> None:
-    for file in glob('Commands/*.py'):
-      if file[-3:] == '.py' and not '_utils.' in file:
-        print(file[:-3].replace('/', '.'))
-        await self.load_extension(file[:-3].replace('/', '.'))
-
-  async def close(self) -> None:
-    if not self.is_closed():
-      
-      return await super(commands.Bot, self).close()
-  
-
 def main() -> int:
-  bot = MyBot()
+  bot = Client()
 
   try:
     TOKEN: str = config('BOT_TOKEN')

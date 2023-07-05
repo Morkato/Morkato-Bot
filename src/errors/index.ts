@@ -35,7 +35,7 @@ export class BaseError extends Error {
   }: ErrorParams) {
     super();
     this.name = this.constructor.name;
-    this.message = message;
+    this.message = message || "Base error";
     this.action = action;
     this.statusCode = statusCode || 500;
     this.errorId = errorId || uuid();
@@ -79,7 +79,7 @@ export class AlreadyExistsError extends BaseError {
     super({
       message: message || 'Esse Objeto já exists.',
       action: action || 'Tente passar dados diferentes.',
-      statusCode: 400,
+      statusCode: 409,
       requestId: requestId,
       errorId: errorId,
       errorLocationCode: errorLocationCode,

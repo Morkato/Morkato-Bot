@@ -42,7 +42,7 @@ class Response:
   async def raise_for_status(self) -> None:
     res = self.__response
     
-    if not self.status_code >= 200 and not self.status_code < 300:
+    if self.status_code >= 300:
 
       data = await self.content()
 
@@ -77,4 +77,4 @@ class Response:
 
   async def end(self) -> None:
     if not self.closed:
-      await self.__response.close()
+      self.__response.close()

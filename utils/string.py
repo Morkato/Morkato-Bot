@@ -30,7 +30,7 @@ def resolve_expression(exp: str, **kwargs) -> Union[str, None]:
 
       return 'Error'
 
-def format_variables(text: str, **kwargs) -> str:
+def format_variables(text: str, /, **kwargs) -> str:
   captured_variables = get_captured_variables(text)
 
   for captured in captured_variables:

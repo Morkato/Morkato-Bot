@@ -104,7 +104,7 @@ export default function Arts(db: PrismaClient['art']) {
     } catch {
       const error = errors['errorIfArtAlreadyExists']
       
-      throw error(guild, data.name);
+      throw error(guild, name);
     }
   }
   async function editArt({ guild, art, data }: { guild: Guild, art: Art, data: Omit<Partial<Art>, 'attacks'> }): Promise<Art> {

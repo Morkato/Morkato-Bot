@@ -31,6 +31,9 @@ class Headers:
       return
     
     self._load_variables(init)
+
+  def __repr__(self) -> str:
+    return repr(self.__headers)
   
   def __getitem__(self, key: _HeadersKeys) -> Union[str, None]:
     return self.get(key)

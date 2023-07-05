@@ -20,13 +20,23 @@ class NotFoundError(BaseError):
 
     super().__init__(message, action, embeds)
 
-class AlrearyExistsError(BaseError):
+class AlreadyExistsError(BaseError):
   def __init__(self, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
     message = message or "Esse item já existe."
     action = action or "Tente novamente com outro nome."
     embeds = embeds or []
 
     super().__init__(message, action, embeds)
+
+class InternalError(BaseError):
+  def __init__(self, error: Exception, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
+    message = message or "Erro interno."
+    action = action or "Tente novamente com outro nome."
+    embeds = embeds or []
+
+    super().__init__(message, action, embeds)
+
+    self.error = error
 
 class InternalServerError(BaseError):
   def __init__(self, error: Exception, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:

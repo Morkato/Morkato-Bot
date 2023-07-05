@@ -19,7 +19,7 @@ export function assert<T>(
   if(error) {
     throw new ValidationError({
       message: error.details[0].message,
-      key: error.details[0].context.key || error.details[0].context.type || 'object',
+      key: error?.details[0]?.context?.key || error?.details[0]?.context?.type || 'object',
       errorLocationCode: 'MODEL:VALIDATOR:SCHEMA',
       type: error.details[0].type
     });
@@ -28,7 +28,7 @@ export function assert<T>(
   return value as T;
 }
 
-export function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean, original?: any) {
+export function makeContext<T>(schema: Joi.AnySchema<T>, required: boolean | undefined, original?: any) {
   if(required) {
     return schema.required();
   }

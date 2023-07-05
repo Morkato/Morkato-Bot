@@ -3,9 +3,11 @@ export namespace string {
     const regex = /(\$(?<key>\$|[^ \n\t]+))/g
   
     for(let { groups } of text.matchAll(regex)) {
-      const key = groups.key
+      if(groups) {
+        const key = groups.key
   
-      text = text.replace(`$${key}`, params[key]||'')
+        text = text.replace(`$${key}`, params[key]||'')
+      }
     }
   
     return text;

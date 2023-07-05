@@ -1,6 +1,6 @@
 from typing import Callable, Literal, Optional, TypeVar, Union, overload
 
-from errors import NotFoundError, AlrearyExistsError
+from errors import NotFoundError, AlreadyExistsError
 
 from discord.guild import Guild as discordGuild, Role
 from decouple import config
