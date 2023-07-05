@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" },
+    {
+      "src": "prisma/**",
+      "use": "@prisma/cli",
+      "config": { "generation": { "output": "../src/client" } }
+    },
+    { "src": "src/**", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "src/$1" }
+  ]
+}

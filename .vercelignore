@@ -1,7 +1,6 @@
 ./api
 ./Commands
 ./morkato
-./prisma
 ./webkit
 ./.env
 ./.env.exemple
