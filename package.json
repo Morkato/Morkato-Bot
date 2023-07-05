@@ -90,5 +90,8 @@
   },
   "exports": [
     "./Backend/**"
-  ]
+  ],
+  "engines": {
+    "node": "18.x"
+  }
 }
