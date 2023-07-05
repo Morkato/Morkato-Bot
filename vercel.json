@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/guilds/([^/]+)/(.*)",
+      "dest": "/guilds/[guild_id]/$2"
+    }
+  ]
+}
