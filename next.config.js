@@ -13,5 +13,4 @@ module.exports = {
   experimental: {
     appDir: true
   },
-  distDir: "dist"
 }
