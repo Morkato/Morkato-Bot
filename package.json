@@ -12,8 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:debug": "jest --debug",
-
-    "vercel-build": "next build && prisma generate"
+    "vercel-build": "next build"
   },
   "keywords": [],
   "author": "V1NI1313",
@@ -37,7 +36,7 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.12.2",
     "@primer/react": "^35.25.0",
-    "@prisma/client": "^4.15.0",
+    "@prisma/client": "^4.16.2",
     "@types/async-lock": "^1.4.0",
     "@types/joi": "^17.2.3",
     "@types/pg": "^8.6.6",
@@ -60,6 +59,7 @@
     "kill-port": "^2.0.1",
     "next": "^13.4.8",
     "node-fetch": "^3.3.1",
+    "openssl": "^2.0.0",
     "prisma": "^4.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -21,6 +21,7 @@ const {
   Extensions,
   warnOnce,
   defineDmmfProperty,
+  Public,
 } = require('./runtime/library')
 
 
@@ -29,11 +30,11 @@ const Prisma = {}
 exports.Prisma = Prisma
 
 /**
- * Prisma Client JS version: 4.15.0
+ * Prisma Client JS version: 4.16.2
  * Query Engine version: 8fbc245156db7124f997f4cecdd8d1219e360944
  */
 Prisma.prismaVersion = {
-  client: "4.15.0",
+  client: "4.16.2",
   engine: "8fbc245156db7124f997f4cecdd8d1219e360944"
 }
 
@@ -52,8 +53,13 @@ Prisma.sql = sqltag
 Prisma.empty = empty
 Prisma.join = join
 Prisma.raw = raw
-Prisma.validator = () => (val) => val
+Prisma.validator = Public.validator
 
+/**
+* Extensions
+*/
+Prisma.getExtensionContext = Extensions.getExtensionContext
+Prisma.defineExtension = Extensions.defineExtension
 
 /**
  * Shorthand utilities for JSON filtering
@@ -182,14 +188,14 @@ const config = {
     "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
-  "clientVersion": "4.15.0",
+  "clientVersion": "4.16.2",
   "engineVersion": "8fbc245156db7124f997f4cecdd8d1219e360944",
   "datasourceNames": [
     "db"
   ],
   "activeProvider": "postgresql",
   "dataProxy": false,
-  "postinstall": true
+  "postinstall": false
 }
 
 const fs = require('fs')
