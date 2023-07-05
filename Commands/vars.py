@@ -1,8 +1,10 @@
-from utils.commands import message_page_embeds
-from utils import Guild, getGuild
-from discord.ext import commands
+from .vars_utils import get as getVarFlag
 
-from utils.string import format_variables as format
+from utils.commands import command_by_flag
+
+from utils import getGuild
+
+from discord.ext import commands
 
 import discord
 
@@ -10,13 +12,9 @@ class Vars(commands.Cog):
   def __init__(self, bot: commands.Bot) -> None:
     self.bot = bot
   
-  @commands.command(name='vars')
-  async def Guild_Vars(self, ctx: commands.Context, /) -> None:
-    guild = getGuild(ctx.guild)
-
-    vars = '\n'.join(f'{var.name.upper()}={repr(var.text)}' for var in guild.vars)
-
-    await ctx.send(f'```{vars}```')
+  @commands.command(aliases=[ 'v', 'var' ])
+  async def vars(self, ctx: commands.Context, /, *, text: str) -> None:
+    await command_by_flag(flag_gether=getVarFlag, ctx=ctx, text=text)
   
   @commands.command(name='new-var')
   async def New_Var(self, ctx: commands.Context, /, name: str, roles: commands.Greedy[discord.Role]) -> None:

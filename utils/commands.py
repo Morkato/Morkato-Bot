@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable, Coroutine, Union, Any, TYPE_CHECKING
+from typing import Callable, Coroutine, Union, Any
+
+from .string import Context, parse_params
+from .guild  import Guild,   get as getGuild
 
 from discord.ext import commands
 import discord
-
-if TYPE_CHECKING:
-  from .guild import Guild
-  from .string import Context
 
 async def message_page_embeds(ctx: commands.Context, bot: commands.Bot, embeds: list[discord.Embed]) -> None:
   message = await ctx.send(embed=embeds[0])

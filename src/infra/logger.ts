@@ -15,7 +15,7 @@ export namespace global {
 }
 
 export interface LogSettings {
-  [key: string]: string
+  [key: string]: string | undefined
   functionName?: string
   userName?: string
   sessionId?: string
@@ -78,8 +78,11 @@ export function format(message: string, keys: { [key: string]: string }) {
 
   const keysOfText = message.matchAll(formatter)
 
-  for(let { groups } of keysOfText)
-    message = message.replace(`$${groups.key}`, keys[groups.key] || '');
+  for(let { groups } of keysOfText) {
+    if(groups) {
+      message = message.replace(`$${groups.key}`, keys[groups.key] || '');
+    }
+  }
   
     
   return message;

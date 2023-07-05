@@ -116,7 +116,7 @@ async def edit_art(ctx: Context, guild: Guild, /) -> None:
       await ctx.send('A arte abordada foi editada.')
 
       return
-
+    
     elif key == 'title':
       payload['embed_title'] = value
 
@@ -188,12 +188,37 @@ async def list_art(ctx: Context, guild: Guild, /) -> None:
 
   await ctx.send(f'Listando por `{list_by}`: **`{arts[:10]}`**')
 
+async def charge_name(ctx: Context, guild: Guild, /) -> None:
+  after, before = (ctx.get_param('name'), ctx.get_param('value'))
+
+  if not after:
+    await ctx.send('Como editar o nome do "nada"?')
+
+    return
+  
+  if not before:
+    await ctx.send('Ok, irei editar o nome para... Hã.? Que nome?')
+
+    return
+  
+  art = guild.get_art(after)
+
+  if not art:
+    await ctx.send('Como trocar o nome de uma arte que não existe?')
+
+    return
+  
+  art.edit(name=before)
+
+  await ctx.send(f'O nome dá **`{after}`** foi alterado para **`{before}`**.')
+
 flags = {
   'DEFAULT': get_art,
   'c': new_art,
   'e': edit_art,
   'd': del_art,
-  'l': list_art
+  'l': list_art,
+  'n': charge_name
 }
 
 def get(flag: str) -> Union[Callable[[Context, Guild], Coroutine[Any, Any, None]], None]:

@@ -1,6 +1,7 @@
 from typing import Optional, Callable, Literal, Union, Coroutine, TypeVar, Dict, Any
 
-from .headers import Headers, _Headers
+from .headers  import Headers, _Headers
+from .request  import Request
 from .response import Response
 
 from urllib.parse import quote
@@ -73,7 +74,10 @@ class HTTPClient:
     user_agent = 'V1NI1313 (https://github.com/V1NI1313/Morkato-Bot {0}) Python/{1[0]}.{1[1]} aiohttp/{2}'
     self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
 
-    self.__headers = headers or Headers()
+    self.__headers = Headers(headers)
+
+    self.__headers.set('user-agent', self.user_agent)
+
   async def __aenter__(self) -> "HTTPClient":
     return self
   async def __aexit__(self, *args, **kwargs) -> None:
@@ -92,23 +96,21 @@ class HTTPClient:
     }
 
     return await self._session.ws_connect(url, **kwargs)
-  async def request(self, route: Route, headers: Union[Headers, _Headers, None] = None, **kwargs):
-    method = route.method
-    url = route.url
+  async def request(self, request: Request, **kwargs):
+    req = self.make_request(request)
 
-    headers = headers if isinstance(headers, Headers) else Headers(headers)
-
-    headers.set('user-agent', self.user_agent)
+    method = req.method
+    url    = str(req.url)
 
     if kwargs.get('json'):
-      headers.set('content-type', 'application/json')
-      
       kwargs['data'] = json.dumps(kwargs.pop('json'))
-    
-    if kwargs.get('auth'):
-      headers.set('authorization', kwargs.pop('auth'))
-    
-    kwargs['headers'] = headers.extend(self.headers).toJSON()
+
+      req.headers.set('content-type', 'application/josn')
+
+    kwargs = {
+      'headers': req.headers.toJSON()
+    }
+      
 
     for tries in range(5):
       try:
@@ -121,14 +123,19 @@ class HTTPClient:
     
     raise RuntimeError('Unreachable code in HTTP handling')
   
+  def make_request(self, req: Request) -> Request:
+    req.headers.extend(self.__headers)
+
+    return req
+  
   async def close(self) -> None:
     await self._session.close()
 
-async def request(route: Route, headers: Union[Headers, _Headers, None] = None, *, call: Callable[[Response], Coroutine[Any, Any, T]], **kwargs):
+async def request(request: Request, *, call: Callable[[Response], Coroutine[Any, Any, T]]) -> T:
   loop = asyncio.get_event_loop()
 
   async with HTTPClient(loop) as client:
-    res = await client.request(route, headers, **kwargs)
+    res = await client.request(request)
     data = await call(res)
 
     await res.end()
