@@ -1,4 +1,4 @@
-import type { PrismaClient, Prisma } from "@prisma/client"
+import type { PrismaClient, Prisma } from "client"
 
 import { type Guild,  assertGuild }  from 'models/validator/guild'
 import { type Art,    assertArt }    from 'models/validator/art'

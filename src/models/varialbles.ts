@@ -1,4 +1,4 @@
-import type { PrismaClient, Prisma } from '@prisma/client'
+import type { PrismaClient, Prisma } from 'client'
 
 import valid, { type Variable, assertVariable } from './validator/variables'
 
