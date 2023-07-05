@@ -2,8 +2,11 @@
   "version": 2,
   "routes": [
     {
-      "src": "/guilds/([^/]+)/(.*)",
+      "src": "/guilds/([0-9]+)/(.*)",
       "dest": "/guilds/[guild_id]/$2"
+    }, {
+      "src": "/guilds/([0-9]+)/vars",
+      "dest": "/guilds/[guild_id]/$2/vars/$2"
     }
   ]
 }
