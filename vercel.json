@@ -2,11 +2,7 @@
   "version": 2,
   "builds": [
     { "src": "package.json", "use": "@vercel/static-build" },
-    {
-      "src": "prisma/**",
-      "use": "@prisma/cli",
-      "config": { "generation": { "output": "../src/client" } }
-    },
+    { "src": "prisma/schema.prisma", "use": "prisma generate" },
     { "src": "src/**", "use": "@vercel/node" }
   ],
   "routes": [
