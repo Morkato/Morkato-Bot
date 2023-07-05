@@ -4,78 +4,112 @@
 **/
 
 import * as runtime from './runtime/library';
-type UnwrapPromise<P extends any> = P extends Promise<infer R> ? R : P
-type UnwrapTuple<Tuple extends readonly unknown[]> = {
-  [K in keyof Tuple]: K extends `${number}` ? Tuple[K] extends Prisma.PrismaPromise<infer X> ? X : UnwrapPromise<Tuple[K]> : UnwrapPromise<Tuple[K]>
-};
+import $Types = runtime.Types // general types
+import $Public = runtime.Types.Public
+import $Utils = runtime.Types.Utils
+import $Extensions = runtime.Types.Extensions
 
-export type PrismaPromise<T> = runtime.Types.Public.PrismaPromise<T>
+export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
+
+export type GuildPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Guild"
+  objects: {
+    arts: ArtPayload<ExtArgs>[]
+    vars: VarialblePayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    id: string
+    created_at: Date
+    updated_at: Date
+  }, ExtArgs["result"]["guild"]>
+  composites: {}
+}
 
 /**
  * Model Guild
  * 
  */
-export type Guild = {
-  id: string
-  created_at: Date
-  updated_at: Date
+export type Guild = runtime.Types.DefaultSelection<GuildPayload>
+export type ArtPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Art"
+  objects: {
+    guild: GuildPayload<ExtArgs>
+    attacks: AttackPayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    name: string
+    key: string
+    type: ArtType
+    role: string | null
+    guild_id: string
+    embed_title: string | null
+    embed_description: string | null
+    embed_url: string | null
+    created_at: Date
+    updated_at: Date
+  }, ExtArgs["result"]["art"]>
+  composites: {}
 }
 
 /**
  * Model Art
  * 
  */
-export type Art = {
-  name: string
-  key: string
-  type: ArtType
-  role: string | null
-  guild_id: string
-  embed_title: string | null
-  embed_description: string | null
-  embed_url: string | null
-  created_at: Date
-  updated_at: Date
+export type Art = runtime.Types.DefaultSelection<ArtPayload>
+export type AttackPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Attack"
+  objects: {
+    art: ArtPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    name: string
+    key: string
+    art_key: string
+    guild_id: string
+    roles: string[]
+    required_roles: number
+    required_exp: number
+    damage: number
+    stamina: number
+    embed_title: string | null
+    embed_description: string | null
+    embed_url: string | null
+    fields_key: string | null
+    created_at: Date
+    updated_at: Date
+  }, ExtArgs["result"]["attack"]>
+  composites: {}
 }
 
 /**
  * Model Attack
  * 
  */
-export type Attack = {
-  name: string
-  key: string
-  art_key: string
-  guild_id: string
-  roles: string[]
-  required_roles: number
-  required_exp: number
-  damage: number
-  stamina: number
-  embed_title: string | null
-  embed_description: string | null
-  embed_url: string | null
-  fields_key: string | null
-  created_at: Date
-  updated_at: Date
+export type Attack = runtime.Types.DefaultSelection<AttackPayload>
+export type VarialblePayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Varialble"
+  objects: {
+    guild: GuildPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    guild_id: string
+    name: string
+    text: string
+    visibleCaseIfNotAuthorizerMember: boolean
+    required_roles: number
+    roles: string[]
+    created_at: Date
+    updated_at: Date
+  }, ExtArgs["result"]["varialble"]>
+  composites: {}
 }
 
 /**
  * Model Varialble
  * 
  */
-export type Varialble = {
-  guild_id: string
-  name: string
-  text: string
-  visibleCaseIfNotAuthorizerMember: boolean
-  required_roles: number
-  roles: string[]
-  created_at: Date
-  updated_at: Date
-}
-
+export type Varialble = runtime.Types.DefaultSelection<VarialblePayload>
 
 /**
  * Enums
@@ -108,8 +142,11 @@ export class PrismaClient<
   U = 'log' extends keyof T ? T['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<T['log']> : never : never,
   GlobalReject extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined = 'rejectOnNotFound' extends keyof T
     ? T['rejectOnNotFound']
-    : false
-      > {
+    : false,
+  ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs
+> {
+  [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
+
     /**
    * ##  Prisma Client ʲˢ
    * 
@@ -140,6 +177,8 @@ export class PrismaClient<
 
   /**
    * Add a middleware
+   * @deprecated since 4.16.0. For new code, prefer client extensions instead.
+   * @see https://pris.ly/d/extensions
    */
   $use(cb: Prisma.Middleware): void
 
@@ -202,9 +241,12 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<UnwrapTuple<P>>
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<runtime.Types.Utils.UnwrapTuple<P>>
 
-  $transaction<R>(fn: (prisma: Omit<this, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use">) => Promise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<R>
+  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => Promise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<R>
+
+
+  $extends: $Extensions.ExtendsHook<'extends', Prisma.TypeMapCb, ExtArgs>
 
       /**
    * `prisma.guild`: Exposes CRUD operations for the **Guild** model.
@@ -214,7 +256,7 @@ export class PrismaClient<
     * const guilds = await prisma.guild.findMany()
     * ```
     */
-  get guild(): Prisma.GuildDelegate<GlobalReject>;
+  get guild(): Prisma.GuildDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.art`: Exposes CRUD operations for the **Art** model.
@@ -224,7 +266,7 @@ export class PrismaClient<
     * const arts = await prisma.art.findMany()
     * ```
     */
-  get art(): Prisma.ArtDelegate<GlobalReject>;
+  get art(): Prisma.ArtDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.attack`: Exposes CRUD operations for the **Attack** model.
@@ -234,7 +276,7 @@ export class PrismaClient<
     * const attacks = await prisma.attack.findMany()
     * ```
     */
-  get attack(): Prisma.AttackDelegate<GlobalReject>;
+  get attack(): Prisma.AttackDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.varialble`: Exposes CRUD operations for the **Varialble** model.
@@ -244,13 +286,18 @@ export class PrismaClient<
     * const varialbles = await prisma.varialble.findMany()
     * ```
     */
-  get varialble(): Prisma.VarialbleDelegate<GlobalReject>;
+  get varialble(): Prisma.VarialbleDelegate<GlobalReject, ExtArgs>;
 }
 
 export namespace Prisma {
   export import DMMF = runtime.DMMF
 
-  export type PrismaPromise<T> = runtime.Types.Public.PrismaPromise<T>
+  export type PrismaPromise<T> = $Public.PrismaPromise<T>
+
+  /**
+   * Validator
+   */
+  export import validator = runtime.Public.validator
 
   /**
    * Prisma Errors
@@ -286,9 +333,18 @@ export namespace Prisma {
   export type MetricHistogram = runtime.MetricHistogram
   export type MetricHistogramBucket = runtime.MetricHistogramBucket
 
+  /**
+  * Extensions
+  */
+  export type Extension = $Extensions.UserArgs
+  export import getExtensionContext = runtime.Extensions.getExtensionContext
+  export type Args<T, F extends $Public.Operation> = $Public.Args<T, F>
+  export type Payload<T, F extends $Public.Operation> = $Public.Payload<T, F>
+  export type Result<T, A, F extends $Public.Operation> = $Public.Result<T, A, F>
+  export type Exact<T, W> = $Public.Exact<T, W>
 
   /**
-   * Prisma Client JS version: 4.15.0
+   * Prisma Client JS version: 4.16.2
    * Query Engine version: 8fbc245156db7124f997f4cecdd8d1219e360944
    */
   export type PrismaVersion = {
@@ -657,7 +713,7 @@ export namespace Prisma {
 
   export const type: unique symbol;
 
-  export function validator<V>(): <S>(select: runtime.Types.Utils.LegacyExact<S, V>) => S;
+
 
   /**
    * Used by group by
@@ -727,6 +783,302 @@ export namespace Prisma {
     db?: Datasource
   }
 
+
+  interface TypeMapCb extends $Utils.Fn<{extArgs: $Extensions.Args}, $Utils.Record<string, any>> {
+    returns: Prisma.TypeMap<this['params']['extArgs']>
+  }
+
+  export type TypeMap<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    meta: {
+      modelProps: 'guild' | 'art' | 'attack' | 'varialble'
+      txIsolationLevel: Prisma.TransactionIsolationLevel
+    },
+    model: {
+      Guild: {
+        payload: GuildPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.GuildFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.GuildFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          findFirst: {
+            args: Prisma.GuildFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.GuildFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          findMany: {
+            args: Prisma.GuildFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>[]
+          }
+          create: {
+            args: Prisma.GuildCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          createMany: {
+            args: Prisma.GuildCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.GuildDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          update: {
+            args: Prisma.GuildUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          deleteMany: {
+            args: Prisma.GuildDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.GuildUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.GuildUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<GuildPayload>
+          }
+          aggregate: {
+            args: Prisma.GuildAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateGuild>
+          }
+          groupBy: {
+            args: Prisma.GuildGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<GuildGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.GuildCountArgs<ExtArgs>,
+            result: $Utils.Optional<GuildCountAggregateOutputType> | number
+          }
+        }
+      }
+      Art: {
+        payload: ArtPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.ArtFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ArtFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          findFirst: {
+            args: Prisma.ArtFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ArtFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          findMany: {
+            args: Prisma.ArtFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>[]
+          }
+          create: {
+            args: Prisma.ArtCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          createMany: {
+            args: Prisma.ArtCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.ArtDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          update: {
+            args: Prisma.ArtUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          deleteMany: {
+            args: Prisma.ArtDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ArtUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.ArtUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ArtPayload>
+          }
+          aggregate: {
+            args: Prisma.ArtAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateArt>
+          }
+          groupBy: {
+            args: Prisma.ArtGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<ArtGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ArtCountArgs<ExtArgs>,
+            result: $Utils.Optional<ArtCountAggregateOutputType> | number
+          }
+        }
+      }
+      Attack: {
+        payload: AttackPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.AttackFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AttackFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          findFirst: {
+            args: Prisma.AttackFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AttackFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          findMany: {
+            args: Prisma.AttackFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>[]
+          }
+          create: {
+            args: Prisma.AttackCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          createMany: {
+            args: Prisma.AttackCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.AttackDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          update: {
+            args: Prisma.AttackUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          deleteMany: {
+            args: Prisma.AttackDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AttackUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.AttackUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AttackPayload>
+          }
+          aggregate: {
+            args: Prisma.AttackAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateAttack>
+          }
+          groupBy: {
+            args: Prisma.AttackGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<AttackGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AttackCountArgs<ExtArgs>,
+            result: $Utils.Optional<AttackCountAggregateOutputType> | number
+          }
+        }
+      }
+      Varialble: {
+        payload: VarialblePayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.VarialbleFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.VarialbleFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          findFirst: {
+            args: Prisma.VarialbleFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.VarialbleFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          findMany: {
+            args: Prisma.VarialbleFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>[]
+          }
+          create: {
+            args: Prisma.VarialbleCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          createMany: {
+            args: Prisma.VarialbleCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.VarialbleDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          update: {
+            args: Prisma.VarialbleUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          deleteMany: {
+            args: Prisma.VarialbleDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.VarialbleUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.VarialbleUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<VarialblePayload>
+          }
+          aggregate: {
+            args: Prisma.VarialbleAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateVarialble>
+          }
+          groupBy: {
+            args: Prisma.VarialbleGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<VarialbleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.VarialbleCountArgs<ExtArgs>,
+            result: $Utils.Optional<VarialbleCountAggregateOutputType> | number
+          }
+        }
+      }
+    }
+  } & {
+    other: {
+      payload: any
+      operations: {
+        $executeRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+        $executeRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+        $queryRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+        $queryRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+      }
+    }
+  }
+  export const defineExtension: $Extensions.ExtendsHook<'define', Prisma.TypeMapCb, $Extensions.DefaultArgs>
   export type DefaultPrismaClient = PrismaClient
   export type RejectOnNotFound = boolean | ((error: Error) => Error)
   export type RejectPerModel = { [P in ModelName]?: RejectOnNotFound }
@@ -867,7 +1219,7 @@ export namespace Prisma {
   /**
    * `PrismaClient` proxy available in interactive transactions.
    */
-  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>
+  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, runtime.ITXClientDenyList>
 
   export type Datasource = {
     url?: string
@@ -888,37 +1240,21 @@ export namespace Prisma {
     vars: number
   }
 
-  export type GuildCountOutputTypeSelect = {
+  export type GuildCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     arts?: boolean
     vars?: boolean
   }
-
-  export type GuildCountOutputTypeGetPayload<S extends boolean | null | undefined | GuildCountOutputTypeArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? GuildCountOutputType :
-    S extends undefined ? never :
-    S extends { include: any } & (GuildCountOutputTypeArgs)
-    ? GuildCountOutputType 
-    : S extends { select: any } & (GuildCountOutputTypeArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-    P extends keyof GuildCountOutputType ? GuildCountOutputType[P] : never
-  } 
-      : GuildCountOutputType
-
-
-
 
   // Custom InputTypes
 
   /**
    * GuildCountOutputType without action
    */
-  export type GuildCountOutputTypeArgs = {
+  export type GuildCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the GuildCountOutputType
      */
-    select?: GuildCountOutputTypeSelect | null
+    select?: GuildCountOutputTypeSelect<ExtArgs> | null
   }
 
 
@@ -932,36 +1268,20 @@ export namespace Prisma {
     attacks: number
   }
 
-  export type ArtCountOutputTypeSelect = {
+  export type ArtCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     attacks?: boolean
   }
-
-  export type ArtCountOutputTypeGetPayload<S extends boolean | null | undefined | ArtCountOutputTypeArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? ArtCountOutputType :
-    S extends undefined ? never :
-    S extends { include: any } & (ArtCountOutputTypeArgs)
-    ? ArtCountOutputType 
-    : S extends { select: any } & (ArtCountOutputTypeArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-    P extends keyof ArtCountOutputType ? ArtCountOutputType[P] : never
-  } 
-      : ArtCountOutputType
-
-
-
 
   // Custom InputTypes
 
   /**
    * ArtCountOutputType without action
    */
-  export type ArtCountOutputTypeArgs = {
+  export type ArtCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the ArtCountOutputType
      */
-    select?: ArtCountOutputTypeSelect | null
+    select?: ArtCountOutputTypeSelect<ExtArgs> | null
   }
 
 
@@ -1020,7 +1340,7 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type GuildAggregateArgs = {
+  export type GuildAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Guild to aggregate.
      */
@@ -1080,7 +1400,7 @@ export namespace Prisma {
 
 
 
-  export type GuildGroupByArgs = {
+  export type GuildGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: GuildWhereInput
     orderBy?: Enumerable<GuildOrderByWithAggregationInput>
     by: GuildScalarFieldEnum[]
@@ -1116,50 +1436,37 @@ export namespace Prisma {
     >
 
 
-  export type GuildSelect = {
+  export type GuildSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     created_at?: boolean
     updated_at?: boolean
-    arts?: boolean | Guild$artsArgs
-    vars?: boolean | Guild$varsArgs
-    _count?: boolean | GuildCountOutputTypeArgs
+    arts?: boolean | Guild$artsArgs<ExtArgs>
+    vars?: boolean | Guild$varsArgs<ExtArgs>
+    _count?: boolean | GuildCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["guild"]>
+
+  export type GuildSelectScalar = {
+    id?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type GuildInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    arts?: boolean | Guild$artsArgs<ExtArgs>
+    vars?: boolean | Guild$varsArgs<ExtArgs>
+    _count?: boolean | GuildCountOutputTypeArgs<ExtArgs>
   }
 
 
-  export type GuildInclude = {
-    arts?: boolean | Guild$artsArgs
-    vars?: boolean | Guild$varsArgs
-    _count?: boolean | GuildCountOutputTypeArgs
-  }
+  type GuildGetPayload<S extends boolean | null | undefined | GuildArgs> = $Types.GetResult<GuildPayload, S>
 
-  export type GuildGetPayload<S extends boolean | null | undefined | GuildArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Guild :
-    S extends undefined ? never :
-    S extends { include: any } & (GuildArgs | GuildFindManyArgs)
-    ? Guild  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'arts' ? Array < ArtGetPayload<S['include'][P]>>  :
-        P extends 'vars' ? Array < VarialbleGetPayload<S['include'][P]>>  :
-        P extends '_count' ? GuildCountOutputTypeGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (GuildArgs | GuildFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'arts' ? Array < ArtGetPayload<S['select'][P]>>  :
-        P extends 'vars' ? Array < VarialbleGetPayload<S['select'][P]>>  :
-        P extends '_count' ? GuildCountOutputTypeGetPayload<S['select'][P]> :  P extends keyof Guild ? Guild[P] : never
-  } 
-      : Guild
-
-
-  type GuildCountArgs = 
+  type GuildCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<GuildFindManyArgs, 'select' | 'include'> & {
       select?: GuildCountAggregateInputType | true
     }
 
-  export interface GuildDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
-
+  export interface GuildDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Guild'], meta: { name: 'Guild' } }
     /**
      * Find zero or one Guild that matches the filter.
      * @param {GuildFindUniqueArgs} args - Arguments to find a Guild
@@ -1171,9 +1478,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends GuildFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, GuildFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Guild'> extends True ? Prisma__GuildClient<GuildGetPayload<T>> : Prisma__GuildClient<GuildGetPayload<T> | null, null>
+    findUnique<T extends GuildFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, GuildFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Guild'> extends True ? Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one Guild that matches the filter or throw an error  with `error.code='P2025'` 
@@ -1187,9 +1494,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends GuildFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, GuildFindUniqueOrThrowArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    findUniqueOrThrow<T extends GuildFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, GuildFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first Guild that matches the filter.
@@ -1204,9 +1511,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends GuildFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, GuildFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Guild'> extends True ? Prisma__GuildClient<GuildGetPayload<T>> : Prisma__GuildClient<GuildGetPayload<T> | null, null>
+    findFirst<T extends GuildFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, GuildFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Guild'> extends True ? Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first Guild that matches the filter or
@@ -1222,9 +1529,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends GuildFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, GuildFindFirstOrThrowArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    findFirstOrThrow<T extends GuildFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, GuildFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Guilds that matches the filter.
@@ -1242,9 +1549,9 @@ export namespace Prisma {
      * const guildWithIdOnly = await prisma.guild.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends GuildFindManyArgs>(
-      args?: SelectSubset<T, GuildFindManyArgs>
-    ): Prisma.PrismaPromise<Array<GuildGetPayload<T>>>
+    findMany<T extends GuildFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, GuildFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a Guild.
@@ -1258,9 +1565,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends GuildCreateArgs>(
-      args: SelectSubset<T, GuildCreateArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    create<T extends GuildCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, GuildCreateArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Guilds.
@@ -1274,8 +1581,8 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends GuildCreateManyArgs>(
-      args?: SelectSubset<T, GuildCreateManyArgs>
+    createMany<T extends GuildCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, GuildCreateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -1290,9 +1597,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends GuildDeleteArgs>(
-      args: SelectSubset<T, GuildDeleteArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    delete<T extends GuildDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, GuildDeleteArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one Guild.
@@ -1309,9 +1616,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends GuildUpdateArgs>(
-      args: SelectSubset<T, GuildUpdateArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    update<T extends GuildUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, GuildUpdateArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Guilds.
@@ -1325,8 +1632,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends GuildDeleteManyArgs>(
-      args?: SelectSubset<T, GuildDeleteManyArgs>
+    deleteMany<T extends GuildDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, GuildDeleteManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -1346,8 +1653,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends GuildUpdateManyArgs>(
-      args: SelectSubset<T, GuildUpdateManyArgs>
+    updateMany<T extends GuildUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, GuildUpdateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -1367,9 +1674,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends GuildUpsertArgs>(
-      args: SelectSubset<T, GuildUpsertArgs>
-    ): Prisma__GuildClient<GuildGetPayload<T>>
+    upsert<T extends GuildUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, GuildUpsertArgs<ExtArgs>>
+    ): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Guilds.
@@ -1387,7 +1694,7 @@ export namespace Prisma {
     count<T extends GuildCountArgs>(
       args?: Subset<T, GuildCountArgs>,
     ): Prisma.PrismaPromise<
-      T extends _Record<'select', any>
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], GuildCountAggregateOutputType>
@@ -1505,7 +1812,7 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__GuildClient<T, Null = never> implements Prisma.PrismaPromise<T> {
+  export class Prisma__GuildClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
     private readonly _queryType;
     private readonly _rootField;
@@ -1520,9 +1827,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    arts<T extends Guild$artsArgs= {}>(args?: Subset<T, Guild$artsArgs>): Prisma.PrismaPromise<Array<ArtGetPayload<T>>| Null>;
+    arts<T extends Guild$artsArgs<ExtArgs> = {}>(args?: Subset<T, Guild$artsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
-    vars<T extends Guild$varsArgs= {}>(args?: Subset<T, Guild$varsArgs>): Prisma.PrismaPromise<Array<VarialbleGetPayload<T>>| Null>;
+    vars<T extends Guild$varsArgs<ExtArgs> = {}>(args?: Subset<T, Guild$varsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     private get _document();
     /**
@@ -1554,15 +1861,15 @@ export namespace Prisma {
   /**
    * Guild base type for findUnique actions
    */
-  export type GuildFindUniqueArgsBase = {
+  export type GuildFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter, which Guild to fetch.
      */
@@ -1572,7 +1879,7 @@ export namespace Prisma {
   /**
    * Guild findUnique
    */
-  export interface GuildFindUniqueArgs extends GuildFindUniqueArgsBase {
+  export interface GuildFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends GuildFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -1584,15 +1891,15 @@ export namespace Prisma {
   /**
    * Guild findUniqueOrThrow
    */
-  export type GuildFindUniqueOrThrowArgs = {
+  export type GuildFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter, which Guild to fetch.
      */
@@ -1603,15 +1910,15 @@ export namespace Prisma {
   /**
    * Guild base type for findFirst actions
    */
-  export type GuildFindFirstArgsBase = {
+  export type GuildFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter, which Guild to fetch.
      */
@@ -1651,7 +1958,7 @@ export namespace Prisma {
   /**
    * Guild findFirst
    */
-  export interface GuildFindFirstArgs extends GuildFindFirstArgsBase {
+  export interface GuildFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends GuildFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -1663,15 +1970,15 @@ export namespace Prisma {
   /**
    * Guild findFirstOrThrow
    */
-  export type GuildFindFirstOrThrowArgs = {
+  export type GuildFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter, which Guild to fetch.
      */
@@ -1712,15 +2019,15 @@ export namespace Prisma {
   /**
    * Guild findMany
    */
-  export type GuildFindManyArgs = {
+  export type GuildFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter, which Guilds to fetch.
      */
@@ -1756,15 +2063,15 @@ export namespace Prisma {
   /**
    * Guild create
    */
-  export type GuildCreateArgs = {
+  export type GuildCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * The data needed to create a Guild.
      */
@@ -1775,7 +2082,7 @@ export namespace Prisma {
   /**
    * Guild createMany
    */
-  export type GuildCreateManyArgs = {
+  export type GuildCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Guilds.
      */
@@ -1787,15 +2094,15 @@ export namespace Prisma {
   /**
    * Guild update
    */
-  export type GuildUpdateArgs = {
+  export type GuildUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * The data needed to update a Guild.
      */
@@ -1810,7 +2117,7 @@ export namespace Prisma {
   /**
    * Guild updateMany
    */
-  export type GuildUpdateManyArgs = {
+  export type GuildUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Guilds.
      */
@@ -1825,15 +2132,15 @@ export namespace Prisma {
   /**
    * Guild upsert
    */
-  export type GuildUpsertArgs = {
+  export type GuildUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * The filter to search for the Guild to update in case it exists.
      */
@@ -1852,15 +2159,15 @@ export namespace Prisma {
   /**
    * Guild delete
    */
-  export type GuildDeleteArgs = {
+  export type GuildDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
     /**
      * Filter which Guild to delete.
      */
@@ -1871,7 +2178,7 @@ export namespace Prisma {
   /**
    * Guild deleteMany
    */
-  export type GuildDeleteManyArgs = {
+  export type GuildDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Guilds to delete
      */
@@ -1882,15 +2189,15 @@ export namespace Prisma {
   /**
    * Guild.arts
    */
-  export type Guild$artsArgs = {
+  export type Guild$artsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     where?: ArtWhereInput
     orderBy?: Enumerable<ArtOrderByWithRelationInput>
     cursor?: ArtWhereUniqueInput
@@ -1903,15 +2210,15 @@ export namespace Prisma {
   /**
    * Guild.vars
    */
-  export type Guild$varsArgs = {
+  export type Guild$varsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     where?: VarialbleWhereInput
     orderBy?: Enumerable<VarialbleOrderByWithRelationInput>
     cursor?: VarialbleWhereUniqueInput
@@ -1924,15 +2231,15 @@ export namespace Prisma {
   /**
    * Guild without action
    */
-  export type GuildArgs = {
+  export type GuildArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Guild
      */
-    select?: GuildSelect | null
+    select?: GuildSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: GuildInclude | null
+    include?: GuildInclude<ExtArgs> | null
   }
 
 
@@ -2029,7 +2336,7 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type ArtAggregateArgs = {
+  export type ArtAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Art to aggregate.
      */
@@ -2089,7 +2396,7 @@ export namespace Prisma {
 
 
 
-  export type ArtGroupByArgs = {
+  export type ArtGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: ArtWhereInput
     orderBy?: Enumerable<ArtOrderByWithAggregationInput>
     by: ArtScalarFieldEnum[]
@@ -2132,7 +2439,7 @@ export namespace Prisma {
     >
 
 
-  export type ArtSelect = {
+  export type ArtSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     name?: boolean
     key?: boolean
     type?: boolean
@@ -2143,46 +2450,40 @@ export namespace Prisma {
     embed_url?: boolean
     created_at?: boolean
     updated_at?: boolean
-    guild?: boolean | GuildArgs
-    attacks?: boolean | Art$attacksArgs
-    _count?: boolean | ArtCountOutputTypeArgs
+    guild?: boolean | GuildArgs<ExtArgs>
+    attacks?: boolean | Art$attacksArgs<ExtArgs>
+    _count?: boolean | ArtCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["art"]>
+
+  export type ArtSelectScalar = {
+    name?: boolean
+    key?: boolean
+    type?: boolean
+    role?: boolean
+    guild_id?: boolean
+    embed_title?: boolean
+    embed_description?: boolean
+    embed_url?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type ArtInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildArgs<ExtArgs>
+    attacks?: boolean | Art$attacksArgs<ExtArgs>
+    _count?: boolean | ArtCountOutputTypeArgs<ExtArgs>
   }
 
 
-  export type ArtInclude = {
-    guild?: boolean | GuildArgs
-    attacks?: boolean | Art$attacksArgs
-    _count?: boolean | ArtCountOutputTypeArgs
-  }
+  type ArtGetPayload<S extends boolean | null | undefined | ArtArgs> = $Types.GetResult<ArtPayload, S>
 
-  export type ArtGetPayload<S extends boolean | null | undefined | ArtArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Art :
-    S extends undefined ? never :
-    S extends { include: any } & (ArtArgs | ArtFindManyArgs)
-    ? Art  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'guild' ? GuildGetPayload<S['include'][P]> :
-        P extends 'attacks' ? Array < AttackGetPayload<S['include'][P]>>  :
-        P extends '_count' ? ArtCountOutputTypeGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (ArtArgs | ArtFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'guild' ? GuildGetPayload<S['select'][P]> :
-        P extends 'attacks' ? Array < AttackGetPayload<S['select'][P]>>  :
-        P extends '_count' ? ArtCountOutputTypeGetPayload<S['select'][P]> :  P extends keyof Art ? Art[P] : never
-  } 
-      : Art
-
-
-  type ArtCountArgs = 
+  type ArtCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<ArtFindManyArgs, 'select' | 'include'> & {
       select?: ArtCountAggregateInputType | true
     }
 
-  export interface ArtDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
-
+  export interface ArtDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Art'], meta: { name: 'Art' } }
     /**
      * Find zero or one Art that matches the filter.
      * @param {ArtFindUniqueArgs} args - Arguments to find a Art
@@ -2194,9 +2495,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends ArtFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, ArtFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Art'> extends True ? Prisma__ArtClient<ArtGetPayload<T>> : Prisma__ArtClient<ArtGetPayload<T> | null, null>
+    findUnique<T extends ArtFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, ArtFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Art'> extends True ? Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one Art that matches the filter or throw an error  with `error.code='P2025'` 
@@ -2210,9 +2511,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends ArtFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, ArtFindUniqueOrThrowArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    findUniqueOrThrow<T extends ArtFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ArtFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first Art that matches the filter.
@@ -2227,9 +2528,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends ArtFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, ArtFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Art'> extends True ? Prisma__ArtClient<ArtGetPayload<T>> : Prisma__ArtClient<ArtGetPayload<T> | null, null>
+    findFirst<T extends ArtFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, ArtFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Art'> extends True ? Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first Art that matches the filter or
@@ -2245,9 +2546,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends ArtFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, ArtFindFirstOrThrowArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    findFirstOrThrow<T extends ArtFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ArtFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Arts that matches the filter.
@@ -2265,9 +2566,9 @@ export namespace Prisma {
      * const artWithNameOnly = await prisma.art.findMany({ select: { name: true } })
      * 
     **/
-    findMany<T extends ArtFindManyArgs>(
-      args?: SelectSubset<T, ArtFindManyArgs>
-    ): Prisma.PrismaPromise<Array<ArtGetPayload<T>>>
+    findMany<T extends ArtFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ArtFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a Art.
@@ -2281,9 +2582,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends ArtCreateArgs>(
-      args: SelectSubset<T, ArtCreateArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    create<T extends ArtCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, ArtCreateArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Arts.
@@ -2297,8 +2598,8 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends ArtCreateManyArgs>(
-      args?: SelectSubset<T, ArtCreateManyArgs>
+    createMany<T extends ArtCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ArtCreateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -2313,9 +2614,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends ArtDeleteArgs>(
-      args: SelectSubset<T, ArtDeleteArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    delete<T extends ArtDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, ArtDeleteArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one Art.
@@ -2332,9 +2633,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends ArtUpdateArgs>(
-      args: SelectSubset<T, ArtUpdateArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    update<T extends ArtUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, ArtUpdateArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Arts.
@@ -2348,8 +2649,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends ArtDeleteManyArgs>(
-      args?: SelectSubset<T, ArtDeleteManyArgs>
+    deleteMany<T extends ArtDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ArtDeleteManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -2369,8 +2670,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends ArtUpdateManyArgs>(
-      args: SelectSubset<T, ArtUpdateManyArgs>
+    updateMany<T extends ArtUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, ArtUpdateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -2390,9 +2691,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends ArtUpsertArgs>(
-      args: SelectSubset<T, ArtUpsertArgs>
-    ): Prisma__ArtClient<ArtGetPayload<T>>
+    upsert<T extends ArtUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, ArtUpsertArgs<ExtArgs>>
+    ): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Arts.
@@ -2410,7 +2711,7 @@ export namespace Prisma {
     count<T extends ArtCountArgs>(
       args?: Subset<T, ArtCountArgs>,
     ): Prisma.PrismaPromise<
-      T extends _Record<'select', any>
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], ArtCountAggregateOutputType>
@@ -2528,7 +2829,7 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__ArtClient<T, Null = never> implements Prisma.PrismaPromise<T> {
+  export class Prisma__ArtClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
     private readonly _queryType;
     private readonly _rootField;
@@ -2543,9 +2844,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    guild<T extends GuildArgs= {}>(args?: Subset<T, GuildArgs>): Prisma__GuildClient<GuildGetPayload<T> | Null>;
+    guild<T extends GuildArgs<ExtArgs> = {}>(args?: Subset<T, GuildArgs<ExtArgs>>): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
-    attacks<T extends Art$attacksArgs= {}>(args?: Subset<T, Art$attacksArgs>): Prisma.PrismaPromise<Array<AttackGetPayload<T>>| Null>;
+    attacks<T extends Art$attacksArgs<ExtArgs> = {}>(args?: Subset<T, Art$attacksArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     private get _document();
     /**
@@ -2577,15 +2878,15 @@ export namespace Prisma {
   /**
    * Art base type for findUnique actions
    */
-  export type ArtFindUniqueArgsBase = {
+  export type ArtFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter, which Art to fetch.
      */
@@ -2595,7 +2896,7 @@ export namespace Prisma {
   /**
    * Art findUnique
    */
-  export interface ArtFindUniqueArgs extends ArtFindUniqueArgsBase {
+  export interface ArtFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ArtFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -2607,15 +2908,15 @@ export namespace Prisma {
   /**
    * Art findUniqueOrThrow
    */
-  export type ArtFindUniqueOrThrowArgs = {
+  export type ArtFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter, which Art to fetch.
      */
@@ -2626,15 +2927,15 @@ export namespace Prisma {
   /**
    * Art base type for findFirst actions
    */
-  export type ArtFindFirstArgsBase = {
+  export type ArtFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter, which Art to fetch.
      */
@@ -2674,7 +2975,7 @@ export namespace Prisma {
   /**
    * Art findFirst
    */
-  export interface ArtFindFirstArgs extends ArtFindFirstArgsBase {
+  export interface ArtFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ArtFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -2686,15 +2987,15 @@ export namespace Prisma {
   /**
    * Art findFirstOrThrow
    */
-  export type ArtFindFirstOrThrowArgs = {
+  export type ArtFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter, which Art to fetch.
      */
@@ -2735,15 +3036,15 @@ export namespace Prisma {
   /**
    * Art findMany
    */
-  export type ArtFindManyArgs = {
+  export type ArtFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter, which Arts to fetch.
      */
@@ -2779,15 +3080,15 @@ export namespace Prisma {
   /**
    * Art create
    */
-  export type ArtCreateArgs = {
+  export type ArtCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * The data needed to create a Art.
      */
@@ -2798,7 +3099,7 @@ export namespace Prisma {
   /**
    * Art createMany
    */
-  export type ArtCreateManyArgs = {
+  export type ArtCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Arts.
      */
@@ -2810,15 +3111,15 @@ export namespace Prisma {
   /**
    * Art update
    */
-  export type ArtUpdateArgs = {
+  export type ArtUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * The data needed to update a Art.
      */
@@ -2833,7 +3134,7 @@ export namespace Prisma {
   /**
    * Art updateMany
    */
-  export type ArtUpdateManyArgs = {
+  export type ArtUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Arts.
      */
@@ -2848,15 +3149,15 @@ export namespace Prisma {
   /**
    * Art upsert
    */
-  export type ArtUpsertArgs = {
+  export type ArtUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * The filter to search for the Art to update in case it exists.
      */
@@ -2875,15 +3176,15 @@ export namespace Prisma {
   /**
    * Art delete
    */
-  export type ArtDeleteArgs = {
+  export type ArtDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
     /**
      * Filter which Art to delete.
      */
@@ -2894,7 +3195,7 @@ export namespace Prisma {
   /**
    * Art deleteMany
    */
-  export type ArtDeleteManyArgs = {
+  export type ArtDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Arts to delete
      */
@@ -2905,15 +3206,15 @@ export namespace Prisma {
   /**
    * Art.attacks
    */
-  export type Art$attacksArgs = {
+  export type Art$attacksArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     where?: AttackWhereInput
     orderBy?: Enumerable<AttackOrderByWithRelationInput>
     cursor?: AttackWhereUniqueInput
@@ -2926,15 +3227,15 @@ export namespace Prisma {
   /**
    * Art without action
    */
-  export type ArtArgs = {
+  export type ArtArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Art
      */
-    select?: ArtSelect | null
+    select?: ArtSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: ArtInclude | null
+    include?: ArtInclude<ExtArgs> | null
   }
 
 
@@ -3087,7 +3388,7 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type AttackAggregateArgs = {
+  export type AttackAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Attack to aggregate.
      */
@@ -3159,7 +3460,7 @@ export namespace Prisma {
 
 
 
-  export type AttackGroupByArgs = {
+  export type AttackGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: AttackWhereInput
     orderBy?: Enumerable<AttackOrderByWithAggregationInput>
     by: AttackScalarFieldEnum[]
@@ -3211,7 +3512,7 @@ export namespace Prisma {
     >
 
 
-  export type AttackSelect = {
+  export type AttackSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     name?: boolean
     key?: boolean
     art_key?: boolean
@@ -3227,38 +3528,41 @@ export namespace Prisma {
     fields_key?: boolean
     created_at?: boolean
     updated_at?: boolean
-    art?: boolean | ArtArgs
+    art?: boolean | ArtArgs<ExtArgs>
+  }, ExtArgs["result"]["attack"]>
+
+  export type AttackSelectScalar = {
+    name?: boolean
+    key?: boolean
+    art_key?: boolean
+    guild_id?: boolean
+    roles?: boolean
+    required_roles?: boolean
+    required_exp?: boolean
+    damage?: boolean
+    stamina?: boolean
+    embed_title?: boolean
+    embed_description?: boolean
+    embed_url?: boolean
+    fields_key?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type AttackInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    art?: boolean | ArtArgs<ExtArgs>
   }
 
 
-  export type AttackInclude = {
-    art?: boolean | ArtArgs
-  }
+  type AttackGetPayload<S extends boolean | null | undefined | AttackArgs> = $Types.GetResult<AttackPayload, S>
 
-  export type AttackGetPayload<S extends boolean | null | undefined | AttackArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Attack :
-    S extends undefined ? never :
-    S extends { include: any } & (AttackArgs | AttackFindManyArgs)
-    ? Attack  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'art' ? ArtGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (AttackArgs | AttackFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'art' ? ArtGetPayload<S['select'][P]> :  P extends keyof Attack ? Attack[P] : never
-  } 
-      : Attack
-
-
-  type AttackCountArgs = 
+  type AttackCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<AttackFindManyArgs, 'select' | 'include'> & {
       select?: AttackCountAggregateInputType | true
     }
 
-  export interface AttackDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
-
+  export interface AttackDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Attack'], meta: { name: 'Attack' } }
     /**
      * Find zero or one Attack that matches the filter.
      * @param {AttackFindUniqueArgs} args - Arguments to find a Attack
@@ -3270,9 +3574,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends AttackFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, AttackFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Attack'> extends True ? Prisma__AttackClient<AttackGetPayload<T>> : Prisma__AttackClient<AttackGetPayload<T> | null, null>
+    findUnique<T extends AttackFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, AttackFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Attack'> extends True ? Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one Attack that matches the filter or throw an error  with `error.code='P2025'` 
@@ -3286,9 +3590,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends AttackFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, AttackFindUniqueOrThrowArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    findUniqueOrThrow<T extends AttackFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AttackFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first Attack that matches the filter.
@@ -3303,9 +3607,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends AttackFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, AttackFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Attack'> extends True ? Prisma__AttackClient<AttackGetPayload<T>> : Prisma__AttackClient<AttackGetPayload<T> | null, null>
+    findFirst<T extends AttackFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, AttackFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Attack'> extends True ? Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first Attack that matches the filter or
@@ -3321,9 +3625,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends AttackFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, AttackFindFirstOrThrowArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    findFirstOrThrow<T extends AttackFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AttackFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Attacks that matches the filter.
@@ -3341,9 +3645,9 @@ export namespace Prisma {
      * const attackWithNameOnly = await prisma.attack.findMany({ select: { name: true } })
      * 
     **/
-    findMany<T extends AttackFindManyArgs>(
-      args?: SelectSubset<T, AttackFindManyArgs>
-    ): Prisma.PrismaPromise<Array<AttackGetPayload<T>>>
+    findMany<T extends AttackFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AttackFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<AttackPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a Attack.
@@ -3357,9 +3661,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends AttackCreateArgs>(
-      args: SelectSubset<T, AttackCreateArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    create<T extends AttackCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, AttackCreateArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Attacks.
@@ -3373,8 +3677,8 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends AttackCreateManyArgs>(
-      args?: SelectSubset<T, AttackCreateManyArgs>
+    createMany<T extends AttackCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AttackCreateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -3389,9 +3693,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends AttackDeleteArgs>(
-      args: SelectSubset<T, AttackDeleteArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    delete<T extends AttackDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, AttackDeleteArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one Attack.
@@ -3408,9 +3712,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends AttackUpdateArgs>(
-      args: SelectSubset<T, AttackUpdateArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    update<T extends AttackUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, AttackUpdateArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Attacks.
@@ -3424,8 +3728,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends AttackDeleteManyArgs>(
-      args?: SelectSubset<T, AttackDeleteManyArgs>
+    deleteMany<T extends AttackDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AttackDeleteManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -3445,8 +3749,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends AttackUpdateManyArgs>(
-      args: SelectSubset<T, AttackUpdateManyArgs>
+    updateMany<T extends AttackUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, AttackUpdateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -3466,9 +3770,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends AttackUpsertArgs>(
-      args: SelectSubset<T, AttackUpsertArgs>
-    ): Prisma__AttackClient<AttackGetPayload<T>>
+    upsert<T extends AttackUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, AttackUpsertArgs<ExtArgs>>
+    ): Prisma__AttackClient<$Types.GetResult<AttackPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Attacks.
@@ -3486,7 +3790,7 @@ export namespace Prisma {
     count<T extends AttackCountArgs>(
       args?: Subset<T, AttackCountArgs>,
     ): Prisma.PrismaPromise<
-      T extends _Record<'select', any>
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], AttackCountAggregateOutputType>
@@ -3604,7 +3908,7 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__AttackClient<T, Null = never> implements Prisma.PrismaPromise<T> {
+  export class Prisma__AttackClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
     private readonly _queryType;
     private readonly _rootField;
@@ -3619,7 +3923,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    art<T extends ArtArgs= {}>(args?: Subset<T, ArtArgs>): Prisma__ArtClient<ArtGetPayload<T> | Null>;
+    art<T extends ArtArgs<ExtArgs> = {}>(args?: Subset<T, ArtArgs<ExtArgs>>): Prisma__ArtClient<$Types.GetResult<ArtPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -3651,15 +3955,15 @@ export namespace Prisma {
   /**
    * Attack base type for findUnique actions
    */
-  export type AttackFindUniqueArgsBase = {
+  export type AttackFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter, which Attack to fetch.
      */
@@ -3669,7 +3973,7 @@ export namespace Prisma {
   /**
    * Attack findUnique
    */
-  export interface AttackFindUniqueArgs extends AttackFindUniqueArgsBase {
+  export interface AttackFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AttackFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -3681,15 +3985,15 @@ export namespace Prisma {
   /**
    * Attack findUniqueOrThrow
    */
-  export type AttackFindUniqueOrThrowArgs = {
+  export type AttackFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter, which Attack to fetch.
      */
@@ -3700,15 +4004,15 @@ export namespace Prisma {
   /**
    * Attack base type for findFirst actions
    */
-  export type AttackFindFirstArgsBase = {
+  export type AttackFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter, which Attack to fetch.
      */
@@ -3748,7 +4052,7 @@ export namespace Prisma {
   /**
    * Attack findFirst
    */
-  export interface AttackFindFirstArgs extends AttackFindFirstArgsBase {
+  export interface AttackFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AttackFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -3760,15 +4064,15 @@ export namespace Prisma {
   /**
    * Attack findFirstOrThrow
    */
-  export type AttackFindFirstOrThrowArgs = {
+  export type AttackFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter, which Attack to fetch.
      */
@@ -3809,15 +4113,15 @@ export namespace Prisma {
   /**
    * Attack findMany
    */
-  export type AttackFindManyArgs = {
+  export type AttackFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter, which Attacks to fetch.
      */
@@ -3853,15 +4157,15 @@ export namespace Prisma {
   /**
    * Attack create
    */
-  export type AttackCreateArgs = {
+  export type AttackCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * The data needed to create a Attack.
      */
@@ -3872,7 +4176,7 @@ export namespace Prisma {
   /**
    * Attack createMany
    */
-  export type AttackCreateManyArgs = {
+  export type AttackCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Attacks.
      */
@@ -3884,15 +4188,15 @@ export namespace Prisma {
   /**
    * Attack update
    */
-  export type AttackUpdateArgs = {
+  export type AttackUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * The data needed to update a Attack.
      */
@@ -3907,7 +4211,7 @@ export namespace Prisma {
   /**
    * Attack updateMany
    */
-  export type AttackUpdateManyArgs = {
+  export type AttackUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Attacks.
      */
@@ -3922,15 +4226,15 @@ export namespace Prisma {
   /**
    * Attack upsert
    */
-  export type AttackUpsertArgs = {
+  export type AttackUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * The filter to search for the Attack to update in case it exists.
      */
@@ -3949,15 +4253,15 @@ export namespace Prisma {
   /**
    * Attack delete
    */
-  export type AttackDeleteArgs = {
+  export type AttackDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
     /**
      * Filter which Attack to delete.
      */
@@ -3968,7 +4272,7 @@ export namespace Prisma {
   /**
    * Attack deleteMany
    */
-  export type AttackDeleteManyArgs = {
+  export type AttackDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Attacks to delete
      */
@@ -3979,15 +4283,15 @@ export namespace Prisma {
   /**
    * Attack without action
    */
-  export type AttackArgs = {
+  export type AttackArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Attack
      */
-    select?: AttackSelect | null
+    select?: AttackSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: AttackInclude | null
+    include?: AttackInclude<ExtArgs> | null
   }
 
 
@@ -4086,7 +4390,7 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type VarialbleAggregateArgs = {
+  export type VarialbleAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Varialble to aggregate.
      */
@@ -4158,7 +4462,7 @@ export namespace Prisma {
 
 
 
-  export type VarialbleGroupByArgs = {
+  export type VarialbleGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: VarialbleWhereInput
     orderBy?: Enumerable<VarialbleOrderByWithAggregationInput>
     by: VarialbleScalarFieldEnum[]
@@ -4203,7 +4507,7 @@ export namespace Prisma {
     >
 
 
-  export type VarialbleSelect = {
+  export type VarialbleSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     guild_id?: boolean
     name?: boolean
     text?: boolean
@@ -4212,38 +4516,34 @@ export namespace Prisma {
     roles?: boolean
     created_at?: boolean
     updated_at?: boolean
-    guild?: boolean | GuildArgs
+    guild?: boolean | GuildArgs<ExtArgs>
+  }, ExtArgs["result"]["varialble"]>
+
+  export type VarialbleSelectScalar = {
+    guild_id?: boolean
+    name?: boolean
+    text?: boolean
+    visibleCaseIfNotAuthorizerMember?: boolean
+    required_roles?: boolean
+    roles?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type VarialbleInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    guild?: boolean | GuildArgs<ExtArgs>
   }
 
 
-  export type VarialbleInclude = {
-    guild?: boolean | GuildArgs
-  }
+  type VarialbleGetPayload<S extends boolean | null | undefined | VarialbleArgs> = $Types.GetResult<VarialblePayload, S>
 
-  export type VarialbleGetPayload<S extends boolean | null | undefined | VarialbleArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Varialble :
-    S extends undefined ? never :
-    S extends { include: any } & (VarialbleArgs | VarialbleFindManyArgs)
-    ? Varialble  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'guild' ? GuildGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (VarialbleArgs | VarialbleFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'guild' ? GuildGetPayload<S['select'][P]> :  P extends keyof Varialble ? Varialble[P] : never
-  } 
-      : Varialble
-
-
-  type VarialbleCountArgs = 
+  type VarialbleCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<VarialbleFindManyArgs, 'select' | 'include'> & {
       select?: VarialbleCountAggregateInputType | true
     }
 
-  export interface VarialbleDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
-
+  export interface VarialbleDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Varialble'], meta: { name: 'Varialble' } }
     /**
      * Find zero or one Varialble that matches the filter.
      * @param {VarialbleFindUniqueArgs} args - Arguments to find a Varialble
@@ -4255,9 +4555,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends VarialbleFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, VarialbleFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Varialble'> extends True ? Prisma__VarialbleClient<VarialbleGetPayload<T>> : Prisma__VarialbleClient<VarialbleGetPayload<T> | null, null>
+    findUnique<T extends VarialbleFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, VarialbleFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Varialble'> extends True ? Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one Varialble that matches the filter or throw an error  with `error.code='P2025'` 
@@ -4271,9 +4571,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends VarialbleFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, VarialbleFindUniqueOrThrowArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    findUniqueOrThrow<T extends VarialbleFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, VarialbleFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first Varialble that matches the filter.
@@ -4288,9 +4588,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends VarialbleFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, VarialbleFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Varialble'> extends True ? Prisma__VarialbleClient<VarialbleGetPayload<T>> : Prisma__VarialbleClient<VarialbleGetPayload<T> | null, null>
+    findFirst<T extends VarialbleFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, VarialbleFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Varialble'> extends True ? Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first Varialble that matches the filter or
@@ -4306,9 +4606,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends VarialbleFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, VarialbleFindFirstOrThrowArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    findFirstOrThrow<T extends VarialbleFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, VarialbleFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Varialbles that matches the filter.
@@ -4326,9 +4626,9 @@ export namespace Prisma {
      * const varialbleWithGuild_idOnly = await prisma.varialble.findMany({ select: { guild_id: true } })
      * 
     **/
-    findMany<T extends VarialbleFindManyArgs>(
-      args?: SelectSubset<T, VarialbleFindManyArgs>
-    ): Prisma.PrismaPromise<Array<VarialbleGetPayload<T>>>
+    findMany<T extends VarialbleFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, VarialbleFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a Varialble.
@@ -4342,9 +4642,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends VarialbleCreateArgs>(
-      args: SelectSubset<T, VarialbleCreateArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    create<T extends VarialbleCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, VarialbleCreateArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Varialbles.
@@ -4358,8 +4658,8 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends VarialbleCreateManyArgs>(
-      args?: SelectSubset<T, VarialbleCreateManyArgs>
+    createMany<T extends VarialbleCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, VarialbleCreateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -4374,9 +4674,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends VarialbleDeleteArgs>(
-      args: SelectSubset<T, VarialbleDeleteArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    delete<T extends VarialbleDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, VarialbleDeleteArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one Varialble.
@@ -4393,9 +4693,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends VarialbleUpdateArgs>(
-      args: SelectSubset<T, VarialbleUpdateArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    update<T extends VarialbleUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, VarialbleUpdateArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Varialbles.
@@ -4409,8 +4709,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends VarialbleDeleteManyArgs>(
-      args?: SelectSubset<T, VarialbleDeleteManyArgs>
+    deleteMany<T extends VarialbleDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, VarialbleDeleteManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -4430,8 +4730,8 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends VarialbleUpdateManyArgs>(
-      args: SelectSubset<T, VarialbleUpdateManyArgs>
+    updateMany<T extends VarialbleUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, VarialbleUpdateManyArgs<ExtArgs>>
     ): Prisma.PrismaPromise<BatchPayload>
 
     /**
@@ -4451,9 +4751,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends VarialbleUpsertArgs>(
-      args: SelectSubset<T, VarialbleUpsertArgs>
-    ): Prisma__VarialbleClient<VarialbleGetPayload<T>>
+    upsert<T extends VarialbleUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, VarialbleUpsertArgs<ExtArgs>>
+    ): Prisma__VarialbleClient<$Types.GetResult<VarialblePayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Varialbles.
@@ -4471,7 +4771,7 @@ export namespace Prisma {
     count<T extends VarialbleCountArgs>(
       args?: Subset<T, VarialbleCountArgs>,
     ): Prisma.PrismaPromise<
-      T extends _Record<'select', any>
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], VarialbleCountAggregateOutputType>
@@ -4589,7 +4889,7 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__VarialbleClient<T, Null = never> implements Prisma.PrismaPromise<T> {
+  export class Prisma__VarialbleClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
     private readonly _queryType;
     private readonly _rootField;
@@ -4604,7 +4904,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    guild<T extends GuildArgs= {}>(args?: Subset<T, GuildArgs>): Prisma__GuildClient<GuildGetPayload<T> | Null>;
+    guild<T extends GuildArgs<ExtArgs> = {}>(args?: Subset<T, GuildArgs<ExtArgs>>): Prisma__GuildClient<$Types.GetResult<GuildPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -4636,15 +4936,15 @@ export namespace Prisma {
   /**
    * Varialble base type for findUnique actions
    */
-  export type VarialbleFindUniqueArgsBase = {
+  export type VarialbleFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter, which Varialble to fetch.
      */
@@ -4654,7 +4954,7 @@ export namespace Prisma {
   /**
    * Varialble findUnique
    */
-  export interface VarialbleFindUniqueArgs extends VarialbleFindUniqueArgsBase {
+  export interface VarialbleFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends VarialbleFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -4666,15 +4966,15 @@ export namespace Prisma {
   /**
    * Varialble findUniqueOrThrow
    */
-  export type VarialbleFindUniqueOrThrowArgs = {
+  export type VarialbleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter, which Varialble to fetch.
      */
@@ -4685,15 +4985,15 @@ export namespace Prisma {
   /**
    * Varialble base type for findFirst actions
    */
-  export type VarialbleFindFirstArgsBase = {
+  export type VarialbleFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter, which Varialble to fetch.
      */
@@ -4733,7 +5033,7 @@ export namespace Prisma {
   /**
    * Varialble findFirst
    */
-  export interface VarialbleFindFirstArgs extends VarialbleFindFirstArgsBase {
+  export interface VarialbleFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends VarialbleFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -4745,15 +5045,15 @@ export namespace Prisma {
   /**
    * Varialble findFirstOrThrow
    */
-  export type VarialbleFindFirstOrThrowArgs = {
+  export type VarialbleFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter, which Varialble to fetch.
      */
@@ -4794,15 +5094,15 @@ export namespace Prisma {
   /**
    * Varialble findMany
    */
-  export type VarialbleFindManyArgs = {
+  export type VarialbleFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter, which Varialbles to fetch.
      */
@@ -4838,15 +5138,15 @@ export namespace Prisma {
   /**
    * Varialble create
    */
-  export type VarialbleCreateArgs = {
+  export type VarialbleCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * The data needed to create a Varialble.
      */
@@ -4857,7 +5157,7 @@ export namespace Prisma {
   /**
    * Varialble createMany
    */
-  export type VarialbleCreateManyArgs = {
+  export type VarialbleCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Varialbles.
      */
@@ -4869,15 +5169,15 @@ export namespace Prisma {
   /**
    * Varialble update
    */
-  export type VarialbleUpdateArgs = {
+  export type VarialbleUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * The data needed to update a Varialble.
      */
@@ -4892,7 +5192,7 @@ export namespace Prisma {
   /**
    * Varialble updateMany
    */
-  export type VarialbleUpdateManyArgs = {
+  export type VarialbleUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Varialbles.
      */
@@ -4907,15 +5207,15 @@ export namespace Prisma {
   /**
    * Varialble upsert
    */
-  export type VarialbleUpsertArgs = {
+  export type VarialbleUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * The filter to search for the Varialble to update in case it exists.
      */
@@ -4934,15 +5234,15 @@ export namespace Prisma {
   /**
    * Varialble delete
    */
-  export type VarialbleDeleteArgs = {
+  export type VarialbleDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
     /**
      * Filter which Varialble to delete.
      */
@@ -4953,7 +5253,7 @@ export namespace Prisma {
   /**
    * Varialble deleteMany
    */
-  export type VarialbleDeleteManyArgs = {
+  export type VarialbleDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Varialbles to delete
      */
@@ -4964,15 +5264,15 @@ export namespace Prisma {
   /**
    * Varialble without action
    */
-  export type VarialbleArgs = {
+  export type VarialbleArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Varialble
      */
-    select?: VarialbleSelect | null
+    select?: VarialbleSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
      */
-    include?: VarialbleInclude | null
+    include?: VarialbleInclude<ExtArgs> | null
   }
 
 
