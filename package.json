@@ -12,7 +12,6 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:debug": "jest --debug",
-    
     "vercel-build": "prisma generate && next build"
   },
   "keywords": [],

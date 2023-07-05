@@ -27,3 +27,5 @@ Volumes/Backend
 ./openFile.cpp
 Storage
 dist
+.vercel
+.env*.local
