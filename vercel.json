@@ -1,5 +1,5 @@
 {
-  "rewrites": [
+  "routes": [
     { "src": "/guilds/([^/]+)/(.*)", "dest": "/app/guilds/[guild_id]/route.ts" }
   ]
 }
