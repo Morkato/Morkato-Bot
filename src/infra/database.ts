@@ -1,28 +1,17 @@
-import { PrismaClient, Prisma } from 'client'
+import { PrismaClient } from '@prisma/client'
 
-declare global {
-  let client: PrismaClient | undefined;
-}
+let prisma: PrismaClient
 
-// @ts-ignore
-export const prisma = globalThis.client ?? new PrismaClient({
-  log: ['query', 'info', 'warn', 'error']
-})
 
-function middleware(model: Prisma.MiddlewareParams['model'], action: Prisma.MiddlewareParams['action'] | Prisma.MiddlewareParams['action'][], func: Prisma.Middleware): Prisma.Middleware  {
-  return async (params, next) => {
-    if(params.model === model && (Array.isArray(action)) ? action.includes(params.action) : params.action === action) {
-      return await func(params, next);
-    }
-
-    return await next(params)
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient()
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient()
   }
+
+  prisma = global.prisma
 }
 
-// @ts-ignore
-if (!globalThis.client) {
-  // @ts-ignore
-  globalThis.client = prisma 
-}
 
 export default prisma;
