@@ -21,7 +21,7 @@ import {
   AlreadyExistsError
 } from 'errors'
 
-import { PrismaClient, Prisma } from 'client'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 export const select: Prisma.ArtSelect = {
   name: true,
