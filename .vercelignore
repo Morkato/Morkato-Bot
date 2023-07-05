@@ -2,7 +2,6 @@
 ./Commands
 ./morkato
 ./prisma
-./utils
 ./webkit
 ./.env
 ./.env.exemple
@@ -10,5 +9,3 @@
 ./app.cpp
 ./requirements.txt
 ./settings.json
-
-./src/client
