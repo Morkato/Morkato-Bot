@@ -1,6 +1,5 @@
 ./api
 ./Commands
-./errors
 ./morkato
 ./prisma
 ./utils
