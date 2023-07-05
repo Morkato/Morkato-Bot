@@ -37,11 +37,11 @@ class GuildPayload:
   def request_element(self, method: str, element: str, /, *, call: Callable[[requests.Response], T], data: Optional[str] = None, json: Optional[Json] = None) -> T: ...
   def request_element(self, method: str, element: str, /, *, call: Optional[Callable[[requests.Response], T]] = None, data: Optional[str] = None, json: Optional[Json] = None) -> Union[requests.Response, T]:
     if data:
-      response = requests.request(method, f'{URL}/api/bot/guilds/{self.id}/{element.strip("/")}', data=data, headers=AUTH)
+      response = requests.request(method, f'{URL}/guilds/{self.id}/{element.strip("/")}', data=data, headers=AUTH)
     elif json:
-      response = requests.request(method, f'{URL}/api/bot/guilds/{self.id}/{element.strip("/")}', json=json, headers=AUTH)
+      response = requests.request(method, f'{URL}/guilds/{self.id}/{element.strip("/")}', json=json, headers=AUTH)
     else:
-      response = requests.request(method, f'{URL}/api/bot/guilds/{self.id}/{element.strip("/")}', headers=AUTH)
+      response = requests.request(method, f'{URL}/guilds/{self.id}/{element.strip("/")}', headers=AUTH)
 
     if callable(call):
       return call(response)
@@ -172,4 +172,4 @@ def get(guild: discordGuild) -> Guild:
 
     return res.json()
 
-  return Guild(guild, check(requests.get(f'{URL}/api/bot/guilds/{guild.id}', headers=AUTH)))
+  return Guild(guild, check(requests.get(f'{URL}/guilds/{guild.id}', headers=AUTH)))
