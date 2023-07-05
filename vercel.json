@@ -1,5 +1,7 @@
 {
   "routes": [
+    { "handle": "filesystem" },
+    { "src": "/guilds/([^/]+)", "dest": "/app/guilds/[guild_id]/route.ts" },
     { "src": "/guilds/([^/]+)/(.*)", "dest": "/app/guilds/[guild_id]/route.ts" }
   ]
 }
