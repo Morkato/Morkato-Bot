@@ -3,8 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-
-  previewFeatures = ["jsonProtocol"]
 }
 
 datasource db {
@@ -24,19 +22,20 @@ model Guild {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  arts Art[]       @relation()
-  vars Varialble[]
+  arts    Art[]
+  attacks Attack[]
+  vars    Variable[]
 
   @@map("guilds")
 }
 
 model Art {
-  name String
-  key  String
-  type ArtType
-  role String?
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  guild    Guild  @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  name String
+  id   String
+  type ArtType
+
   guild_id String
 
   embed_title       String?
@@ -48,47 +47,45 @@ model Art {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@id([key, guild_id])
+  @@id([id, guild_id])
   @@map("arts")
 }
 
 model Attack {
   name String
-  key  String
+  id   String
 
-  art Art @relation(fields: [art_key, guild_id], references: [key, guild_id], onDelete: Cascade)
+  guild   Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  art     Art?     @relation(fields: [art_id, guild_id], references: [id, guild_id], onDelete: Cascade, onUpdate: Cascade)
+  attacks Attack[] @relation("ParentAttack")
 
-  art_key  String
   guild_id String
+  art_id   String?
 
-  roles          String[] @default([])
-  required_roles Int      @default(0)
-  required_exp   Int      @default(0)
+  parent Attack? @relation("ParentAttack", fields: [parent_id, guild_id], references: [id, guild_id])
 
-  damage  Int @default(3000)
-  stamina Int @default(3000)
+  parent_id String?
+
+  required_exp Int @default(0)
 
   embed_title       String?
   embed_description String?
   embed_url         String?
 
-  fields_key String?
-
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@id([key, guild_id])
+  @@id([id, guild_id])
   @@map("attacks")
 }
 
-model Varialble {
-  guild Guild @relation(fields: [guild_id], references: [id])
+model Variable {
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   guild_id String
 
-  name                             String
-  text                             String
-  visibleCaseIfNotAuthorizerMember Boolean @default(false)
+  name String
+  text String
 
   required_roles Int      @default(1)
   roles          String[]
@@ -97,5 +94,5 @@ model Varialble {
   updated_at DateTime @updatedAt
 
   @@id([guild_id, name])
-  @@map("guild_varialbles")
+  @@map("guild_variables")
 }

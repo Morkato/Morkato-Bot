@@ -15,6 +15,7 @@ node_modules
 Backend/.env
 
 *.test.*
+*.private.*
 
 # Python
 
@@ -29,3 +30,5 @@ Storage
 dist
 .vercel
 .env*.local
+
+spec

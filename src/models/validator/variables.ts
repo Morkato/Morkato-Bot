@@ -5,9 +5,10 @@ import { makeContext, assert } from './utils'
 import Joi from 'joi'
 
 export type Variable = {
-  name:                             string
-  text:                             string
-  visibleCaseIfNotAuthorizerMember: boolean
+  name: string
+  text: string
+
+  guild_id: string
 
   required_roles: number
   roles:          string[]
@@ -20,7 +21,8 @@ export function variableSchema({ original = {}, required = {} }: { original?: Pa
   return Joi.object({
     name: makeContext(Joi.string().trim().min(1).regex(/^[^-+>@&$][a-z0-9_]+[^-+>@&$]$/i), required['name'], original['name']),
     text: makeContext(Joi.string().trim().min(1).max(1024), required['text'], original['text']),
-    visibleCaseIfNotAuthorizerMember: makeContext(Joi.boolean(), required['visibleCaseIfNotAuthorizerMember'], original['visibleCaseIfNotAuthorizerMember']),
+
+    guild_id: makeContext(Joi.string().trim().regex(/^[0-9]+$/), required['guild_id'], original['guild_id']),
 
     required_roles: makeContext(Joi.number().integer(), required['required_roles'], original['required_roles']),
     roles: makeContext(Joi.array().items(Joi.string().regex(/^[0-9]+$/)), required['roles'], original['roles']),
@@ -39,7 +41,6 @@ export function assertVariable(obj: Record<string, unknown>): Variable {
     required: {
       name: true,
       text: true,
-      visibleCaseIfNotAuthorizerMember: true,
 
       required_roles: true,
       roles: true,

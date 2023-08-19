@@ -17,6 +17,9 @@
     }, {
       "src": "/guilds/([0-9]+)/arts/([^/]+)/(.*)",
       "dest": "/guilds/[guild_id]/arts/[art_name]/$2"
+    }, {
+      "src": "/guilds/([0-9]+)/attacks/$2",
+      "dest": "/guilds/[guild_id]/attacks"
     }
   ]
 }
