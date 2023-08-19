@@ -16,4 +16,16 @@
     "node_modules": true,
     "dist": true
   },
+  "cSpell.ignoreWords": [
+    "KEKKIJUTSU",
+    "Morkato",
+    "aiohttp",
+    "kekki",
+    "kekkijutsu",
+    "levelname",
+    "morkato",
+    "numerize",
+    "orjson",
+    "yarl"
+  ],
 }

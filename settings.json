@@ -1,9 +1,0 @@
-{
-  "urls": {
-    "discord": {
-      "base": "https://discord.com",
-      "api": "https://discord.com/api/v9",
-      "cdn": "https://cdn.discordapp.com"
-    }
-  }
-}

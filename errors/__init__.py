@@ -1,5 +1,9 @@
-from discord.embeds import Embed
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+  from discord.embeds import Embed
 
 class BaseError(Exception):
   def __init__(self, message: str, action: str, embeds: Optional[list[Embed]]) -> None:
@@ -14,7 +18,7 @@ class BaseError(Exception):
 
 class NotFoundError(BaseError):
   def __init__(self, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
-    message = message or "Não foi possivel achar esse item."
+    message = message or "Não foi possível achar esse item."
     action = action or "Tente novamente com outro nome."
     embeds = embeds or []
 

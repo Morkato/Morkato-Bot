@@ -1,166 +1,107 @@
-import valid, { 
-  type Art,
-  type ArtType,
-  type editeArt,
+import type { Art, ArtType } from './validator/art'
+import type { PrismaClient } from '@prisma/client'
 
-  assertArt
-} from './validator/art'
+import { validate, id as schema_id, type as schema_type } from './validator/art'
+import { id as schema_guild_id }                          from './validator/guild'
+import { assert }                                         from './validator/utils'
 
-import {
-  select as selectMembersInAttacks
-} from 'models/attacks'
-
-import { Guild, assertGuild } from 'models/validator/guild'
-
-import { assert, schemas } from './validator/utils'
-
-import { toKey } from 'utils'
-
-import {
-  NotFoundError,
-  AlreadyExistsError
-} from 'errors'
-
-import { PrismaClient, Prisma } from '@prisma/client'
-
-export const select: Prisma.ArtSelect = {
-  name: true,
-  type: true,
-  role: true,
-
-  embed_title: true,
-  embed_description: true,
-  embed_url: true,
-
-  attacks: { select: selectMembersInAttacks, orderBy: { created_at: 'asc' } },
-  
-  created_at: true,
-  updated_at: true
-}
+import { uuid }                              from 'utils/uuid'
+import { NotFoundError, AlreadyExistsError } from 'errors'
 
 const errors = {
-  errorIfArtNotExists: ({ id }: Guild, name: string) => new NotFoundError({
+  errorIfArtNotExists: (id: string, name: string) => new NotFoundError({
     message: `Erro: A arte com o nome: ${name} não existe no servidor: ${id}.`
   }),
-  errorIfArtAlreadyExists: ({ id }: Guild, name: string) => new AlreadyExistsError({
+  errorIfArtAlreadyExists: (id: string, name: string) => new AlreadyExistsError({
     message: `Erro: A arte com o nome: ${name} já existe no servidor: ${id}.`
   })
 }
 
+type ArtWhereParams = {
+  guild_id?: string
+  type?:     ArtType
+}
+
+type ArtGetherParams = { guild_id: string, id: string }
+
+type ArtCreateParams = { guild_id: string, data: Omit<Partial<Art> & Pick<Art, 'name' | 'type'>, 'guild_id' | 'id'> }
+
+type ArtEditParams = { guild_id: string, id: string, data: Omit<Partial<Art>, 'guild_id' | 'id'> }
+
+type ArtDeleteParams = ArtGetherParams
+
 export default function Arts(db: PrismaClient['art']) {
-  async function getAll(guild: Guild): Promise<Art[]> {
-    assertGuild(guild)
-    
-    const arts = await db.findMany({ where: { guild_id: guild.id }, select, orderBy: { created_at: 'asc' } })
+  async function where({ guild_id, type }: ArtWhereParams): Promise<Art[]> {
+    guild_id = !guild_id ? guild_id : assert(schema_guild_id, guild_id)
+    type     = !type ? type : assert(schema_type, type)
 
-    return arts as Art[];
+    const arts = await db.findMany({ where: { guild_id, type }, orderBy: { created_at: 'asc' } })
+
+    return arts;
   }
-  async function get({ guild, name }: { guild: Guild, name: string }): Promise<Art> {
-    name = assert(schemas.name.required(), name)
-    assertGuild(guild)
 
-    const art = await db.findUnique({ where: { key_guild_id: { key: toKey(name), guild_id: guild.id } }, select })
+  async function get({ guild_id, id }: ArtGetherParams): Promise<Art> {
+    guild_id = assert(schema_guild_id, guild_id)
+    id       = assert(schema_id, id)
+
+    const art = await db.findUnique({ where: { id_guild_id: { guild_id, id } } })
 
     if(!art) {
       const error = errors['errorIfArtNotExists']
 
-      throw error(guild, name);
+      throw error(guild_id, id);
     }
 
-    return art as Art;
+    return art;
   }
-  async function create({ guild, data }: { guild: Guild, data: Partial<Omit<Art, 'attacks'>> }): Promise<Art> {
-    const {
-      name,
-      type,
-      role,
 
-      embed_title,
-      embed_description,
-      embed_url
-    } = valid(data, {
-      required: {
-        name: true,
-        type: true
-      }
-    })
-    assertGuild(guild)
+  async function create({ guild_id, data }: ArtCreateParams): Promise<Art> {
+    guild_id = assert(schema_guild_id, guild_id)
+    
+    const { name, type, created_at, updated_at, ...rest } = validate<ArtCreateParams['data']>(data, { required: { name: true, type: true } })
 
     try {
-      const art = await db.create({ data: {
-        name,
-        type,
-        role,
+      const art = await db.create({ data: { name, type, guild_id, id: uuid(), ...rest } })
 
-        embed_title,
-        embed_description,
-        embed_url,
-
-        key: toKey(name),
-        guild_id: guild.id
-      }, select })
-
-      return art as Art;
+      return art;
     } catch {
       const error = errors['errorIfArtAlreadyExists']
       
-      throw error(guild, name);
+      throw error(guild_id, name);
     }
   }
-  async function editArt({ guild, art, data }: { guild: Guild, art: Art, data: Omit<Partial<Art>, 'attacks'> }): Promise<Art> {
-    assertGuild(guild)
-    assertArt(art)
+  async function edit({ guild_id, id, data }: ArtEditParams): Promise<Art> {
+    guild_id = assert(schema_guild_id, guild_id)
+    id       = assert(schema_id, id)
 
-    let {
-      name,
-      type,
-      role,
-      key,
-
-      embed_title,
-      embed_description,
-      embed_url
-    } = valid(data, {})
-
-    if(name) {
-      key = toKey(name)
-    }
+    const { created_at, updated_at, ...rest } = validate<ArtEditParams['data']>(data, {})
 
     try {
-      const editedArt = await db.update({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, data: {
-        name,
-        type,
-        role,
-        key,
+      const editedArt = await db.update({ where: { id_guild_id: { guild_id, id } }, data: rest })
 
-        embed_title,
-        embed_description,
-        embed_url
-      }, select })
-
-      return editedArt as Art;
+      return editedArt;
     } catch {
       const error = errors['errorIfArtNotExists']
       
-      throw error(guild, art.name);
+      throw error(guild_id, id);
     }
   }
-  async function delArt({ guild, art }: { guild: Guild, art: Art }): Promise<Art> {
-    assertGuild(guild)
-    assertArt(art)
+  async function del({ guild_id, id }: ArtDeleteParams): Promise<Art> {
+    guild_id = assert(schema_guild_id, guild_id)
+    id       = assert(schema_id, id)
 
     try {
-      const deletedArt = await db.delete({ where: { key_guild_id: { key: toKey(art.name), guild_id: guild.id } }, select })
+      const deletedArt = await db.delete({ where: { id_guild_id: { guild_id, id } } })
 
       return deletedArt as Art;
     } catch {
       const error = errors['errorIfArtNotExists']
 
-      throw error(guild, art.name);
+      throw error(guild_id, id);
     }
   }
 
-  return { getAll, get, create, editArt, delArt };
+  return { where, get, create, edit, del };
 }
 
-export type { Art, ArtType, editeArt };
+export type { Art, ArtType };

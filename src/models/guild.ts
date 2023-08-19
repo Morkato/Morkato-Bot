@@ -1,14 +1,10 @@
+import type { Guild }                from './validator/guild'
 import type { PrismaClient, Prisma } from '@prisma/client'
 
-import { type Guild, assertGuild } from './validator/guild'
-
-import { select as selectMembersInVariables } from './varialbles'
 import { assert, schemas } from './validator/utils'
 
 const select: Prisma.GuildSelect = {
   id: true,
-
-  vars: { select: selectMembersInVariables, orderBy: { created_at: 'asc' } },
 
   created_at: true,
   updated_at: true
@@ -39,14 +35,10 @@ export default function Guilds(db: PrismaClient['guild']) {
 
       return guilds;
     },
-    async deleteGuild(guild: Guild): Promise<Guild> {
-      assertGuild(guild)
-    
-      const { id } = guild
-    
-      guild = await db.delete({ where: { id }, select }) as Guild
+    async deleteGuild(id: string): Promise<Guild> {
+      assert(schemas.id.required(), id)
 
-      return guild;
+      return await db.delete({ where: { id }, select }) as Guild;
     }
   }
 }
