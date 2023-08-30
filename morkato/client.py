@@ -1,5 +1,5 @@
 from .src.client import (
-  Morkato,
-  Client,
+  MorkatoClientManager,
+  MorkatoBot,
   Cog
 )

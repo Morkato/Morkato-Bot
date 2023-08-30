@@ -1,6 +1,13 @@
-import type { Handler } from "express"
+import type { Handler, Request, Response, NextFunction } from "express"
 
-import { BaseError } from 'errors'
+import { BaseError, InternalServerError } from 'errors'
+
+type SendType = 'json' | 'text'
+
+const sendEvents = {
+  json: (res: Response, obj: any) => res.json(obj),
+  text: (res: Response, obj: any) => res.send(obj)
+}
 
 export function then<Params extends any[]>(handle: Handler): Handler {
   return async (req, res, next) => {
@@ -17,5 +24,17 @@ export function then<Params extends any[]>(handle: Handler): Handler {
 
       res.status(500).json({ message: 'InternalErrorServer', error: err })
     }
+  }
+}
+
+export function send<T extends any = {}>(type: SendType) {
+  const event = sendEvents[type]
+
+  if (!event) {
+    throw new Error('Type Send not exists!')
+  }
+
+  return async (req: Request, res: Response, next: NextFunction, obj: T) => {
+    event(res, obj)
   }
 }

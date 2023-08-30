@@ -7,6 +7,7 @@ import { UnauthorizedError } from 'errors'
 
 import { then } from './utils'
 
+import Players from 'models/players'
 import Attacks from 'models/attacks'
 import Guilds  from 'models/guild'
 import Arts    from 'models/arts'
@@ -19,6 +20,7 @@ import client from 'infra/database'
 
 dotenv.config()
 
+const players = Players(client.player)
 const attacks = Attacks(client.attack)
 const guilds  = Guilds(client.guild)
 const arts    = Arts(client.art)
@@ -40,20 +42,18 @@ export default (server: WebSocketServer) => {
   
   app.use('/guilds', then(auth), Guild(server))
 
-  server.on('connection', sock => {
+  server.on('connection', async sock => {
     sock.send(JSON.stringify({ e: 'HELLO', d: 'This device has connected of gateway!' }))
 
-    guilds.getAll().then(guilds => {
-      sock.send(JSON.stringify({ e: 'CREATE_GUILDS', d: guilds }))
+    sock.send(JSON.stringify({ e: 'CREATE_GUILDS', d: await guilds.getAll() }))
+    sock.send(JSON.stringify({ e: 'CREATE_ARTS', d: await arts.where({}) }))
+    sock.send(JSON.stringify({ e: 'CREATE_ATTACKS', d: await attacks.where({}) }))
+    sock.send(JSON.stringify({ e: 'CREATE_PLAYERS', d: await players.where({}) }))
+
+    sock.on('close', async code => {
+      sock.close()
     })
 
-    arts.where({}).then(arts => {
-      sock.send(JSON.stringify({ e: 'CREATE_ARTS', d: arts }))
-    })
-
-    attacks.where({}).then(attacks => {
-      sock.send(JSON.stringify({ e: 'CREATE_ATTACKS', d: attacks }))
-    })
   })
   
   return app;

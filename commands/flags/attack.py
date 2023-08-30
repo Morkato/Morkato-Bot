@@ -3,17 +3,26 @@ from typing import (
   Union
 )
 
-from .utils import reaction_checker, message_checker
-from ..ext  import Command, flag
+from io import BytesIO
 
+from .utils       import reaction_checker, message_checker
+from utils.player import extract_webhook
+
+from ..ext  import Command, message_page_embeds, flag
+
+from easy_pil      import Editor, load_image_async
 from discord.ext   import commands
 from objects.guild import Guild
+
+from errors import NotFoundError
+
+import discord
 
 FlagChecker = Literal['author', 'guild', 'channel', 'message']
 
 class AttackCommand(Command):
   @flag(name='default', aliases=['info'])
-  async def default(self, ctx: commands.Context, guild: Guild, util, name: Union[str, None], /) -> None:
+  async def default(self, ctx: commands.Context, guild: Guild, member: discord.Member, name: Union[str, None], /) -> None:
     if not name:
       await ctx.send('Pera, pera... Qual o nome mesmo? Sumiu T-T')
 
@@ -21,9 +30,22 @@ class AttackCommand(Command):
     
     attack = guild.get_attack_by_name(name)
 
+    player = None
+
+    try:
+      player = guild.get_player(str(member.id))
+    except NotFoundError: ...
+    
     embed = await attack.embed_at()
 
-    await ctx.send(embed=embed)
+    if not player:
+      await ctx.send(f'{member.name} Você não possui registro.', embed=embed)
+
+      return
+
+    embed.set_author(name=player.name, icon_url=player.appearance or member.display_avatar.url)
+    
+    await ctx.send(f'{member.name} Você não possui registro.', embed=embed)
   
   @flag(name='create', aliases=['c', 'new'])
   async def create(self, ctx: commands.Context, guild: Guild, util, name: Union[str, None], art_name: Union[str, None], /) -> None:
@@ -171,3 +193,36 @@ class AttackCommand(Command):
     
     elif str(reaction.emoji) == '❌':
       await ctx.send('Ok, você mudou de ideia.')
+  
+  @flag(name='list', aliases=['l'])
+  async def list(self, ctx: commands.Context, guild: Guild, util, art_name: Union[str, None], /) -> None:
+    db = guild.db
+
+    art = None
+
+    if art_name:
+      art = guild.get_art_by_name(art_name)[0]
+
+    attacks = list(db.attacks.where(art=art))
+
+    embeds = [ await attack.embed_at() for attack in attacks]
+
+    await message_page_embeds(ctx, ctx.bot, embeds)
+  
+  @flag(name='attr', aliases=['a'])
+  async def attr(self, ctx: commands.Context, guild: Guild, util, name: Union[str, None], attr: Union[str, None], /) -> None:
+    if not name:
+      await ctx.send('Pera, pera... Qual o nome mesmo? Sumiu T-T')
+
+      return
+    
+    attack = guild.get_attack_by_name(name)
+
+    if not attr:
+      await ctx.send(f'**`{attack}`**')
+
+      return
+    
+    attr = getattr(attack, attr, 'Esse atributo não existe.')
+
+    await ctx.send(attr)
