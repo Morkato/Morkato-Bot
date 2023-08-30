@@ -110,7 +110,15 @@ class ArtCommand(Command):
           url=payload.get('url')
         )
 
-        await ctx.send(f'O ataque: **`{art.name}`** foi editado.')
+        message = 'A arte: **`{0}`** foi editada.'
+
+        if art.type == 'RESPIRATION':
+          message = 'A respiração chamada: **`{0}`** foi editada.'
+
+        elif art.type == 'KEKKIJUTSU':
+          message = 'O kekkijutsu chamado: **`{0}`** foi editado.'
+
+        await ctx.send(message.format(art))
         
         return
       

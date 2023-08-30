@@ -19,11 +19,11 @@ const {
 } = Arts(client.art)
 
 export function getArtID(req: Request) {
-  if (!req.params.name) {
+  if (!req.params.art_id) {
     throw new InternalServerError({ message: "Erro interno no servidor" })
   }
 
-  return req.params.name;
+  return req.params.art_id;
 }
 
 export function getArtType(req: Request) {

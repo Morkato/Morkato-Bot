@@ -25,7 +25,7 @@ from copy import deepcopy
 import discord
 
 if TYPE_CHECKING:
-  from morkato.client import Morkato
+  from morkato.client import MorkatoClientManager
   from .guild         import Guild
 
 LIMIT_PAGE = 10
@@ -33,10 +33,10 @@ LIMIT_PAGE = 10
 class Art:
   def __init__(
     self,
-    db:      Morkato,
+    client: MorkatoClientManager,
     payload: art.Art
   ) -> None:
-    self.db  = db
+    self.client = client
 
     self._load_variables(payload)
 
@@ -70,11 +70,11 @@ class Art:
   
   @property
   def guild(self) -> Guild:
-    return self.db.guilds.get(self.guild_id)
+    return self.client.database.get_guild(self.guild_id)
   
   @property
   def attacks(self) -> Generator[Any, Any, ArtAttack]:
-    return self.db.attacks.where(guild_id=self.guild_id, art=self)
+    return self.client.database.attacks.where(guild_id=self.guild_id, art=self)
 
   @property
   def type(self) -> Literal['RESPIRATION', 'KEKKIJUTSU']:
@@ -112,7 +112,7 @@ class Art:
     ):
       return self
     
-    data = await self.db.edit_art(self.guild_id, self.id,
+    data = await self.client.api.edit_art(self.guild_id, self.id,
       name=name,
       type=type,
       embed_title=title,
@@ -158,13 +158,13 @@ class Art:
     return embeds
   
   async def delete(self) -> Art:
-    await self.db.del_art(guild_id=self.guild_id, id=self.id)
+    await self.client.api.del_art(guild_id=self.guild_id, id=self.id)
 
     return self
 
 class Arts(Sequence[Art]):
-  def __init__(self, arts: List[Art] = None) -> None:
-    self.__items = arts or []
+  def __init__(self, *arts: List[Art]) -> None:
+    self.__items = list(arts)
 
   def __iter__(self) -> Iterator[Art]:
     return iter(self.__items)
@@ -189,8 +189,8 @@ class Arts(Sequence[Art]):
 
     self.__items.append(art)
 
-  def delete(self, guild_id: str, name: str) -> Art:
-    index, art = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and toKey(name) == toKey(item.name)), (-1, None))
+  def delete(self, guild_id: str, id: str) -> Art:
+    index, art = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and id == item.id), (-1, None))
 
     if index == -1 or not art:
       raise NotFoundError

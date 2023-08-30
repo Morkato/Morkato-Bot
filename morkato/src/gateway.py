@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from typing import (
+  Coroutine,
+  Callable,
   Optional,
+  Union,
   Tuple,
   
   TYPE_CHECKING,
@@ -10,7 +13,12 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-  from .client import Morkato
+  from .session import MorkatoSessionController
+  from .client  import MorkatoClientManager
+
+from utils.etc import getEnv
+
+from .events   import events
 
 import aiohttp
 import asyncio
@@ -21,7 +29,7 @@ import yarl
 class WebSocketClosure(Exception):
   pass
 
-class MorkatoWebSocket:
+class MorkatoWebSocket:  
   def __init__(
       self,
       socket:  aiohttp.ClientWebSocketResponse, *,
@@ -31,10 +39,8 @@ class MorkatoWebSocket:
     self.loop   = loop
   
   @classmethod
-  async def from_client(cls, client: Morkato, *, gateway: Optional[yarl.URL] = None) -> MorkatoWebSocket:
-    gateway = gateway or client.DEFAULT_GATEWAY
-    
-    socket = await client.ws(gateway=gateway)
+  async def from_session(cls, session: MorkatoSessionController, *, gateway: yarl.URL) -> MorkatoWebSocket:
+    socket = await session.ws(gateway=gateway)
     loop   = asyncio.get_running_loop()
 
     return cls(socket, loop=loop)
@@ -72,3 +78,30 @@ class MorkatoWebSocket:
   
   async def close(self) -> bool:
     return await self.socket.close()
+  
+
+class MorkatoWebSocketManager:
+  DEFAULT_GATEWAY = yarl.URL(getEnv('GATEWAY', 'ws://localhost:80'))
+
+  def __init__(self, gateway: MorkatoWebSocket) -> None:
+    self.__gateway = gateway
+  
+  @classmethod
+  async def from_session(cls, session: MorkatoSessionController, *, gateway: Optional[yarl.URL] = None) -> MorkatoWebSocket:
+    gateway = gateway or cls.DEFAULT_GATEWAY
+    
+    return await MorkatoWebSocket.from_session(session, gateway=gateway)
+
+  def get_event(self, event: str) -> Union[Callable[[MorkatoClientManager, Any], Coroutine[Any, Any, None]], None]:
+    call = next((callback for event_name, callback in events if event_name == event), None)
+
+    if not call:
+      return
+    
+    return call
+
+  async def pool_event(self, timeout: Optional[float] = None) -> Tuple[str, Any]:
+    return await self.__gateway.pool_event(timeout)
+  
+  async def close(self) -> bool:
+    return await self.close()

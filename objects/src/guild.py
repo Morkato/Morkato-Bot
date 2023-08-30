@@ -6,30 +6,39 @@ from typing import (
   Literal,
   Iterator,
   Sequence,
+  Union,
   
   TYPE_CHECKING,
   List,
   Any
 )
 
+from .player import Player, PlayerBreed
 from .attack import Attack
 from .art    import Art
 
 if TYPE_CHECKING:
-  from morkato.client import Morkato
+  from morkato.client import MorkatoClientManager
+
   from ..types        import guild
 
 from errors import NotFoundError
 
+import discord
+
 class Guild:
   def __init__(
     self, *,
-    db:      Morkato,
+    client:  MorkatoClientManager,
     payload: guild.Guild
   ) -> None:
-    self.db = db
+    self.client = client
 
     self._load_variables(payload)
+
+  @property
+  def discord(self) -> Union[discord.Guild, None]:
+    return self.client.get_guild(int(self.id))
 
   def _load_variables(self, payload: guild.Guild) -> None:
     self.__id = payload['id']
@@ -37,23 +46,22 @@ class Guild:
     self.__created_at = payload['created_at']
     self.__updated_at = payload['updated_at']
 
+  def get_player(self, id: str) -> Player:
+    return self.client.database.get_player(guild_id=self.id, id=id)
+  
   def get_art_by_name(self, name: str) -> List[Art]:
-    print('aqui')
-    
-    result = list(self.db.arts.where(guild=self, name=name))
-
-    print(result)
+    result = list(self.client.database.get_art_by_name(guild_id=self.id, name=name))
 
     if not result:
-      raise NotFoundError
+      raise NotFoundError('Essa arte não existe.')
     
     return result
 
   def get_attack_by_name(self, name: str) -> Attack:
-    result = next(self.db.attacks.where(guild=self, name=name), None)
+    result = next(self.client.database.get_attack_by_name(guild_id=self.id, name=name), None)
 
     if not result:
-      raise NotFoundError
+      raise NotFoundError('Esse ataque não existe.')
     
     return result
   
@@ -64,10 +72,9 @@ class Guild:
     embed_description: Optional[str] = None,
     embed_url:         Optional[str] = None
   ) -> Art:
-    self.db.create_attack
     return Art(
       db      = self.db,
-      payload = await self.db.create_art(
+      payload = await self.client.api.create_art(
         guild_id=self.id,
         name=name,
         type=type,
@@ -100,6 +107,34 @@ class Guild:
 
     return Attack(db=self.db, payload=payload)
   
+  async def create_player(self, *,
+    id:          str,
+    name:        str,
+    breed:       PlayerBreed,
+    credibility: Optional[int] = None,
+    cash:        Optional[int] = None,
+    life:        Optional[int] = None,
+    breath:      Optional[int] = None,
+    blood:       Optional[int] = None,
+    exp:         Optional[int] = None,
+    appearance:  Optional[str] = None
+  ) -> Player:
+    payload = await self.db.create_player(
+      guild_id=self.id,
+      id=id,
+      name=name,
+      breed=breed,
+      credibility=credibility,
+      cash=cash,
+      life=life,
+      breath=breath,
+      blood=blood,
+      exp=exp,
+      appearance=appearance
+    )
+
+    return Player(db=self.db, payload=payload)
+  
   @property
   def id(self) -> str:
     return self.__id
@@ -113,8 +148,8 @@ class Guild:
     return self.__updated_at
   
 class Guilds(Sequence[Guild]):
-  def __init__(self, guilds: List[Guild]) -> None:
-    self.__items = guilds
+  def __init__(self, *guilds: List[Guild]) -> None:
+    self.__items = list(guilds)
 
   def __iter__(self) -> Iterator[Guild]:
     return iter(self.__items)

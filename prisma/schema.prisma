@@ -16,6 +16,12 @@ enum ArtType {
   KEKKIJUTSU
 }
 
+enum PlayerBreed {
+  HUMAN
+  ONI
+  HYBRID
+}
+
 model Guild {
   id String @id
 
@@ -25,6 +31,8 @@ model Guild {
   arts    Art[]
   attacks Attack[]
   vars    Variable[]
+  players Player[]
+  quests  Quest[]
 
   @@map("guilds")
 }
@@ -95,4 +103,50 @@ model Variable {
 
   @@id([guild_id, name])
   @@map("guild_variables")
+}
+
+model Player {
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  name        String
+  credibility Int    @default(0)
+
+  guild_id String
+  id       String
+  breed    PlayerBreed
+
+  cash Int @default(0)
+
+  life   Int @default(0)
+  blood  Int @default(0)
+  breath Int @default(0)
+  exp    Int @default(0)
+
+  appearance String?
+
+  @@id([guild_id, id])
+  @@map("players")
+}
+
+model Quest {
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  id       String
+  guild_id String
+
+  name String
+
+  required_breed   PlayerBreed?
+  allowed_channels String[]
+  required_exp     Int
+
+  title       String?
+  description String?
+  url         String
+  icon        String?
+
+  cooldown Int
+
+  @@id([guild_id, id])
+  @@map("quests")
 }

@@ -1,4 +1,4 @@
-from morkato.client import Client
+from morkato.client import MorkatoBot
 from decouple       import config
 
 from sys import exit
@@ -24,7 +24,7 @@ def main() -> int:
 
     return -1
 
-  bot = Client(auth=TOKEN)
+  bot = MorkatoBot(auth=TOKEN)
   
   bot.run(TOKEN)
   

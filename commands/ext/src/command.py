@@ -22,7 +22,7 @@ from parsers.command import parse
 import discord
 
 if TYPE_CHECKING:
-  from morkato.client import Morkato
+  from morkato.client import MorkatoBot
 
 CommandFunc = Callable[[commands.Context, Callable[[Any, str], Coroutine[Any, Any, None]]], Coroutine[Any, Any, None]]
 
@@ -80,10 +80,10 @@ async def message_page_embeds(ctx: commands.Context, bot: commands.Bot, embeds: 
 
 async def command_by_flag(*,
   command: Command,
-  ctx:  commands.Context,
-  util: Optional[Any] = None,
-  db:   Morkato,
-  text: str
+  ctx:     commands.Context,
+  util:    Optional[Any] = None,
+  client:  MorkatoBot,
+  text:    str
 ) -> None:
   for task in text.split('&'):
     flag, value, value_in, params = parse(task)
@@ -100,6 +100,6 @@ async def command_by_flag(*,
 
       return
 
-    guild = db.guilds.get(str(ctx.guild.id))
+    guild = client.database.get_guild(str(ctx.guild.id))
 
     await event(command, ctx, guild, util, value, value_in, params)

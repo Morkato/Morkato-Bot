@@ -16,7 +16,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-  from morkato.client import Morkato
+  from morkato.client import MorkatoClientManager
 
   from ..types import attack
   from .guild  import Guild
@@ -31,10 +31,10 @@ import discord
 class Attack:
   def __init__(
     self,
-    db: Morkato,
+    client:  MorkatoClientManager,
     payload: attack.Attack
   ) -> None:
-    self.db = db
+    self.client = client
 
     self._load_variables(payload)
 
@@ -73,7 +73,7 @@ class Attack:
   
   @property
   def guild(self) -> Guild:
-    return self.db.guilds.get(self.__guild_id)
+    return self.client.database.get_guild(self.guild_id)
   
   @property
   def parent_id(self) -> str:
@@ -81,15 +81,22 @@ class Attack:
   
   @property
   def parent(self) -> Self:
-    return self.db.attacks.get(guild_id=self.guild_id, id=self.parent_id)
+    return self.client.database.get_attack(guild_id=self.guild_id, id=self.parent_id)
   
   @property
-  def parents(self) -> Generator[Attack]:
-    return self.db.attacks.where(guild=self.guild, parent=self.id)
+  def parents(self) -> Generator[Self]:
+    return self.client.database.attacks.where(guild=self.guild, parent=self.id)
   
   @property
   def art_id(self) -> Union[str, None]:
     return self.__art_id
+  
+  @property
+  def art(self) -> Union[Art, None]:
+    if not self.art_id:
+      return
+    
+    return self.client.database.get_art(guild_id=self.guild_id, id=self.art_id)
   
   @property
   def required_roles(self) -> int:
@@ -116,7 +123,7 @@ class Attack:
     title:          Optional[str] = None,
     description:    Optional[str] = None,
     url:            Optional[str] = None
-  ) -> Attack:
+  ) -> Self:
     payload = {  }
 
     if name:
@@ -134,7 +141,7 @@ class Attack:
     if not payload:
       return self
 
-    data = await self.db.edit_attack(guild_id=self.guild_id, id=self.id, **payload)
+    data = await self.client.api.edit_attack(guild_id=self.guild_id, id=self.id, **payload)
 
     self._load_variables(data)
 
@@ -184,8 +191,8 @@ class ArtAttack(Attack):
     return super().art
   
 class Attacks(Sequence[Attack]):
-  def __init__(self, attacks: Optional[List[Attack]] = None) -> None:
-    self.__items = attacks or []
+  def __init__(self, *attacks: List[Attack]) -> None:
+    self.__items = list(attacks)
 
   def __iter__(self) -> Iterator[Attack]:
     return iter(self.__items)
@@ -210,8 +217,8 @@ class Attacks(Sequence[Attack]):
     
     self.__items.append(attack)
   
-  def delete(self, guild_id: str, name: str) -> Art:
-    index, attack = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and toKey(name) == toKey(item.name)), (-1, None))
+  def delete(self, guild_id: str, id: str) -> Art:
+    index, attack = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and id == item.id), (-1, None))
 
     if index == -1 or not attack:
       raise NotFoundError('Esse ataque não existe.')
@@ -221,10 +228,10 @@ class Attacks(Sequence[Attack]):
     return attack
 
   @overload
-  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Any, Any, Attack]: ...
+  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Attack]: ...
   @overload
-  def where(self, *, art: Art, art_name: Optional[str] = None, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Any, Any, ArtAttack]: ...
-  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, art: Optional[Art] = None, art_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Any, Any, Attack]:
+  def where(self, *, art: Art, art_name: Optional[str] = None, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[ArtAttack]: ...
+  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, art: Optional[Art] = None, art_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Attack]:
     if guild:
       guild_id = guild.id
 

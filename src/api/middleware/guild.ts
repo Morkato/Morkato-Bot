@@ -11,7 +11,7 @@ import client from 'infra/database'
 const guilds = Guilds(client.guild)
 
 export function getGuildID(req: Request) {
-  const value = req.params['id']  
+  const value = req.params['guild_id']  
 
   if (!value) {
     throw new InternalServerError({ message: "Erro interno no servidor <getGuildID>" })

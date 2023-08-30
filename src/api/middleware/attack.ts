@@ -19,11 +19,11 @@ const {
 } = Attacks(client.attack)
 
 export function getAttackID(req: Request) {
-  if (!req.params.name) {
+  if (!req.params.attack_id) {
     throw new InternalServerError({ message: "Erro interno no servidor" })
   }
 
-  return req.params.name;
+  return req.params.attack_id;
 }
 
 export function attack(handle: Handler<Attack>): ExpressHandler {
