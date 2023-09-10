@@ -1,20 +1,7 @@
-from morkato.client import MorkatoBot
-from decouple       import config
+from morkato  import MorkatoBot
+from decouple import config
 
 from sys import exit
-
-import logging
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-handler = logging.StreamHandler()
-handler.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s : %(message)s')
-handler.setFormatter(formatter)
-
-logger.addHandler(handler)
 
 def main() -> int:
   try:

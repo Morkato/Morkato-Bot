@@ -26,25 +26,28 @@ import asyncio
 import orjson
 import yarl
 
+import logging
+
+_log = logging.getLogger(__name__)
+
 class WebSocketClosure(Exception):
   pass
 
 class MorkatoWebSocket:  
   def __init__(
       self,
-      socket:  aiohttp.ClientWebSocketResponse, *,
-      loop:    asyncio.AbstractEventLoop,
+      socket: aiohttp.ClientWebSocketResponse, *,
+      loop:    Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
     self.socket = socket
-    self.loop   = loop
+    self.loop   = loop or asyncio.get_running_loop()
   
   @classmethod
   async def from_session(cls, session: MorkatoSessionController, *, gateway: yarl.URL) -> MorkatoWebSocket:
     socket = await session.ws(gateway=gateway)
-    loop   = asyncio.get_running_loop()
 
-    return cls(socket, loop=loop)
-  
+    return cls(socket)
+
   def _handle_context(self, data: Dict[str, Any]) -> Tuple[str, Any]:
     return data['e'], data['d']
   
@@ -57,7 +60,11 @@ class MorkatoWebSocket:
     event, data = self._handle_context(msg)
 
     return event, data
-
+  
+  @property
+  def closed(self) -> bool:
+    return self.socket.closed
+  
   async def pool_event(self, timeout: Optional[float] = None) -> Tuple[str, Any]:
     try:
       coro = self.socket.receive()
@@ -74,8 +81,8 @@ class MorkatoWebSocket:
         raise WebSocketClosure
       
     except (asyncio.TimeoutError, WebSocketClosure) as err:
-      return None, None
-  
+      raise
+
   async def close(self) -> bool:
     return await self.socket.close()
   
@@ -90,10 +97,16 @@ class MorkatoWebSocketManager:
   async def from_session(cls, session: MorkatoSessionController, *, gateway: Optional[yarl.URL] = None) -> MorkatoWebSocket:
     gateway = gateway or cls.DEFAULT_GATEWAY
     
-    return await MorkatoWebSocket.from_session(session, gateway=gateway)
+    _log.info('Conectando com o gateway.')
 
-  def get_event(self, event: str) -> Union[Callable[[MorkatoClientManager, Any], Coroutine[Any, Any, None]], None]:
-    call = next((callback for event_name, callback in events if event_name == event), None)
+    return MorkatoWebSocketManager(await MorkatoWebSocket.from_session(session, gateway=gateway))
+
+  @property
+  def closed(self) -> bool:
+    return self.__gateway.closed
+  
+  def get_event(self, event_name: str) -> Union[Callable[[MorkatoClientManager, Any], Coroutine[Any, Any, None]], None]:
+    call = next((event[1] for event in events if event[0] == event_name), None)
 
     if not call:
       return
@@ -104,4 +117,4 @@ class MorkatoWebSocketManager:
     return await self.__gateway.pool_event(timeout)
   
   async def close(self) -> bool:
-    return await self.close()
+    return await self.__gateway.close()

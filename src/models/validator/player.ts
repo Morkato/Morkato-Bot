@@ -4,6 +4,7 @@ import { id as guild_id } from './guild'
 
 import Joi from 'joi'
 
+type PlayerRank  = 'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'AA' | 'AAA' | 'AAAA' | 'S' | 'SS' | 'SSS' | 'SSSS'
 type PlayerBreed = 'HUMAN' | 'ONI' | 'HYBRID'
 
 type Player = {
@@ -88,7 +89,7 @@ export const {
   appearance
 } = baseSchema;
 
-export type { Player, PlayerBreed };
+export type { Player, PlayerBreed, PlayerRank };
 
 export { validate };
 export { guild_id };

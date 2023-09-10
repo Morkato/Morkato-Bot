@@ -101,9 +101,9 @@ class URL:
       url: Define a URL base para a aplicação (Opcional)
       parameters: Define os parâmetros da URL (Opcional)
     
-      Exemplo:
+    Exemplo:
 
-        >>> url = URL('/hello word') # output: http://localhost/hello%02word
+      >>> url = URL('/hello word') # output: http://localhost/hello%02word
   """
   
   URL = getEnv('URL', 'http://localhost')

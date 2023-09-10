@@ -20,7 +20,7 @@ class Player(Cog):
     if not member:
       member = ctx.author
 
-    await command_by_flag(command=self.player_command, ctx=ctx, util=member, db=self.db, text=text or '')
+    await command_by_flag(command=self.player_command, ctx=ctx, util=member, client=self.bot, text=text or '')
 
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Player(bot))

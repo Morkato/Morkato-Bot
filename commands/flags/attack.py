@@ -6,11 +6,9 @@ from typing import (
 from io import BytesIO
 
 from .utils       import reaction_checker, message_checker
-from utils.player import extract_webhook
 
 from ..ext  import Command, message_page_embeds, flag
 
-from easy_pil      import Editor, load_image_async
 from discord.ext   import commands
 from objects.guild import Guild
 
@@ -45,7 +43,7 @@ class AttackCommand(Command):
 
     embed.set_author(name=player.name, icon_url=player.appearance or member.display_avatar.url)
     
-    await ctx.send(f'{member.name} Você não possui registro.', embed=embed)
+    await ctx.send(embed=embed)
   
   @flag(name='create', aliases=['c', 'new'])
   async def create(self, ctx: commands.Context, guild: Guild, util, name: Union[str, None], art_name: Union[str, None], /) -> None:
@@ -196,7 +194,18 @@ class AttackCommand(Command):
   
   @flag(name='list', aliases=['l'])
   async def list(self, ctx: commands.Context, guild: Guild, util, art_name: Union[str, None], /) -> None:
-    db = guild.db
+    nick = 'Anonymous'
+    avatar = None
+
+    try:
+      player = guild.get_player(str(ctx.author.id))
+
+      nick = player.name
+      avatar = player.appearance or ctx.author.display_avatar.url
+    
+    except NotFoundError: pass
+    
+    db = guild.client.database
 
     art = None
 
@@ -205,7 +214,7 @@ class AttackCommand(Command):
 
     attacks = list(db.attacks.where(art=art))
 
-    embeds = [ await attack.embed_at() for attack in attacks]
+    embeds = [ (await attack.embed_at()).set_author(name=nick, icon_url=avatar) for attack in attacks]
 
     await message_page_embeds(ctx, ctx.bot, embeds)
   

@@ -19,7 +19,7 @@ export function assert<T>(
   if(error) {
     throw new ValidationError({
       message: error.details[0].message,
-      key: error?.details[0]?.context?.key || error?.details[0]?.context?.type || 'object',
+      key: error.details[0]?.context?.key || error.details[0]?.context?.type || 'object',
       errorLocationCode: 'MODEL:VALIDATOR:SCHEMA',
       type: error.details[0].type
     });
@@ -45,9 +45,17 @@ export const regex = {
 }
 
 export const schemas = {
-  id: Joi.string().regex(regex.id),
+  id: Joi.string().trim().regex(regex.id),
   uuid: Joi.string().min(1),
   arrayId: Joi.array().items(Joi.string().regex(regex.id)),
   name: Joi.string().trim().min(1).max(32).regex(/^[^-+>@&$].+[^-+>@&$]$/),
-  type: Joi.string().trim().allow('RESPIRATION', 'KEKKIJUTSU')
+  art_type: Joi.string().trim().valid('RESPIRATION', 'KEKKIJUTSU'),
+  player_breed: Joi.string().trim().valid('HUMAN', 'ONI', 'HYBRID'),
+  player_rank: Joi.string().trim().valid('F', 'E', 'D', 'C', 'B', 'A', 'AA', 'AAA', 'AAAA', 'S', 'SS', 'SSS', 'SSSS'),
+  exp: Joi.number().integer(),
+
+  embed_title: Joi.string().trim().allow(null).min(1).max(96),
+  embed_description: Joi.string().trim().allow(null).min(1).max(4096),
+  embed_url: Joi.string().trim().allow(null).uri(),
+  embed_icon: Joi.string().trim().allow(null).uri()
 }

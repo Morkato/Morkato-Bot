@@ -14,18 +14,13 @@ class RequestCommand(Cog):
   async def request(self, ctx: commands.Context, method: str, *, route: str) -> None:
     async def resolver(res: Response) -> tuple[str, str]:
       type = res.headers.get('content-type')
-
-      if type == 'application/json; charset=utf-8':
-        return (type, await res.json())
       
       return (type, await res.content())
 
-    content_type, content = await request(Request(method, route), call=resolver)
+    content_type, content = await request(Request(method, route, headers={ 'authorization': self.bot.auth }), call=resolver)
 
     if content_type == 'application/json; charset=utf-8':
-      await ctx.send(f'```json\n{orjson.dumps(content).decode("utf-8")}```')
-
-    print(content_type)
+      await ctx.send(f'```json\n{content}```')
 
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(RequestCommand(bot))

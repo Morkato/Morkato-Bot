@@ -33,6 +33,9 @@ from errors import (
 
 import asyncio
 import aiohttp
+import logging
+
+_log = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
@@ -42,7 +45,7 @@ def createAssert(*,
    badRequestMessage:    Optional[str] = None,
    internalErrorMessage: Optional[str] = None
 ):
-  def handle(res: Response) -> None:
+  async def handle(res: Response) -> None:
     if not res.status_code == 200:
       if res.status_code == 400:
         raise InternalError(BadRequest(res, badRequestMessage), internalErrorMessage)
@@ -53,7 +56,7 @@ def createAssert(*,
       elif res.status_code == 404:
         raise NotFoundError(notFoundMessage)
       
-      res.raise_for_status()
+      await res.raise_for_status()
     
   return handle
 
@@ -139,6 +142,8 @@ class BaseSessionController:
     
     self.session = HTTPClient(loop=loop, headers={ 'authorization': self.__auth })
 
+    _log.info('Started Session in Morkato API')
+
     return self
   
   def request(self, request: Request, **kwargs) -> RequestContext:
@@ -176,7 +181,7 @@ class MorkatoSessionController(BaseSessionController):
     embed_description: Optional[str] = None,
     embed_url:         Optional[str] = None
   ) -> CoroContext[art.Art]:
-    return CoroContext(self._get_art(guild_id,
+    return CoroContext(self._create_art(guild_id,
       name=name,
       type=type,
       embed_title=embed_title,
@@ -290,7 +295,7 @@ class MorkatoSessionController(BaseSessionController):
   
   async def _get_guild(self, id: str) -> guild.Guild:
     async with self.request(Request('GET', f'/guilds/{id}')) as resp:
-      assertGuildResponse(resp)
+      await assertGuildResponse(resp)
       
       return await resp.json()
   
@@ -302,7 +307,7 @@ class MorkatoSessionController(BaseSessionController):
     
   async def _get_art(self, guild_id: str, id: str) -> art.Art:
     async with self.request(Request('GET', f'/guilds/{guild_id}/arts/{id}')) as res:
-      assertArtResponse(res)
+      await assertArtResponse(res)
       
       return await res.json()
     
@@ -313,25 +318,25 @@ class MorkatoSessionController(BaseSessionController):
       params.set('art_id', art_id)
     
     async with self.request(Request('GET', URL(f'/guilds/{guild_id}/attacks', parameters=params))) as res:
-      assertAttackResponse(res)
+      await assertAttackResponse(res)
       
       return await res.json()
     
   async def _get_attack(self, guild_id: str, id: str) -> attack.Attack:
     async with self.request(Request('GET', f'/guilds/{guild_id}/attacks/{id}')) as res:
-      assertAttackResponse(res)
+      await assertAttackResponse(res)
 
       return await res.json()
 
   async def _get_players(self, guild_id: str) -> List[player.Player]:
     async with self.request(Request('GET', f'/guilds/{guild_id}/players')) as res:
-      assertPlayerResponse(res)
+      await assertPlayerResponse(res)
 
       return await res.json()
 
   async def _get_player(self, guild_id: str, id: str) -> player.Player:
     async with self.request(Request('GET', f'/guilds/{guild_id}/players/{id}')) as res:
-      assertPlayerResponse(res)
+      await assertPlayerResponse(res)
       
       return await res.json()
 
@@ -354,7 +359,7 @@ class MorkatoSessionController(BaseSessionController):
       payload['embed_url'] = embed_url
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/arts', body=payload)) as res:
-      assertArtResponse(res)
+      await assertArtResponse(res)
       
       return await res.json()
 
@@ -384,7 +389,7 @@ class MorkatoSessionController(BaseSessionController):
       payload['embed_url'] = embed_url
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/attacks', body=payload)) as res:
-      assertAttackResponse(res)
+      await assertAttackResponse(res)
       
       return await res.json()
   
@@ -426,7 +431,7 @@ class MorkatoSessionController(BaseSessionController):
     print(payload)
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/players', body=payload)) as res:
-      assertPlayerResponse(res)
+      await assertPlayerResponse(res)
 
       return await res.json()
     
@@ -455,7 +460,7 @@ class MorkatoSessionController(BaseSessionController):
       payload['embed_url'] = embed_url
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/arts/{id}', body=payload)) as res:
-      assertArtResponse(res)
+      await assertArtResponse(res)
       
       return await res.json()
   
@@ -484,7 +489,7 @@ class MorkatoSessionController(BaseSessionController):
       payload['embed_url'] = embed_url
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/attacks/{id}', body=payload)) as res:
-      assertAttackResponse(res)
+      await assertAttackResponse(res)
 
       return await res.json()
   
@@ -529,25 +534,25 @@ class MorkatoSessionController(BaseSessionController):
       payload['appearance'] = appearance
 
     async with self.request(Request('POST', f'/guilds/{guild_id}/players/{id}', body=payload)) as res:
-      assertPlayerResponse(res)
+      await assertPlayerResponse(res)
 
       return await res.json()
     
   async def _del_art(self, guild_id: str, id: str) -> art.Art:
     async with self.request(Request('DELETE', f'/guilds/{guild_id}/arts/{id}')) as res:
-      assertArtResponse(res)
+      await assertArtResponse(res)
       
       return await res.json()
 
   async def _del_attack(self, guild_id: str, id: str) -> attack.Attack:
     async with self.request(Request('DELETE', f'/guilds/{guild_id}/attacks/{id}')) as res:
-      assertAttackResponse(res)
+      await assertAttackResponse(res)
       
       return await res.json()
   
   async def _del_player(self, guild_id: str, id: str) -> player.Player:
     async with self.request(Request('DELETE', f'/guilds/{guild_id}/players/{id}')) as res:
-      assertPlayerResponse(res)
+      await assertPlayerResponse(res)
 
       return await res.json()
 
