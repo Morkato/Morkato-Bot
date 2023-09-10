@@ -8,3 +8,8 @@ export namespace object {
 }
 
 export default object;
+
+export const {
+  map,
+  filter
+} = object

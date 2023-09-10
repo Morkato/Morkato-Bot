@@ -56,7 +56,14 @@ class Player:
     self.__exp    = payload['exp']
 
     self.__appearance = payload['appearance']
+  
+  def __repr__(self) -> str:
+    return self.__name
 
+  @property
+  def user(self) -> Union[discord.User, None]:
+    return self.client.get_user(self.__id)
+  
   @property
   def name(self) -> str:
     return self.__name
@@ -133,8 +140,10 @@ class Player:
     return self
 
   async def card(self, member: discord.Member) -> BytesIO:
+    user = member or self.user
+    
     display_card = card(
-      avatar_image=await load_image_async(member.display_avatar.url),
+      avatar_image=await load_image_async(self.appearance or user.display_avatar.url),
       breed=self.breed,
       username=member.name,
       name=self.name,

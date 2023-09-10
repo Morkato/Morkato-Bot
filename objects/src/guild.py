@@ -14,8 +14,8 @@ from typing import (
 )
 
 from .player import Player, PlayerBreed
-from .attack import Attack
-from .art    import Art
+from .attack import Attacks, Attack
+from .art    import Arts, Art
 
 if TYPE_CHECKING:
   from morkato.client import MorkatoClientManager
@@ -73,7 +73,7 @@ class Guild:
     embed_url:         Optional[str] = None
   ) -> Art:
     return Art(
-      db      = self.db,
+      client  = self.client,
       payload = await self.client.api.create_art(
         guild_id=self.id,
         name=name,
@@ -95,7 +95,7 @@ class Guild:
     parent_id = parent if not parent else parent.id
     art_id    = art if not art else art.id
     
-    payload = await self.db.create_attack(
+    payload = await self.client.api.create_attack(
       guild_id=self.id,
       name=name,
       parent=parent_id,
@@ -105,7 +105,7 @@ class Guild:
       embed_url=embed_url
     )
 
-    return Attack(db=self.db, payload=payload)
+    return Attack(client=self.client, payload=payload)
   
   async def create_player(self, *,
     id:          str,
@@ -119,7 +119,7 @@ class Guild:
     exp:         Optional[int] = None,
     appearance:  Optional[str] = None
   ) -> Player:
-    payload = await self.db.create_player(
+    payload = await self.client.api.create_player(
       guild_id=self.id,
       id=id,
       name=name,
@@ -133,7 +133,7 @@ class Guild:
       appearance=appearance
     )
 
-    return Player(db=self.db, payload=payload)
+    return Player(client=self.client, payload=payload)
   
   @property
   def id(self) -> str:
@@ -147,6 +147,10 @@ class Guild:
   def updated_at(self) -> str:
     return self.__updated_at
   
+  @property
+  def arts(self) -> Arts:
+    return Arts(*self.client.database.arts.where(guild=self))
+
 class Guilds(Sequence[Guild]):
   def __init__(self, *guilds: List[Guild]) -> None:
     self.__items = list(guilds)

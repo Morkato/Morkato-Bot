@@ -3,7 +3,6 @@ from typing import (
   Union
 )
 
-from .utils import reaction_checker, message_checker
 from ..ext  import Command, message_page_embeds, flag
 
 from discord.ext   import commands
@@ -12,6 +11,7 @@ from objects.guild import Guild
 from objects.types.player import PlayerBreed
 
 import discord
+import re
 
 FlagChecker = Literal['author', 'guild', 'channel', 'message']
 
@@ -74,6 +74,8 @@ class PlayerCommand(Command):
     cash = params.get('cash')
     exp = params.get('exp')
 
+    appearance = params.get('image')
+
     rest = {  }
 
     if life:
@@ -94,6 +96,9 @@ class PlayerCommand(Command):
     if exp:
       rest['exp'] = int(exp)
 
+    if appearance:
+      rest['appearance'] = appearance
+
     player = await guild.create_player(
       id=str(member.id),
       name=name,
@@ -103,5 +108,108 @@ class PlayerCommand(Command):
 
     await ctx.send(f'**`{member.name}`** foi registrado.')
 
+  @flag(name='setName')
+  async def setName(self, ctx: commands.Context, guild: Guild, member: discord.Member, name: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
 
+    if not name:
+      await ctx.send('Beleza, mas vou trocar para qual nome?')
+
+      return
+    
+    player = await player.edit(name=name)
+
+    await ctx.send(f'O nome do **{member.name}** foi alterado para: **`{player.name}`**')
+  
+  @flag(name='setLife')
+  async def setLife(self, ctx: commands.Context, guild: Guild, member: discord.Member, life: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
+
+    if not life:
+      await ctx.send('Hmmmmmmm, okok, não irei colocar nenhuma vida.')
+
+      return
+    
+    if not re.match(r'[0-9]+', life.strip()):
+      await ctx.send('Apenas números, ok?')
+
+      return
+    
+    player = await player.edit(life=int(life))
+
+    await ctx.send(f'A vida do **`{member.name}`** foi alterada para: **`{player.life}`**')
+
+  @flag(name='setCredibility')
+  async def setCredibility(self, ctx: commands.Context, guild: Guild, member: discord.Member, credibility: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
+
+    if not credibility:
+      await ctx.send('Eu não sei se li direito, mas acho que você não colocou nenhuma credibilidade :/', tts=True)
+
+      return
+    
+    if not re.match(r'[0-9]+', credibility.strip()):
+      await ctx.send('Apenas números, ok?')
+
+      return
+    
+    player = await player.edit(credibility=int(credibility))
+
+    await ctx.send(f'A credibilidade do **`{member.name}`** foi alterada para **`{player.credibility}`**.')
+  
+  @flag(name='setBreath')
+  async def setBreath(self, ctx: commands.Context, guild: Guild, member: discord.Member, breath: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
+
+    if not breath:
+      await ctx.send(f'Bem, não entendi. Cadê o fôlego?')
+
+      return
+    
+    if not re.match(r'[0-9]+', breath.strip()):
+      await ctx.send('Apenas números, ok?')
+      
+      return
+    
+    player = await player.edit(breath=int(breath))
+    
+    await ctx.send(f'O fôlego do **`{member.name}`** foi alterado para **`{player.breath}`**.')
+
+  @flag(name='setBlood')
+  async def setBlood(self, ctx: commands.Context, guild: Guild, member: discord.Member, blood: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
+
+    if not blood:
+      await ctx.send('Bem, você especificou o sangue?')
+      
+      return
+    
+    if not re.match(r'[0-9]+', blood.strip()):
+      await ctx.send('Apenas números, ok?', ephemeral=True)
+      
+      return
+    
+    player = await player.edit(blood=blood)
+
+    await ctx.send(f'O sangue do **`{member.name}`** foi alterado para **`{player.blood}`**.')
+
+  @flag(name='setAppearance')
+  async def setAppearance(self, ctx: commands.Context, guild: Guild, member: discord.Member, uri: Union[str, None], /) -> None:
+    player = guild.get_player(id=str(member.id))
+
+    if not uri:
+      await ctx.send('Ok, cadê a nova url?')
+      
+      return
+    
+    uri = uri.strip()
+    
+    if not re.match(r'^(http://|https://)?[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*\.[a-zA-Z]{2,5}(:[0-9]{1,5})?(/.*)?$', uri):
+      await ctx.send('Apenas links, ok?')
+
+      return
+    
+    player = await player.edit(appearance=uri)
+
+    await ctx.send(f'A aparência do **`{member.name}`** foi alterada.')
     

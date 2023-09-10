@@ -22,17 +22,40 @@ enum PlayerBreed {
   HYBRID
 }
 
+enum PlayerRank {
+  F
+  E
+  D
+  C
+  B
+  A
+  AA
+  AAA
+  AAAA
+  S
+  SS
+  SSS
+  SSSS
+}
+
+enum DialogChoose {
+  PLAYER
+  NPC
+}
+
 model Guild {
   id String @id
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  arts    Art[]
-  attacks Attack[]
-  vars    Variable[]
-  players Player[]
-  quests  Quest[]
+  arts        Art[]
+  attacks     Attack[]
+  players     Player[]
+  quests      Quest[]
+  DialogQuest DialogQuest[]
+  Arm         Arm[]
+  Armttack    Armttack[]
 
   @@map("guilds")
 }
@@ -87,24 +110,6 @@ model Attack {
   @@map("attacks")
 }
 
-model Variable {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  guild_id String
-
-  name String
-  text String
-
-  required_roles Int      @default(1)
-  roles          String[]
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@id([guild_id, name])
-  @@map("guild_variables")
-}
-
 model Player {
   guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -115,7 +120,8 @@ model Player {
   id       String
   breed    PlayerBreed
 
-  cash Int @default(0)
+  cash Int        @default(0)
+  rank PlayerRank @default(F)
 
   life   Int @default(0)
   blood  Int @default(0)
@@ -137,16 +143,75 @@ model Quest {
   name String
 
   required_breed   PlayerBreed?
+  required_rank    PlayerRank
   allowed_channels String[]
   required_exp     Int
 
   title       String?
   description String?
-  url         String
+  url         String?
   icon        String?
 
-  cooldown Int
+  dialogs DialogQuest[]
 
   @@id([guild_id, id])
   @@map("quests")
+}
+
+model DialogQuest {
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quest Quest @relation(fields: [guild_id, quest_id], references: [guild_id, id], onDelete: Cascade)
+
+  id       String
+  guild_id String
+  quest_id String
+
+  positon Int
+
+  contents String[]
+  choose   DialogChoose
+
+  @@id([guild_id, quest_id, id])
+  @@unique([guild_id, quest_id, positon])
+  @@map("dialog_quests")
+}
+
+model Arm {
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  guild_id String
+  id       String
+
+  name String
+  role String?
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+
+  attacks Armttack[]
+
+  @@id([guild_id, id])
+  @@map("arms")
+}
+
+model Armttack {
+  name String
+  id   String
+
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  arm   Arm   @relation(fields: [guild_id, arm_id], references: [guild_id, id], onDelete: Cascade, onUpdate: Cascade)
+
+  guild_id String
+  arm_id   String
+
+  embed_title       String?
+  embed_description String?
+  embed_url         String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([guild_id, id])
+  @@map("arm_attacks")
 }

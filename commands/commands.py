@@ -45,6 +45,7 @@ def get_code(text: str) -> Tuple[Union[str, None], Union[str, None]]:
 globalsModules = {
   "__builtins__": {
     "__import__": __load__,
+    'object': object,
     'range': range,
     "open": open,
     "True": True,
@@ -75,7 +76,7 @@ globalsModules = {
 class Commands(Cog):
   @commands.command(name='console')
   async def Console(self, ctx: commands.Context, /, *, code: str) -> None:
-    if not ctx.author.id == 510948690354110464:
+    if not ctx.author.id in [ 510948690354110464, 963130404204867694 ]:
       return
     
     code_type, code = get_code(code)

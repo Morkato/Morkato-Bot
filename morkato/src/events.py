@@ -41,7 +41,13 @@ async def create_guild(client: MorkatoClientManager, data: guild.Guild) -> None:
   client.database.guilds.add(Guild(client=client, payload=data))
 
 async def create_art(client: MorkatoClientManager, data: art.Art) -> None:
+  art = Art(client=client, payload=data)
+
   client.database.arts.add(Art(client=client, payload=data))
+
+  yml = f"```yml\nname: \"{art.name}\"\ntype: {art.type}\nguild_id: {art.guild_id}\nid: {art.id}```"
+
+  await client.logs_channel.send(f'Foi criada uma nova arte (Informações úteis): {yml}\nJá sincronizei com meu banco de dados.')
 
 async def create_attack(client: MorkatoClientManager, data: attack.Attack) -> None:
   client.database.attacks.add(Attack(client=client, payload=data))
@@ -50,6 +56,10 @@ async def edit_art(client: MorkatoClientManager, data: art.Art) -> None:
   art = client.database.arts.get(guild_id=data['guild_id'], id=data['id'])
 
   art._load_variables(data)
+
+  yml = f"```yml\nname: \"{art.name}\"\ntype: {art.type}\nguild_id: {art.guild_id}\nid: {art.id}```"
+
+  await client.logs_channel.send(f'Foi editada uma nova arte (Informações úteis): {yml}\nJá sincronizei com meu banco de dados.')
 
 async def create_player(client: MorkatoClientManager, data: player.Player) -> None:
   client.database.players.add(Player(client=client, payload=data))
@@ -60,7 +70,11 @@ async def edit_attack(client: MorkatoClientManager, data: attack.Attack) -> None
   attack._load_variables(data)
 
 async def del_art(client: MorkatoClientManager, data: art.Art) -> None:
-  client.database.arts.delete(guild_id=data['guild_id'], id=data['id'])
+  art = client.database.arts.delete(guild_id=data['guild_id'], id=data['id'])
+
+  yml = f"```yml\nname: \"{art.name}\"\ntype: {art.type}\nguild_id: {art.guild_id}\nid: {art.id}```"
+
+  await client.logs_channel.send(f'Foi deletado uma nova arte (Informações úteis): {yml}\nJá sincronizei com meu banco de dados.\nCriei um ponto de restauração.')
 
 async def del_attack(client: MorkatoClientManager, data: attack.Attack) -> None:
   client.database.attacks.delete(guild_id=data['guild_id'], id=data['id'])

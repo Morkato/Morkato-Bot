@@ -219,3 +219,20 @@ class ArtCommand(Command):
     
     elif str(reaction.emoji) == '❌':
       await ctx.send('Ok, você mudou de ideia.')
+  
+  @flag(name='list', aliases=['l'])
+  async def list(self, ctx: commands.Context, guild: Guild, util, by: Union[str, None]) -> None:
+    if by:
+      by = extract_art_type(by)
+
+      if not by:
+        await ctx.send('Apenas os tipos: **`RESPIRATION`** ou **`KEKKIJUTSU`**')
+
+        return
+      
+    list_by = by or None
+
+    arts = list(guild.arts.where(type=list_by))
+
+    await ctx.send(f'**`{arts}`**')
+
