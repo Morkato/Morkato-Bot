@@ -54,8 +54,7 @@ model Guild {
   players     Player[]
   quests      Quest[]
   DialogQuest DialogQuest[]
-  Arm         Arm[]
-  Armttack    Armttack[]
+  arms        Arm[]
 
   @@map("guilds")
 }
@@ -92,6 +91,7 @@ model Attack {
 
   guild_id String
   art_id   String?
+  arm_id   String?
 
   parent Attack? @relation("ParentAttack", fields: [parent_id, guild_id], references: [id, guild_id])
 
@@ -103,10 +103,15 @@ model Attack {
   embed_description String?
   embed_url         String?
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  Arm         Arm?     @relation(fields: [armGuild_id, armId], references: [guild_id, id])
+  armGuild_id String?
+  armId       String?
 
-  @@id([id, guild_id])
+  @@id([guild_id, id], map: "attack_from_id")
+  @@unique([guild_id, art_id, id], map: "attack_from_art")
+  @@unique([guild_id, arm_id, id], map: "atack_from_arm")
   @@map("attacks")
 }
 
@@ -172,7 +177,7 @@ model DialogQuest {
   choose   DialogChoose
 
   @@id([guild_id, quest_id, id])
-  @@unique([guild_id, quest_id, positon])
+  @@unique([guild_id, quest_id, positon], map: "from_position")
   @@map("dialog_quests")
 }
 
@@ -189,29 +194,8 @@ model Arm {
   embed_description String?
   embed_url         String?
 
-  attacks Armttack[]
+  attacks Attack[]
 
   @@id([guild_id, id])
   @@map("arms")
-}
-
-model Armttack {
-  name String
-  id   String
-
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  arm   Arm   @relation(fields: [guild_id, arm_id], references: [guild_id, id], onDelete: Cascade, onUpdate: Cascade)
-
-  guild_id String
-  arm_id   String
-
-  embed_title       String?
-  embed_description String?
-  embed_url         String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@id([guild_id, id])
-  @@map("arm_attacks")
 }
