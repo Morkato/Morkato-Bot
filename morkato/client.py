@@ -7,6 +7,7 @@ from typing import (
 from .gateway  import MorkatoWebSocketManager, WebSocketClosure
 from .session  import MorkatoSessionController
 from .database import MorkatoDatabaseManager
+from .context  import MorkatoContext
 
 from discord.ext import commands
 from discord     import Intents
@@ -43,6 +44,9 @@ class MorkatoClientManager(commands.Bot):
     self.logs_channel: discord.TextChannel  = None # type: ignore
 
     self.__auth = auth
+  
+  async def get_context(self, origin: discord.Message) -> MorkatoContext:
+    return await super().get_context(origin, cls=MorkatoContext)
 
   @property
   def auth(self) -> str:
