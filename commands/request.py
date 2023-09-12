@@ -1,7 +1,7 @@
 from morkato.client import Cog
 from discord.ext    import commands
 
-from webkit import (
+from morkato.webkit import (
   Response,
   Request,
   request,
@@ -17,7 +17,7 @@ class RequestCommand(Cog):
       
       return (type, await res.content())
 
-    content_type, content = await request(Request(method, route, headers={ 'authorization': self.bot.auth }), call=resolver)
+    content_type, content = await request(Request(method, route), call=resolver)
 
     if content_type == 'application/json; charset=utf-8':
       await ctx.send(f'```json\n{content}```')

@@ -10,9 +10,9 @@ from .utils       import reaction_checker, message_checker
 from ..ext  import Command, message_page_embeds, flag
 
 from discord.ext   import commands
-from objects.guild import Guild
+from morkato.objects.guild import Guild
 
-from errors import NotFoundError
+from morkato.errors import NotFoundError
 
 import discord
 

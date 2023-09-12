@@ -13,7 +13,7 @@ from typing import (
 from .types.command import CommandFunction
 
 from discord.ext     import commands
-from objects.guild   import Guild
+from morkato.objects.guild   import Guild
 
 import inspect
 

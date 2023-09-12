@@ -3,17 +3,15 @@ from __future__ import annotations
 from typing import (
   Optional,
   Generator,
-  Literal,
   Iterator,
   Sequence,
   Union,
   
   TYPE_CHECKING,
-  List,
-  Any
+  List
 )
 
-from ..types import player
+from .types import player
 
 PlayerBreed = player.PlayerBreed
 
@@ -24,9 +22,8 @@ if TYPE_CHECKING:
 
 from easy_pil   import load_image_async
 from io         import BytesIO
-from utils.card import card
 
-from errors import NotFoundError
+from ..errors import NotFoundError
 
 import discord
 

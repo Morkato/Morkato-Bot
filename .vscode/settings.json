@@ -20,12 +20,14 @@
     "KEKKIJUTSU",
     "Morkato",
     "aiohttp",
+    "dotenv",
     "kekki",
     "kekkijutsu",
     "levelname",
     "morkato",
     "numerize",
     "orjson",
+    "unidecode",
     "yarl"
   ],
 }

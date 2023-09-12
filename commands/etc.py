@@ -1,7 +1,7 @@
 from .ext import Command, command_by_flag, flag
 
 from discord.ext   import commands
-from objects.guild import Guild
+from morkato.objects.guild import Guild
 
 from morkato import Cog
 

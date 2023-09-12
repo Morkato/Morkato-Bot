@@ -3,22 +3,17 @@ from __future__ import annotations
 from typing import (
   Iterator,
   Optional,
-  Generator,
   Sequence,
   Literal, 
   Union,
   
   TYPE_CHECKING,
   List,
-  Any
 )
 
-from utils.etc import format, toKey
 
-from .attack import ArtAttack
-from ..types import art
-
-from errors import NotFoundError
+from ..errors import NotFoundError
+from ..       import utils
 
 from copy import deepcopy
 
@@ -26,6 +21,8 @@ import discord
 
 if TYPE_CHECKING:
   from morkato.client import MorkatoClientManager
+  from .types         import Art as TypeArt, ArtType
+  from .attack        import ArtAttack
   from .guild         import Guild
 
 LIMIT_PAGE = 10
@@ -34,13 +31,13 @@ class Art:
   def __init__(
     self,
     client: MorkatoClientManager,
-    payload: art.Art
+    payload: TypeArt
   ) -> None:
     self.client = client
 
     self._load_variables(payload)
 
-  def _load_variables(self, payload: art.Art) -> None:
+  def _load_variables(self, payload: TypeArt) -> None:
     self.__name = payload['name']
     self.__type = payload['type']
     self.__id   = payload['id']
@@ -73,7 +70,7 @@ class Art:
     return self.client.database.get_guild(self.guild_id)
   
   @property
-  def attacks(self) -> Generator[Any, Any, ArtAttack]:
+  def attacks(self) -> utils.GenericGen[ArtAttack]:
     return self.client.database.attacks.where(guild_id=self.guild_id, art=self)
 
   @property
@@ -97,18 +94,20 @@ class Art:
     return self.__image_url
   
   async def edit(self,
-    name:              Optional[str]          = None,
-    type:              Optional[art.ArtType]  = None,
-    title:             Optional[str]          = None,
-    description:       Optional[str]          = None,
-    url:               Optional[str]          = None
+    name:              Optional[str]     = utils.UNDEFINED,
+    type:              Optional[ArtType] = utils.UNDEFINED,
+    title:             Optional[str]     = utils.UNDEFINED,
+    description:       Optional[str]     = utils.UNDEFINED,
+    url:               Optional[str]     = utils.UNDEFINED
   ) -> Art:
+    nis_undefined = utils.nis_undefined
+
     if (
-      not name
-      and not type
-      and not title
-      and not description
-      and not url
+      nis_undefined(name)
+      and nis_undefined(type)
+      and nis_undefined(title)
+      and nis_undefined(description)
+      and nis_undefined(url)
     ):
       return self
     
@@ -126,9 +125,9 @@ class Art:
   
   async def embed_at(
     self, *,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    url: Optional[str] = None
+    title:       Optional[str] = utils.UNDEFINED,
+    description: Optional[str] = utils.UNDEFINED,
+    url:         Optional[str] = utils.UNDEFINED
   ) -> list[discord.Embed]:
     title = title or self.title or self.name
     description = format(description or self.description, title=title) if description or self.description else 'No description'
@@ -158,7 +157,9 @@ class Art:
     return embeds
   
   async def delete(self) -> Art:
-    await self.client.api.del_art(guild_id=self.guild_id, id=self.id)
+    payload = await self.client.api.del_art(guild_id=self.guild_id, id=self.id)
+
+    self._load_variables(payload)
 
     return self
 
@@ -199,21 +200,42 @@ class Arts(Sequence[Art]):
 
     return art
 
-  def where(self, *, name: Optional[str] = None, id: Optional[str] = None, type: Optional[art.ArtType] = None, guild: Optional[Guild] = None, guild_id: Optional[str] = None) -> Generator[Any, Any, Art]:
+  def where(self, *,
+      name:     str     = utils.UNDEFINED,
+      id:       str     = utils.UNDEFINED,
+      type:     ArtType = utils.UNDEFINED,
+      guild:    Guild   = utils.UNDEFINED,
+      guild_id: str     = utils.UNDEFINED
+    ) -> utils.GenericGen[Art]:
+    nis_undefined = utils.nis_undefined
+
     if guild:
       guild_id = guild.id
 
+    if name:
+      name = utils.strip_text(name,
+        ignore_accents=True,
+        ignore_empty=True,
+        case_insensitive=True,
+        strip_text=True
+      )
+
     def checker(art: Art) -> bool:
-      if id and not art.id == id:
+      if nis_undefined(id) and not art.id == id:
         return False
       
-      if guild_id and not art.guild_id == guild_id:
+      if nis_undefined(guild_id) and not art.guild_id == guild_id:
         return False
       
-      if name and not toKey(name) == toKey(art.name):
+      if nis_undefined(name) and not name == utils.strip_text(art.name,
+        ignore_accents=True,
+        ignore_empty=True,
+        case_insensitive=True,
+        strip_text=True
+      ):
         return False
       
-      if type and not art.type == type:
+      if nis_undefined(type) and not art.type == type:
         return False
       
       return True

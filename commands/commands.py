@@ -1,5 +1,8 @@
 from discord.ext     import commands
-from parsers.command import parse
+from parsers.command import parse as parseV1
+from parsers.command_bar import parse as parseV2
+
+from .ext.command_bar import CommandV2
 
 from morkato import Cog, compile_code
 
@@ -92,7 +95,11 @@ class Commands(Cog):
   
   @commands.command(name='parse')
   async def Parse(self, ctx: commands.Context, /, *, text: str) -> None:
-    await ctx.send(f'**`{parse(text)}`**')
+    await ctx.send(f'**`{parseV1(text)}`**')
+
+  @commands.command(name='parse', cls=CommandV2)
+  async def ParseV2(self, ctx: commands.Context, /, *, text: str) -> None:
+    await ctx.send(f'**`{parseV2(text)}`**')
 
 async def setup(bot: commands.Bot) -> None:
   await bot.add_cog(Commands(bot))
