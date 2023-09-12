@@ -4,7 +4,7 @@ import { id as guild_id } from './guild'
 
 import Joi from 'joi'
 
-export type ArtType = "RESPIRATION" | "KEKKIJUTSU"
+export type ArtType = "RESPIRATION" | "KEKKIJUTSU" | 'FIGHTING_STYLE'
 export type Art = {
   name: string
   type: ArtType
@@ -21,7 +21,7 @@ export type Art = {
 }
 
 const orderBy = { created_at: 'asc' }
-const allowedTypes = ['RESPIRATION', 'KEKKIJUTSU']
+const allowedTypes = ['RESPIRATION', 'KEKKIJUTSU', 'FIGHTING_STYLE']
 
 const baseSchemas = {
   name: Joi.string().trim().min(1).max(32).regex(/^[^-+>@&$].+[^-+>@&$]$/),
