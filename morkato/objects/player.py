@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import (
   Optional,
-  Generator,
   Iterator,
   Sequence,
   Union,
@@ -11,33 +10,29 @@ from typing import (
   List
 )
 
-from .types import player
-
-PlayerBreed = player.PlayerBreed
+from .types import Player as TypePlayer, PlayerBreed
 
 if TYPE_CHECKING:
-  from morkato.client import MorkatoClientManager
+  from ..client import MorkatoClientManager
 
   from .guild import Guild
 
-from easy_pil   import load_image_async
-from io         import BytesIO
-
-from ..errors import NotFoundError
-
-import discord
+from .. import (
+  errors,
+  utils
+)
 
 class Player:
   def __init__(
     self,
     client:  MorkatoClientManager,
-    payload: player.Player
+    payload: TypePlayer
   ) -> None:
     self.client = client
 
     self._load_variables(payload)
 
-  def _load_variables(self, payload: player.Player) -> None:
+  def _load_variables(self, payload: TypePlayer) -> None:
     self.__name        = payload['name']
     self.__credibility = payload['credibility']
 
@@ -56,10 +51,6 @@ class Player:
   
   def __repr__(self) -> str:
     return self.__name
-
-  @property
-  def user(self) -> Union[discord.User, None]:
-    return self.client.get_user(self.__id)
   
   @property
   def name(self) -> str:
@@ -82,7 +73,7 @@ class Player:
     return self.__id
   
   @property
-  def breed(self) -> player.PlayerBreed:
+  def breed(self) -> PlayerBreed:
     return self.__breed
   
   @property
@@ -111,7 +102,7 @@ class Player:
   
   async def edit(self,
     name:         Optional[str]                 = None,
-    breed:        Optional[player.PlayerBreed]  = None,
+    breed:        Optional[PlayerBreed]  = None,
     credibility:  Optional[int]                 = None,
     cash:         Optional[int]                 = None,
     life:         Optional[int]                 = None,
@@ -135,26 +126,9 @@ class Player:
     self._load_variables(payload)
 
     return self
-
-  async def card(self, member: discord.Member) -> BytesIO:
-    user = member or self.user
-    
-    display_card = card(
-      avatar_image=await load_image_async(self.appearance or user.display_avatar.url),
-      breed=self.breed,
-      username=member.name,
-      name=self.name,
-      life=self.life,
-      breath=self.breath,
-      blood=self.blood,
-      credibility=self.credibility,
-      exp=self.exp
-    )
-
-    return display_card.image_bytes
   
 class Players(Sequence[Player]):
-  def __init__(self, *players: List[Player]) -> None:
+  def __init__(self, *players: Player) -> None:
     self.__items = list(players)
 
   def __iter__(self) -> Iterator[Player]:
@@ -170,30 +144,32 @@ class Players(Sequence[Player]):
     result = next(self.where(guild_id=guild_id, id=id), None)
 
     if not result:
-      raise NotFoundError('Você não possuí registro.')
+      raise errors.NotFoundError('Você não possuí registro.')
     
     return result
   
-  def add(self, player: Player) -> None:
-    if not isinstance(player, Player):
+  def add(self, *players: Player) -> None:
+    if not all(isinstance(player, Player) for player in players):
       raise TypeError
     
-    self.__items.append(player)
+    self.__items.extend(players)
   
   def where(
     self, *,
-    guild:    Optional[Guild] = None,
-    guild_id: Optional[str]   = None,
-    id:       Optional[str]   = None
-  ) -> Generator[Player]:
-    if guild:
+    guild:    Guild = utils.UNDEFINED,
+    guild_id: str   = utils.UNDEFINED,
+    id:       str   = utils.UNDEFINED
+  ) -> utils.GenericGen[Player]:
+    nis_undefined = utils.nis_undefined
+    
+    if nis_undefined(guild):
       guild_id = guild.id
     
     def checker(player: Player) -> bool:
-      if guild_id and not player.guild_id == guild_id:
+      if nis_undefined(guild_id) and not player.guild_id == guild_id:
         return False
         
-      if id and not player.id == id:
+      if nis_undefined(id) and not player.id == id:
         return False
       
       return True
