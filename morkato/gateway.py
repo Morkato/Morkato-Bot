@@ -37,7 +37,7 @@ class MorkatoWebSocket:
   def __init__(
       self,
       socket: aiohttp.ClientWebSocketResponse, *,
-      loop:    Optional[asyncio.AbstractEventLoop] = None,
+      loop:   Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
     self.socket = socket
     self.loop   = loop or asyncio.get_running_loop()
