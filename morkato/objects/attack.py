@@ -87,7 +87,7 @@ class Attack:
   
   @property
   def parents(self) -> Generator[Attack]:
-    return self.client.database.attacks.where(guild=self.guild, parent=self.id)
+    return self.client.database.attacks.where(guild=self.guild, parent=self)
   
   @property
   def art_id(self) -> Union[str, None]:
