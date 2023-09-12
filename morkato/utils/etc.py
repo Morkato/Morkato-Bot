@@ -6,6 +6,8 @@ from typing import (
   Generator,
   Union,
 
+  overload,
+
   Any
 )
 
@@ -92,3 +94,13 @@ def is_undefined(item) -> bool:
 
 def nis_undefined(item) -> bool:
    return not is_undefined(item)
+
+@overload
+def case_undefined(item: T) -> Union[T, None]: ...
+@overload
+def case_undefined(item: T | _UndefinedMissing, default: T) -> T: ...
+def case_undefined(item: T | _UndefinedMissing, default: Union[T, None] = UNDEFINED) -> T:
+  if is_undefined(item):
+     return default or None
+  
+  return item

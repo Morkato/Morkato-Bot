@@ -4,28 +4,36 @@ from typing import (
   Any
 )
 
+from .gateway  import MorkatoWebSocketManager, WebSocketClosure
 from .session  import MorkatoSessionController
 from .database import MorkatoDatabaseManager
-from .gateway  import MorkatoWebSocketManager, WebSocketClosure
 
 from discord.ext import commands
 from discord     import Intents
 
-from .errors    import BaseError
-from glob      import glob
+from glob import glob
+from .    import (
+  errors,
+  utils
+)
+
 
 import asyncio
 import re
 
 import discord
 
-
 class MorkatoClientManager(commands.Bot):
-  def __init__(self, auth: str, command_prefix: str = '!', case_insensitive: bool = True) -> None:
+  def __init__(
+    self,
+    auth:             str,
+    command_prefix:   str  = utils.UNDEFINED,
+    case_insensitive: bool = utils.UNDEFINED
+  ) -> None:
     super(commands.Bot, self).__init__(
-      command_prefix=command_prefix,
+      command_prefix=utils.case_undefined(command_prefix, '!'),
       intents=Intents.all(),
-      case_insensitive=case_insensitive
+      case_insensitive=utils.case_undefined(case_insensitive, True)
     )
 
     self.__api:      MorkatoSessionController = None # type: ignore
@@ -137,7 +145,7 @@ class MorkatoClientManager(commands.Bot):
 
     error = err.original
 
-    if not isinstance(error, BaseError):
+    if not isinstance(error, errors.BaseError):
       await ctx.send(f'Desculpe-me um erro insperado. Comunique a um desenvolvedor, tipo `{type(error).__name__}`, novamente, desculpe-me.')
 
       raise error

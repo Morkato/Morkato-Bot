@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing_extensions import Self
 from typing import (
-  Optional,
   Generator,
   
   List,
@@ -13,6 +12,8 @@ from typing import (
 if TYPE_CHECKING:
   from .gateway import MorkatoWebSocketManager
   from .client  import MorkatoClientManager
+
+from . import utils
 
 from .objects.types import (
   Player as TypedPlayer,
@@ -36,11 +37,11 @@ from .objects import (
 class MorkatoDatabaseManager:
   def __init__(
     self,
-    client: MorkatoClientManager, *,
-    guilds: Optional[List[TypedGuild]]   = None,
-    attacks: Optional[List[TypedAttack]] = None,
-    players: Optional[List[TypedPlayer]] = None,
-    arts: Optional[List[TypedArt]]       = None
+    client:  MorkatoClientManager, *,
+    guilds:  List[TypedGuild]    = utils.UNDEFINED,
+    attacks: List[TypedAttack]   = utils.UNDEFINED,
+    players: List[TypedPlayer]   = utils.UNDEFINED,
+    arts:    List[TypedArt]      = utils.UNDEFINED
   ) -> None:
     self.__client = client
 
@@ -95,13 +96,13 @@ class MorkatoDatabaseManager:
   def get_art(self, guild_id: str, id: str) -> Art:
     return self.arts.get(guild_id, id)
   
-  def get_art_by_name(self, guild_id: str, name: str) -> Generator[Art]:
+  def get_artS_by_name(self, guild_id: str, name: str) -> Generator[Art]:
     return self.arts.where(guild_id=guild_id, name=name)
   
   def get_attack(self, guild_id: str, id: str) -> Attack:
     return self.attacks.get(guild_id, id)
 
-  def get_attack_by_name(self, guild_id: str, name: str) -> Generator[Attack]:
+  def get_attackS_by_name(self, guild_id: str, name: str) -> Generator[Attack]:
     return self.attacks.where(guild_id=guild_id, name=name)
   
   def get_player(self, guild_id: str, id: str) -> Player:

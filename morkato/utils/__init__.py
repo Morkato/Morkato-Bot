@@ -7,6 +7,7 @@ from .etc import (
   format_text,
   is_undefined,
   nis_undefined,
+  case_undefined,
   find,
   get
 )
