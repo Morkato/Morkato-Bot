@@ -18,8 +18,22 @@ _log.addHandler(warn_handler)
 
 __version__ = '1.0'
 
-from .gateway import *
-from .session import *
+from .gateway import (
+  MorkatoWebSocketManager,
+  WebSocketClosure,
+  MorkatoWebSocket
+)
+
+from .session import (
+  BaseSessionController,
+  MorkatoSessionController
+)
+
 from .console import *
-from .client  import *
+from .client  import (
+  MorkatoContext,
+  MorkatoBot,
+  Cog
+)
+
 from .events  import *

@@ -75,7 +75,7 @@ class Art:
     return self.client.database.attacks.where(guild_id=self.guild_id, art=self)
 
   @property
-  def type(self) -> Literal['RESPIRATION', 'KEKKIJUTSU']:
+  def type(self) -> ArtType:
     return self.__type
   
   @property
