@@ -8,7 +8,7 @@ base_syntax = pp.Regex(r'[^-].*')
 
 parser = pp.Forward()
 
-parser << pp.Optional(flag_syntax) + base_syntax
+parser << pp.Optional(flag_syntax) + pp.Optional(base_syntax)
 
 T = TypeVar('T')
 K = TypeVar('K')

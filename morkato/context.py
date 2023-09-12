@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
   from .objects.player import Player
   from .objects.attack import Attack
+  from .objects.guild  import Guild
   from .objects.art    import Art
-  
 
   import discord
 
@@ -21,6 +21,10 @@ class MorkatoContext(Context['MorkatoBot']):
   @property
   def player(self) -> Player:
     return self.bot.database.get_player(guild_id=str(self.guild.id), id=str(self.author.id))
+  
+  @property
+  def morkato_guild(self) -> Guild:
+    return self.bot.database.get_guild(str(self.guild.id))
   
   async def send_page_embed(self, embeds: List[discord.Embed]) -> discord.Message:
     message = await self.send(embed=embeds[0])
