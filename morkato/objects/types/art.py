@@ -1,6 +1,6 @@
 from typing import TypedDict, Optional, Literal
 
-ArtType = Literal['RESPIRATION', 'KEKKIJUTSU']
+ArtType = Literal['RESPIRATION', 'KEKKIJUTSU', 'FIGHTING_STYLE']
 
 class Art(TypedDict):
   name: str
