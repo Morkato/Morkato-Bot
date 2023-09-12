@@ -16,17 +16,19 @@ if TYPE_CHECKING:
   from .session import MorkatoSessionController
   from .client  import MorkatoClientManager
 
-from utils.etc import getEnv
-
-from .events   import events
+from .events import events
+from .       import (
+  utils
+)
 
 import aiohttp
 import asyncio
 
+import logging
 import orjson
 import yarl
 
-import logging
+import os
 
 _log = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ class MorkatoWebSocket:
   def __init__(
       self,
       socket: aiohttp.ClientWebSocketResponse, *,
-      loop:   Optional[asyncio.AbstractEventLoop] = None,
+      loop:   asyncio.AbstractEventLoop = utils.UNDEFINED
     ) -> None:
     self.socket = socket
     self.loop   = loop or asyncio.get_running_loop()
@@ -88,7 +90,7 @@ class MorkatoWebSocket:
   
 
 class MorkatoWebSocketManager:
-  DEFAULT_GATEWAY = yarl.URL(getEnv('GATEWAY', 'ws://localhost:80'))
+  DEFAULT_GATEWAY = yarl.URL(os.environ.get('GATEWAY', 'ws://localhost:80'))
 
   def __init__(self, gateway: MorkatoWebSocket) -> None:
     self.__gateway = gateway

@@ -51,7 +51,6 @@ class Response:
 
       data = await self.content()
 
-
       if res.status_code == 400:
         raise BadRequest(res, data)
       elif res.status_code == 401:
