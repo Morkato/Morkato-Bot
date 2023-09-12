@@ -58,7 +58,7 @@ def format_text(text: str, default: Optional[str] = None, /, **kwargs) -> str:
 	return re.sub(r'(?<!\\)\$(?P<key>[\w_]+)', repl, text, flags=re.IGNORECASE)
 
 def is_empty_text(text: str) -> bool:
-  return not not re.match(r'\s*', text)
+  return not text.strip()
 
 def strip_text(
   text: str, *,

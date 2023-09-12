@@ -1,4 +1,4 @@
-const range = 1000000000000000000
+const range = 10000000000000
 
 export function uuid(identify?: string | null) {
   identify = !identify ? identify : identify.toUpperCase()
