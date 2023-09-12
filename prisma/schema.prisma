@@ -110,9 +110,7 @@ model Attack {
   armGuild_id String?
   armId       String?
 
-  @@id([guild_id, id], map: "attack_from_id")
-  @@unique([guild_id, art_id, id], map: "attack_from_art")
-  @@unique([guild_id, arm_id, id], map: "atack_from_arm")
+  @@id([guild_id, id])
   @@map("attacks")
 }
 

@@ -130,6 +130,8 @@ class Art:
     description: Optional[str] = utils.UNDEFINED,
     url:         Optional[str] = utils.UNDEFINED
   ) -> list[discord.Embed]:
+    format = utils.format_text
+
     title = title or self.title or self.name
     description = format(description or self.description, title=title) if description or self.description else 'No description'
     url = url or self.image_url
@@ -210,10 +212,10 @@ class Arts(Sequence[Art]):
     ) -> utils.GenericGen[Art]:
     nis_undefined = utils.nis_undefined
 
-    if guild:
+    if nis_undefined(guild):
       guild_id = guild.id
 
-    if name:
+    if nis_undefined(name):
       name = utils.strip_text(name,
         ignore_accents=True,
         ignore_empty=True,

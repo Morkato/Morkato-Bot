@@ -32,7 +32,7 @@ class ArtCommand(Command):
 
       return
     
-    arts = guild.get_art_by_name(name)
+    arts = guild.get_arts_by_name(name)
 
     art = arts[0]
 
