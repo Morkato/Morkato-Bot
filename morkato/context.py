@@ -11,6 +11,7 @@ if TYPE_CHECKING:
   from .client import MorkatoBot
 
   from .objects.player import Player
+  from .objects.attack import Attack
   from .objects.art    import Art
   
 
@@ -64,3 +65,14 @@ class MorkatoContext(Context['MorkatoBot']):
       embeds = await art.embed_at()
 
     return await self.send_page_embed(embeds)
+  
+  async def send_attack(self, attack: Attack) -> discord.Message:
+    embed = None
+
+    try:
+      player = self.player
+      embed = (await attack.embed_at()).set_author(name = player.name, icon_url = player.appearance or self.author.display_avatar.url)
+    except:
+      embed = await attack.embed_at()
+
+    await self.send(embed=embed)
