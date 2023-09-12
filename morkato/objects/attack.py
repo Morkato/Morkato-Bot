@@ -4,6 +4,7 @@ from typing_extensions import Self
 from typing import (
   Generator,
   Iterator,
+  Iterable,
   Optional,
   Sequence,
   Union,
@@ -15,16 +16,17 @@ from typing import (
   Any
 )
 
+from morkato.objects.types import Attack as TypeAttack
+
 if TYPE_CHECKING:
   from morkato.client import MorkatoClientManager
 
-  from .types import attack
-  from .guild  import Guild
-  from .art    import Art
-
-from utils.etc         import format, toKey
+  from .types import Attack as TypeAttack
+  from .guild import Guild
+  from .art   import Art
 
 from ..errors import NotFoundError
+from ..       import utils
 
 import discord
 
@@ -32,13 +34,13 @@ class Attack:
   def __init__(
     self,
     client:  MorkatoClientManager,
-    payload: attack.Attack
+    payload: TypeAttack
   ) -> None:
     self.client = client
 
     self._load_variables(payload)
 
-  def _load_variables(self, payload: attack.Attack) -> None:
+  def _load_variables(self, payload: TypeAttack) -> None:
     self.__name   = payload['name']
     self.__id     = payload['id']
     self.__parent = payload['parent_id']
@@ -80,11 +82,11 @@ class Attack:
     return self.__parent
   
   @property
-  def parent(self) -> Self:
+  def parent(self) -> Attack:
     return self.client.database.get_attack(guild_id=self.guild_id, id=self.parent_id)
   
   @property
-  def parents(self) -> Generator[Self]:
+  def parents(self) -> Generator[Attack]:
     return self.client.database.attacks.where(guild=self.guild, parent=self.id)
   
   @property
@@ -185,6 +187,13 @@ class Attack:
     return self
   
 class ArtAttack(Attack):
+  def _load_variables(self, payload: Attack) -> None:
+    result = super()._load_variables(payload)
+
+    if self.__art_id is None:
+      raise TypeError('Attack Art required art!')
+    
+    return result
   
   @property
   def art(self) -> Art:
@@ -211,11 +220,11 @@ class Attacks(Sequence[Attack]):
     
     return attack
 
-  def add(self, attack: Attack) -> None:
-    if not isinstance(attack, Attack):
+  def add(self, *attacks: Attack) -> None:
+    if not all(isinstance(item, Attack) for item in attacks):
       raise TypeError
     
-    self.__items.append(attack)
+    self.__items.extend(attacks)
   
   def delete(self, guild_id: str, id: str) -> Art:
     index, attack = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and id == item.id), (-1, None))
@@ -228,30 +237,86 @@ class Attacks(Sequence[Attack]):
     return attack
 
   @overload
-  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Attack]: ...
+  def where(
+    self, *,
+    guild:     Guild  = utils.UNDEFINED,
+    guild_id:  str    = utils.UNDEFINED,
+    name:      str    = utils.UNDEFINED,
+    id:        str    = utils.UNDEFINED,
+    parent:    Attack = utils.UNDEFINED,
+    parent_id: str    = utils.UNDEFINED
+  ) -> utils.GenericGen[Attack]: ...
   @overload
-  def where(self, *, art: Art, art_name: Optional[str] = None, guild: Optional[Guild] = None, guild_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[ArtAttack]: ...
-  def where(self, *, guild: Optional[Guild] = None, guild_id: Optional[str] = None, art: Optional[Art] = None, art_id: Optional[str] = None, name: Optional[str] = None, id: Optional[str] = None, parent: Optional[str] = None) -> Generator[Attack]:
-    if guild:
+  def where(
+    self, *,
+    art:       Art,
+    guild:     Guild  = utils.UNDEFINED,
+    guild_id:  str    = utils.UNDEFINED,
+    name:      str    = utils.UNDEFINED,
+    id:        str    = utils.UNDEFINED,
+    parent:    Attack = utils.UNDEFINED,
+    parent_id: str    = utils.UNDEFINED
+  ) -> utils.GenericGen[ArtAttack]: ...
+  @overload
+  def where(
+    self, *,
+    art_id: str,
+    guild:    Guild  = utils.UNDEFINED,
+    guild_id: str    = utils.UNDEFINED,
+    name:     str    = utils.UNDEFINED,
+    id:       str    = utils.UNDEFINED,
+    parent:   Attack = utils.UNDEFINED,
+    parent_id: str   = utils.UNDEFINED
+  ) -> utils.GenericGen[ArtAttack]: ...
+  def where(
+    self, *,
+    art:      Art    = utils.UNDEFINED,
+    art_id: str      = utils.UNDEFINED,
+    guild:    Guild  = utils.UNDEFINED,
+    guild_id: str    = utils.UNDEFINED,
+    name:     str    = utils.UNDEFINED,
+    id:       str    = utils.UNDEFINED,
+    parent:   Attack = utils.UNDEFINED,
+    parent_id: str   = utils.UNDEFINED
+  ) -> Generator[Attack]:
+    nis_undefined = utils.nis_undefined
+    
+    if nis_undefined(guild):
       guild_id = guild.id
 
-    if art:
+    if nis_undefined(art):
       art_id = art.id
+
+    if nis_undefined(parent):
+      parent_id = parent.id
+
+    if nis_undefined(name):
+      name = utils.strip_text(name,
+        ignore_accents=True,
+        ignore_empty=True,
+        case_insensitive=True,
+        strip_text=True      
+      )
     
     def checker(attack: Attack) -> bool:
-      if id and not attack.id == id:
+      if nis_undefined(id) and not attack.id == id:
         return False
       
-      if guild_id and not guild_id == attack.guild_id:
+      if nis_undefined(guild_id) and not guild_id == attack.guild_id:
         return False
       
-      if art_id and not art_id == attack.art_id:
+      if nis_undefined(art_id) and not art_id == attack.art_id:
         return False
       
-      if name and not toKey(name) == toKey(attack.name):
+      if nis_undefined(name) and not name == utils.strip_text(attack.name,
+        ignore_accents=True,
+        ignore_empty=True,
+        case_insensitive=True,
+        strip_text=True      
+      ):
         return False
       
-      if parent and not parent == attack.parent_id:
+      if nis_undefined(parent_id) and not parent_id == attack.parent_id:
         return False
       
       return True

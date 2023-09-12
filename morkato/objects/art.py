@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing_extensions import Self
 from typing import (
   Iterator,
   Optional,
@@ -99,7 +100,7 @@ class Art:
     title:             Optional[str]     = utils.UNDEFINED,
     description:       Optional[str]     = utils.UNDEFINED,
     url:               Optional[str]     = utils.UNDEFINED
-  ) -> Art:
+  ) -> Self:
     nis_undefined = utils.nis_undefined
 
     if (
@@ -156,7 +157,7 @@ class Art:
 
     return embeds
   
-  async def delete(self) -> Art:
+  async def delete(self) -> Self:
     payload = await self.client.api.del_art(guild_id=self.guild_id, id=self.id)
 
     self._load_variables(payload)
