@@ -144,6 +144,8 @@ class Art:
     if url:
       embed.set_image(url=url)
 
+    embed.set_footer(text=f'ID: {self.id}')
+
     attacks = list(self.attacks)
 
     if not attacks:
