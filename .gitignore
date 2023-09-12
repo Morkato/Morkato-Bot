@@ -32,3 +32,5 @@ dist
 .env*.local
 
 spec
+
+settings.yml

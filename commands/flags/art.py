@@ -9,8 +9,8 @@ from ..ext  import Command, message_page_embeds, flag
 from .utils import reaction_checker, message_checker
 
 from discord.ext       import commands
-from objects.types.art import ArtType
-from objects.guild     import Guild
+from morkato.objects.types.art import ArtType
+from morkato.objects.guild     import Guild
 
 import re
 

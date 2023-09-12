@@ -3,7 +3,11 @@ from decouple import config
 
 from sys import exit
 
+import dotenv
+
 def main() -> int:
+  dotenv.load_dotenv()
+  
   try:
     TOKEN: str = config('BOT_TOKEN')
   except:

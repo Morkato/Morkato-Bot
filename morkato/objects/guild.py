@@ -20,9 +20,9 @@ from .art    import Arts, Art
 if TYPE_CHECKING:
   from morkato.client import MorkatoClientManager
 
-  from ..types        import guild
+  from .types        import guild
 
-from errors import NotFoundError
+from ..errors import NotFoundError
 
 import discord
 

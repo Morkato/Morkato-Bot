@@ -18,13 +18,13 @@ from typing import (
 if TYPE_CHECKING:
   from morkato.client import MorkatoClientManager
 
-  from ..types import attack
+  from .types import attack
   from .guild  import Guild
   from .art    import Art
 
 from utils.etc         import format, toKey
 
-from errors import NotFoundError
+from ..errors import NotFoundError
 
 import discord
 

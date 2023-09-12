@@ -6,9 +6,9 @@ from typing import (
 from ..ext  import Command, message_page_embeds, flag
 
 from discord.ext   import commands
-from objects.guild import Guild
+from morkato.objects.guild import Guild
 
-from objects.types.player import PlayerBreed
+from morkato.objects.types.player import PlayerBreed
 
 import discord
 import re

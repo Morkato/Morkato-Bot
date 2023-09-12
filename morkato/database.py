@@ -14,14 +14,14 @@ if TYPE_CHECKING:
   from .gateway import MorkatoWebSocketManager
   from .client  import MorkatoClientManager
 
-from objects.types import (
+from .objects.types import (
   Player as TypedPlayer,
   Attack as TypedAttack,
   Guild  as TypedGuild,
   Art    as TypedArt
 )
 
-from objects import (
+from .objects import (
   Players,
   Attacks,
   Guilds,

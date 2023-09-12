@@ -7,7 +7,7 @@ from typing import (
 )
 
 from discord.ext   import commands
-from objects.guild import Guild
+from morkato.objects.guild import Guild
 
 
 CoroNone = Coroutine[Any, Any, None]
