@@ -13,6 +13,7 @@ from typing import (
 )
 
 
+from .types   import Art as TypeArt, ArtType
 from ..errors import NotFoundError
 from ..       import utils
 
@@ -21,8 +22,7 @@ from copy import deepcopy
 import discord
 
 if TYPE_CHECKING:
-  from .types         import Art as TypeArt, ArtType
-  from morkato.client import MorkatoClientManager
+  from ..client import MorkatoClientManager
   from .attack        import ArtAttack
   from .guild         import Guild
 
@@ -185,11 +185,11 @@ class Arts(Sequence[Art]):
     
     return art
 
-  def add(self, art: Art) -> None:
-    if not isinstance(art, Art):
+  def add(self, *arts: Art) -> None:
+    if not all(isinstance(art, Art) for art in arts):
       raise TypeError
 
-    self.__items.append(art)
+    self.__items.extend(arts)
 
   def delete(self, guild_id: str, id: str) -> Art:
     index, art = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and id == item.id), (-1, None))

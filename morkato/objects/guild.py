@@ -2,27 +2,27 @@ from __future__ import annotations
 
 from typing import (
   Optional,
-  Generator,
-  Literal,
   Iterator,
   Sequence,
   Union,
   
   TYPE_CHECKING,
   List,
-  Any
 )
 
 from .player import Player, PlayerBreed
+from .art    import ArtType, Arts, Art
 from .attack import Attacks, Attack
-from .art    import Arts, Art
 
 if TYPE_CHECKING:
-  from morkato.client import MorkatoClientManager
+  from ..client import MorkatoClientManager
 
   from .types        import guild
 
-from ..errors import NotFoundError
+from .. import (
+  errors,
+  utils
+)
 
 import discord
 
@@ -49,28 +49,28 @@ class Guild:
   def get_player(self, id: str) -> Player:
     return self.client.database.get_player(guild_id=self.id, id=id)
   
-  def get_art_by_name(self, name: str) -> List[Art]:
-    result = list(self.client.database.get_art_by_name(guild_id=self.id, name=name))
+  def get_arts_by_name(self, name: str) -> List[Art]:
+    result = list(self.client.database.arts.where(guild=self, name=name))
 
     if not result:
-      raise NotFoundError('Essa arte não existe.')
+      raise errors.NotFoundError('Essa arte não existe.')
     
     return result
 
-  def get_attack_by_name(self, name: str) -> Attack:
-    result = next(self.client.database.get_attack_by_name(guild_id=self.id, name=name), None)
+  def get_attacks_by_name(self, name: str) -> List[Attack]:
+    result = list(self.client.database.attacks.where(guild=self, name=name))
 
     if not result:
-      raise NotFoundError('Esse ataque não existe.')
+      raise errors.NotFoundError('Esse ataque não existe.')
     
     return result
   
   async def create_art(self, *,
     name:              str,
-    type:              Literal['RESPIRATION', 'KEKKIJUTSU'],
-    embed_title:       Optional[str] = None,
-    embed_description: Optional[str] = None,
-    embed_url:         Optional[str] = None
+    type:              ArtType,
+    embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
   ) -> Art:
     return Art(
       client  = self.client,
@@ -86,11 +86,11 @@ class Guild:
   
   async def create_attack(self, *, 
     name:              str,
-    parent:            Optional[Attack]       = None,
-    art:               Optional[Art]          = None,
-    embed_title:       Optional[str]          = None,
-    embed_description: Optional[str]          = None,
-    embed_url:         Optional[str]          = None
+    parent:            Optional[Attack]       = utils.UNDEFINED,
+    art:               Optional[Art]          = utils.UNDEFINED,
+    embed_title:       Optional[str]          = utils.UNDEFINED,
+    embed_description: Optional[str]          = utils.UNDEFINED,
+    embed_url:         Optional[str]          = utils.UNDEFINED
   ) -> Attack:
     parent_id = parent if not parent else parent.id
     art_id    = art if not art else art.id
@@ -111,13 +111,13 @@ class Guild:
     id:          str,
     name:        str,
     breed:       PlayerBreed,
-    credibility: Optional[int] = None,
-    cash:        Optional[int] = None,
-    life:        Optional[int] = None,
-    breath:      Optional[int] = None,
-    blood:       Optional[int] = None,
-    exp:         Optional[int] = None,
-    appearance:  Optional[str] = None
+    credibility: Optional[int] = utils.UNDEFINED,
+    cash:        Optional[int] = utils.UNDEFINED,
+    life:        Optional[int] = utils.UNDEFINED,
+    breath:      Optional[int] = utils.UNDEFINED,
+    blood:       Optional[int] = utils.UNDEFINED,
+    exp:         Optional[int] = utils.UNDEFINED,
+    appearance:  Optional[str] = utils.UNDEFINED
   ) -> Player:
     payload = await self.client.api.create_player(
       guild_id=self.id,
@@ -150,6 +150,10 @@ class Guild:
   @property
   def arts(self) -> Arts:
     return Arts(*self.client.database.arts.where(guild=self))
+  
+  @property
+  def attacks(self) -> Attacks:
+    return Attacks(*self.client.database.attacks.where(guild=self))
 
 class Guilds(Sequence[Guild]):
   def __init__(self, *guilds: List[Guild]) -> None:
@@ -168,19 +172,19 @@ class Guilds(Sequence[Guild]):
     guild = next(self.where(id=id), None)
 
     if not guild:
-      raise NotFoundError('Seu servidor não está registrado em meu banco de dados, registre ele.')
+      raise errors.NotFoundError('Seu servidor não está registrado em meu banco de dados, registre ele.')
     
     return guild
 
-  def add(self, guild: Guild) -> None:
-    if not isinstance(guild, Guild):
+  def add(self, *guilds: Guild) -> None:
+    if not all(isinstance(guild, Guild) for guild in guilds):
       raise TypeError
 
-    self.__items.append(guild)
+    self.__items.extend(guilds)
 
-  def where(self, *, id: Optional[str] = None) -> Generator[Any, Any, Guild]:
+  def where(self, *, id: Optional[str] = utils.UNDEFINED) -> utils.GenericGen[Guild]:
     def checker(guild: Guild) -> bool:
-      if id and not guild.id == id:
+      if utils.nis_undefined(id) and not guild.id == id:
         return False
       
       return True

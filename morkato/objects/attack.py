@@ -4,29 +4,29 @@ from typing_extensions import Self
 from typing import (
   Generator,
   Iterator,
-  Iterable,
   Optional,
   Sequence,
   Union,
   
   overload,
   
-  List,
   TYPE_CHECKING,
-  Any
+  List  
 )
 
 from morkato.objects.types import Attack as TypeAttack
 
 if TYPE_CHECKING:
-  from morkato.client import MorkatoClientManager
+  from ..client import MorkatoClientManager
 
   from .types import Attack as TypeAttack
   from .guild import Guild
   from .art   import Art
 
-from ..errors import NotFoundError
-from ..       import utils
+from .. import (
+  errors,
+  utils
+)
 
 import discord
 
@@ -121,23 +121,25 @@ class Attack:
     return self.__image_url
   
   async def edit(self,
-    name:           Optional[str] = None,
-    title:          Optional[str] = None,
-    description:    Optional[str] = None,
-    url:            Optional[str] = None
+    name:           Optional[str] = utils.UNDEFINED,
+    title:          Optional[str] = utils.UNDEFINED,
+    description:    Optional[str] = utils.UNDEFINED,
+    url:            Optional[str] = utils.UNDEFINED
   ) -> Self:
+    nis_undefined = utils.nis_undefined
+    
     payload = {  }
 
-    if name:
+    if nis_undefined(name):
       payload['name'] = name
 
-    if title:
+    if nis_undefined(title):
       payload['embed_title'] = title
 
-    if description:
+    if nis_undefined(description):
       payload['embed_description'] = description
     
-    if url:
+    if nis_undefined(url):
       payload['embed_url'] = url
 
     if not payload:
@@ -150,11 +152,13 @@ class Attack:
     return self
 
   async def embed_at(self,
-    member:      Optional[discord.Member] = None, *,
-    title:       Optional[str]            = None,
-    description: Optional[str]            = None,
-    url:         Optional[str]            = None,
+    member:      Optional[discord.Member] = utils.UNDEFINED, *,
+    title:       Optional[str]            = utils.UNDEFINED,
+    description: Optional[str]            = utils.UNDEFINED,
+    url:         Optional[str]            = utils.UNDEFINED,
   ) -> discord.Embed:
+    format = utils.format_text
+    
     title       = title or self.title or self.name
     description = description or self.description
     url         = url or self.image_url
@@ -177,7 +181,7 @@ class Attack:
     return embed
   
   async def delete(self) -> Attack:
-    payload = await self.db.del_attack(
+    payload = await self.client.api.del_attack(
       guild_id=self.guild_id,
       id=self.id
     )
@@ -216,7 +220,7 @@ class Attacks(Sequence[Attack]):
     attack = next(self.where(guild_id=guild_id, id=id), None)
 
     if not attack:
-      raise NotFoundError
+      raise errors.NotFoundError("Essa arte (Respiração e Kekkijutsu!) não existe")
     
     return attack
 
@@ -230,7 +234,7 @@ class Attacks(Sequence[Attack]):
     index, attack = next(((i, item) for i, item in enumerate(self) if item.guild_id == guild_id and id == item.id), (-1, None))
 
     if index == -1 or not attack:
-      raise NotFoundError('Esse ataque não existe.')
+      raise errors.NotFoundError('Esse ataque não existe.')
     
     del self[index]
 
@@ -260,26 +264,27 @@ class Attacks(Sequence[Attack]):
   @overload
   def where(
     self, *,
-    art_id: str,
-    guild:    Guild  = utils.UNDEFINED,
-    guild_id: str    = utils.UNDEFINED,
-    name:     str    = utils.UNDEFINED,
-    id:       str    = utils.UNDEFINED,
-    parent:   Attack = utils.UNDEFINED,
-    parent_id: str   = utils.UNDEFINED
+    art_id:    str,
+    guild:     Guild  = utils.UNDEFINED,
+    guild_id:  str    = utils.UNDEFINED,
+    name:      str    = utils.UNDEFINED,
+    id:        str    = utils.UNDEFINED,
+    parent:    Attack = utils.UNDEFINED,
+    parent_id: str    = utils.UNDEFINED
   ) -> utils.GenericGen[ArtAttack]: ...
   def where(
     self, *,
-    art:      Art    = utils.UNDEFINED,
-    art_id: str      = utils.UNDEFINED,
-    guild:    Guild  = utils.UNDEFINED,
-    guild_id: str    = utils.UNDEFINED,
-    name:     str    = utils.UNDEFINED,
-    id:       str    = utils.UNDEFINED,
-    parent:   Attack = utils.UNDEFINED,
-    parent_id: str   = utils.UNDEFINED
-  ) -> Generator[Attack]:
+    art:       Art    = utils.UNDEFINED,
+    art_id:    str    = utils.UNDEFINED,
+    guild:     Guild  = utils.UNDEFINED,
+    guild_id:  str    = utils.UNDEFINED,
+    name:      str    = utils.UNDEFINED,
+    id:        str    = utils.UNDEFINED,
+    parent:    Attack = utils.UNDEFINED,
+    parent_id: str    = utils.UNDEFINED
+  ) -> utils.GenericGen[ArtAttack]:
     nis_undefined = utils.nis_undefined
+    strip_text     = utils.strip_text
     
     if nis_undefined(guild):
       guild_id = guild.id
@@ -291,7 +296,7 @@ class Attacks(Sequence[Attack]):
       parent_id = parent.id
 
     if nis_undefined(name):
-      name = utils.strip_text(name,
+      name = strip_text(name,
         ignore_accents=True,
         ignore_empty=True,
         case_insensitive=True,
@@ -308,7 +313,7 @@ class Attacks(Sequence[Attack]):
       if nis_undefined(art_id) and not art_id == attack.art_id:
         return False
       
-      if nis_undefined(name) and not name == utils.strip_text(attack.name,
+      if nis_undefined(name) and not name == strip_text(attack.name,
         ignore_accents=True,
         ignore_empty=True,
         case_insensitive=True,
