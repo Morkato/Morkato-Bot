@@ -20,8 +20,8 @@ from copy import deepcopy
 import discord
 
 if TYPE_CHECKING:
-  from morkato.client import MorkatoClientManager
   from .types         import Art as TypeArt, ArtType
+  from morkato.client import MorkatoClientManager
   from .attack        import ArtAttack
   from .guild         import Guild
 
