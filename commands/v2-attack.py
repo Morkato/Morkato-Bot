@@ -1,7 +1,4 @@
-from typing import Union, Dict, List
-
 from morkato.converters import CommandConverter
-from .                  import utils
 
 from morkato import (
   MorkatoBot,
@@ -10,8 +7,6 @@ from morkato import (
 )
 
 from discord.ext import commands
-
-import re
 
 class Attack(Cog, name='v2-Attack'):
   @commands.command(name='v2-a')

@@ -1,14 +1,8 @@
 from typing import TypeVar, Union
 
-import pyparsing as pp
 import re
 
-flag_syntax = pp.Suppress(pp.Literal('-')) + pp.Regex(r'[a-z]',  re.IGNORECASE) | pp.Suppress(pp.Literal('--')) + pp.Regex(r'[a-z]+', re.IGNORECASE)
-base_syntax = pp.Regex(r'[^-].*')
-
-parser = pp.Forward()
-
-parser << pp.Optional(flag_syntax) + pp.Optional(base_syntax)
+base_pattern = r'^\s*(-[a-z]|--[a-z]+)?([^-].*)?$'
 
 T = TypeVar('T')
 K = TypeVar('K')
@@ -26,27 +20,36 @@ def parse(text: str) -> tuple[Union[str, None], dict[str, str]]:
   result = None
 
   try:
-    result = parser.parseString(text)
-  except pp.ParseException:
+    result = list(re.match(base_pattern, text, re.IGNORECASE).groups())
+  except:
     return (None, {})
 
   params = {}
 
-  if len(result) == 1:
-    flag = re.search(r'\s(-[a-z]|--[a-z]+)', result[0], re.IGNORECASE)
+  if not result[0]:
+    if not result[1]:
+      return (None, params)
+
+    flag = re.search(r'\s(-[a-z]|--[a-z]+)', result[1], re.IGNORECASE)
 
     if not flag:
-      return (result[0], params)
+      return (result[1], params)
 
     start, _ = flag.span()
     
-    text = result[0][start+1:]
+    text = result[1][start+1:]
 
     _, params = parse(text)
 
-    return (result[0][:start].strip(), params)
+    return (result[1][:start].strip() or None, params)
     
-  if len(result) == 2:
+  result[0] = re.sub(r'^--?', '', result[0])
+
+  if not result[1]:
+    params[result[0]] = []
+
+    return (None, params)
+  else:
     param_value, other_params = parse(result[1])
 
     params[result[0]] = [param_value]
