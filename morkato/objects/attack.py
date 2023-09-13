@@ -303,6 +303,7 @@ class Attacks(Sequence[Attack]):
         strip_text=True      
       )
     
+    print('aqui')
     def checker(attack: Attack) -> bool:
       if nis_undefined(id) and not attack.id == id:
         return False
@@ -326,7 +327,7 @@ class Attacks(Sequence[Attack]):
       
       return True
     
-    return (item for item in self if checker(item))
+    return utils.find(self, checker)
   
   def __delitem__(self, k: int) -> None:
     del self.__items[k]

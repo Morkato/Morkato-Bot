@@ -217,3 +217,27 @@ class ArtGroupFlags(utils.FlagGroup):
 
   @utils.flag(name='list', aliases=[ 'l' ])
   async def list(self, ctx: MorkatoContext, base: BaseType, param: ParamType) -> None: ...
+  @utils.flag(name='attack', aliases=[ 'a' ])
+  async def list(self, ctx: MorkatoContext, base: BaseType, param: ParamType) -> None:
+    if not base:
+      await ctx.send('Tá, mas qual é o nome?')
+
+      return
+    
+    if not param:
+      await ctx.send('Ok, mas qual ataque?')
+    
+    guild = ctx.morkato_guild
+
+    art = guild.get_arts_by_name(base)[0]
+
+    attacks = ctx.bot.database.attacks.where(guild=guild, art_id=art.id, name=param[0])
+
+    attack = next(attacks, None)
+
+    if not attack:
+      await ctx.send('Essa ataque não existe nessa arte :/')
+
+      return
+
+    await ctx.send_attack(attack)
