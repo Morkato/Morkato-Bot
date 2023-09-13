@@ -1,4 +1,4 @@
-from .etc import (
+from .etc  import (
   UNDEFINED,
   GenericGen,
   
