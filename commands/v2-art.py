@@ -2,10 +2,7 @@ from typing import Union, Dict, List
 
 from morkato.converters import CommandConverter
 from .                  import utils
-from .flags.v2.test import TestGroup
-
-from morkato.utils.flag import process_flags
-from morkato       import (
+from morkato            import (
   MorkatoBot,
   MorkatoContext,
   Cog
@@ -78,13 +75,6 @@ class Art(Cog, name='v2-Art'):
       return
     
     await self.process_params(ctx, cmd.base, cmd.params)
-
-  @commands.command()
-  async def testFlag(self, ctx: MorkatoContext, *, cmd: CommandConverter) -> None:
-    if not cmd.params:
-      return
-    
-    await process_flags(TestGroup(), ctx=ctx, base=cmd.base, params=cmd.params)
     
 async def setup(bot: MorkatoBot) -> None:
   await bot.add_cog(Art(bot))
