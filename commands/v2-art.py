@@ -80,7 +80,5 @@ class Art(Cog, name='v2-Art'):
     
     await self.process_params(ctx, cmd.base, cmd.params)
     
-
-    
 async def setup(bot: MorkatoBot) -> None:
   await bot.add_cog(Art(bot))
