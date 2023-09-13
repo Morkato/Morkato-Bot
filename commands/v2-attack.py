@@ -1,18 +1,25 @@
-from morkato.converters import CommandConverter
+from .v2.attack import AttackGroupFlags
 
-from morkato import (
-  MorkatoBot,
+from morkato.converters import CommandConverter
+from morkato            import (
   MorkatoContext,
-  Cog
+  MorkatoBot,
+  Cog,
+  
+  utils
 )
 
 from discord.ext import commands
 
 class Attack(Cog, name='v2-Attack'):
+  GROUP = AttackGroupFlags()
+
   @commands.command(name='v2-a')
   async def attack(self, ctx: MorkatoContext, *, cmd: CommandConverter) -> None:
     guild = ctx.morkato_guild
 
+    print(cmd.params)
+    
     if not cmd.params:
       if not cmd.base:
         await ctx.send('Ok, mas qual o nome?')
@@ -26,6 +33,8 @@ class Attack(Cog, name='v2-Attack'):
       await ctx.send_attack(attack)
 
       return
+    
+    await utils.process_flags(Attack.GROUP, ctx=ctx, base=cmd.base, params=cmd.params)
 
 async def setup(bot: MorkatoBot) -> None:
   await bot.add_cog(Attack(bot))

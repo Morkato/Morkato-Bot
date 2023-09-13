@@ -75,12 +75,7 @@ def strip_text(
   case_insensitive: bool = UNDEFINED,
   strip_text:       bool = UNDEFINED
 ) -> str:
-  if not (
-      ignore_accents
-      and ignore_empty
-      and case_insensitive
-      and strip_text
-  ) or is_empty_text(text):
+  if is_empty_text(text):
     return text
   
   if strip_text:
@@ -90,7 +85,7 @@ def strip_text(
      text = unidecode(text)
 
   if ignore_empty:
-     text = re.sub(r'\s+', '', text)
+     text = re.sub(r'\s+', '-', text)
   
   if case_insensitive:
      text = text.lower()
