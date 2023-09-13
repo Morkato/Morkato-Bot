@@ -1,6 +1,7 @@
 from typing import (
   Optional,
   Callable,
+  Coroutine,
   Iterable,
   TypeVar,
   Generator,
@@ -12,7 +13,6 @@ from typing import (
 )
 
 from unidecode import unidecode
-import discord
 import re
 
 class _UndefinedMissing:
@@ -34,6 +34,7 @@ T = TypeVar('T')
 
 UNDEFINED: Any   = _UndefinedMissing()
 GenericGen = Generator[T, Any, Any]
+EmptyCoro = Coroutine[Any, Any, None]
 
 def find(iter: Iterable[T], check: Callable[[T], bool]) -> GenericGen[T]:
   return (item for item in iter if check(item))
