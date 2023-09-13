@@ -19,7 +19,7 @@ from .etc import EmptyCoro, UNDEFINED, case_undefined
 import asyncio
 import inspect
 
-FlagCallback = Union[Callable[[Self, MorkatoContext], EmptyCoro], Callable[[Self, MorkatoContext, Union[str, None]], EmptyCoro], Callable[[Self, MorkatoContext, Union[str, None], List[str]], EmptyCoro]]
+FlagCallback = Union[Callable[[Self, 'MorkatoContext'], 'EmptyCoro'], Callable[[Self, 'MorkatoContext', Union[str, None]], 'EmptyCoro'], Callable[[Self, 'MorkatoContext', Union[str, None], List[str]], 'EmptyCoro']]
 
 def make_callback(call: FlagCallback):
   signatured = inspect.signature( call)
@@ -35,11 +35,9 @@ def make_callback(call: FlagCallback):
     required_params = [self, ctx]
     optional_params = [base, param]
 
-    length -= 1
+    params = required_params + optional_params[:length - 1]
 
-    params = required_params + optional_params[:length]
-
-    return await call(self, *params)
+    return await call(*params)
   
   return wrapper
 
@@ -58,7 +56,7 @@ class Flag:
     return await self.callback(self.group, ctx, base, param)
 
 class GroupFlagMeta(type):
-  __flags__: List[Flag]
+  __flags__: List[Flag] = []
 
   def __new__(cls, name: str, bases: Any, attrs: Dict[str, Any], **kwargs) -> Self:
     flags = []
@@ -72,12 +70,11 @@ class GroupFlagMeta(type):
     attrs['__flags__'] = flags
 
     return super().__new__(cls, name, bases, attrs, **kwargs)
-  
-  def __init__(self) -> None:
-    for flag in self.__flags__:
-      flag.group = self
 
-class FlagGroup(metaclass=GroupFlagMeta): ...
+class FlagGroup(metaclass=GroupFlagMeta):
+  def __init__(self) -> None:
+    for flag in self.__class__.__flags__:
+      flag.group = self
 
 def flag(*, name: str = UNDEFINED, aliases: List[str] = UNDEFINED):
   def wrapper(func: FlagCallback) -> Flag:
