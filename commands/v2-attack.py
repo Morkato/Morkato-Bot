@@ -14,7 +14,7 @@ from discord.ext import commands
 class Attack(Cog, name='v2-Attack'):
   GROUP = AttackGroupFlags()
 
-  @commands.command(name='v2-a')
+  @commands.command(name='v2-a', cls=utils.LoggerCommand)
   async def attack(self, ctx: MorkatoContext, *, cmd: CommandConverter) -> None:
     guild = ctx.morkato_guild
 

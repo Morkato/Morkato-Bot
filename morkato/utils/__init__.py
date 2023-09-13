@@ -1,3 +1,5 @@
+from .command import LoggerCommand
+
 from .flag import FlagGroup, process_flags, flag
 from .art  import extract_art_type
 from .etc  import (

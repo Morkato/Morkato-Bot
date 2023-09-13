@@ -14,7 +14,7 @@ from discord.ext import commands
 class Art(Cog, name='v2-Art'):
   GROUP: ArtGroupFlags = ArtGroupFlags()
 
-  @commands.command(name='v2-art')
+  @commands.command(name='v2-art', cls=utils.LoggerCommand)
   async def art(self, ctx: MorkatoContext, *, cmd: CommandConverter) -> None:
     guild = ctx.morkato_guild
     
