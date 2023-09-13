@@ -2,6 +2,7 @@ from typing import (
   Optional,
   Callable,
   Coroutine,
+  Literal,
   Iterable,
   TypeVar,
   Generator,
@@ -9,11 +10,17 @@ from typing import (
 
   overload,
 
+  List,
   Any
 )
 
-from unidecode import unidecode
+from discord.ext import commands
+from unidecode   import unidecode
+
+import discord
 import re
+
+FlagChecker = Literal['author', 'guild', 'channel', 'message']
 
 class _UndefinedMissing:
   __slots__ = ()
@@ -105,3 +112,39 @@ def case_undefined(item: T | _UndefinedMissing, default: Union[T, None] = UNDEFI
      return default or None
   
   return item
+
+def message_checker(ctx: commands.Context, flags: List[FlagChecker]):
+  def check(message: discord.Message) -> bool:
+    if 'author' in flags and not message.author.id == ctx.author.id:
+      return False
+    
+    if 'guild' in flags and not message.guild.id == ctx.guild.id:
+      return False
+    
+    if 'channel' in flags and not message.channel.id == ctx.channel.id:
+      return False
+    
+    return True
+  return check
+
+def reaction_checker(ctx: commands.Context, message: discord.Message, flags: List[FlagChecker]):
+  def check(reaction: discord.Reaction, user: discord.User) -> bool:
+    if 'author' in flags and not user.id == ctx.author.id:
+      print('a')
+      return False
+    
+    if 'guild' in flags and reaction.message.guild and not reaction.message.guild.id == ctx.guild.id:
+      print('b')
+      return False
+    
+    if 'channel' in flags and not reaction.message.channel.id == ctx.channel.id:
+      print('c')
+      return False
+    
+    if 'message' in flags and not reaction.message.id == message.id:
+      print('d')
+      return False
+    
+    return True
+  
+  return check

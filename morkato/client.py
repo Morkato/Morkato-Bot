@@ -161,7 +161,7 @@ class MorkatoClientManager(commands.Bot):
 
   async def setup_hook(self) -> None:
     for file in glob('commands/*.py'):
-      if re.match(r'commands/(ext|flags|utils)/.*', file):
+      if re.match(r'commands/(ext|flags|utils|v2)/.*', file):
         continue
 
       if file[-3:] == '.py':

@@ -45,4 +45,8 @@ class Context:
   
 class CommandConverter(commands.Converter, Context):
   async def convert(self, ctx: MorkatoContext, argument: str) -> Context:
-    return Context(*parse(argument))
+    result = parse(argument)
+
+    print(result)
+
+    return Context(*result)
