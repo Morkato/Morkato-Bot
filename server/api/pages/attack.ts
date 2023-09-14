@@ -14,13 +14,13 @@ import {
 export default (server: WebSocketServer) => {
   const route = Router()
 
-  route.get('/:guild_id/attacks', then(
+  route.get('/:guild_id', then(
     attacks(async (req, res, next, attacks) => {
       res.json(attacks)
     })
   ))
 
-  route.post('/:guild_id/attacks', then(
+  route.post('/:guild_id', then(
     forCreateAttack(async (req, res, next, attack) => {
       server.clients.forEach(sock => {
         sock.send(JSON.stringify({ e: 'CREATE_ATTACK', d: attack }))
@@ -30,13 +30,13 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.get('/:guild_id/attacks/:attack_id', then(
+  route.get('/:guild_id/:attack_id', then(
     attack(async (req, res, next, attack) => {
       res.json(attack)
     })
   ))
 
-  route.post('/:guild_id/attacks/:attack_id', then(
+  route.post('/:guild_id/:attack_id', then(
     forEditAttack(async (req, res, next, attack) => {
       server.clients.forEach(sock => {
         sock.send(JSON.stringify({ e: 'EDIT_ATTACK', d: attack }))
@@ -46,7 +46,7 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.delete('/:guild_id/attacks/:attack_id', then(
+  route.delete('/:guild_id/:attack_id', then(
     forDelAttack(async (req, res, next, attack) => {
       server.clients.forEach(sock => {
         sock.send(JSON.stringify({ e: 'DELETE_ATTACK', d: attack }))

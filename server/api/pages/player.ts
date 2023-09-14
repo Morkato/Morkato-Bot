@@ -16,10 +16,10 @@ import {
 export default (server: WebSocketServer) => {
   const route = Router()
 
-  route.get('/:guild_id/players', then(players(send('json'))))
-  route.get('/:guild_id/players/:player_id', then(player(send('json'))))
+  route.get('/:guild_id', then(players(send('json'))))
+  route.get('/:guild_id/:player_id', then(player(send('json'))))
 
-  route.post('/:guild_id/players', then(
+  route.post('/:guild_id', then(
     forCreatePlayer(async (req, res, next, player) => {
       res.json(player)
       
@@ -29,7 +29,7 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.post('/:guild_id/players/:player_id', then(
+  route.post('/:guild_id/:player_id', then(
     forEditPlayer(async (req, res, next, player) => {
       res.json(player)
 
@@ -39,7 +39,7 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.delete('/:guild_id/players/:player_id', then(
+  route.delete('/:guild_id/:player_id', then(
     forDelPlayer(async (req, res, next, player) => {
       res.json(player)
 
