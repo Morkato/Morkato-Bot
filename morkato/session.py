@@ -496,6 +496,8 @@ class MorkatoSessionController(BaseSessionController):
     if nis_undefined(embed_url):
       payload['embed_url'] = embed_url
 
+    print(payload)
+    
     async with self.request(Request('POST', f'/guilds/{guild_id}/attacks/{id}', body=payload)) as res:
       await assertAttackResponse(res)
 

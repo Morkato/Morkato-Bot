@@ -1,25 +1,38 @@
-from .ext import command_by_flag
+from .v2.art import ArtGroupFlags
 
-from morkato.client import MorkatoBot, Cog
-from discord.ext    import commands
+from morkato.converters import CommandConverter
+from morkato            import (
+  MorkatoContext,
+  MorkatoBot,
+  Cog,
 
-from .flags.attack import AttackCommand
-from .flags.art    import ArtCommand
+  utils
+)
+
+from discord.ext import commands
 
 class Art(Cog):
-  def __init__(self, bot: MorkatoBot) -> None:
-    super().__init__(bot)
+  GROUP: ArtGroupFlags = ArtGroupFlags()
 
-    self.attack_command = AttackCommand(case_insensitive=True)
-    self.art_command    = ArtCommand(case_insensitive=True)
-  
-  @commands.command(name='art')
-  async def Art(self, ctx: commands.Context, /, *, text: str) -> None:
-    return await command_by_flag(command=self.art_command, client=self.bot, ctx=ctx, text=text)
-  
-  @commands.command(aliases=['a', 'atk'])
-  async def Attack(self, ctx: commands.Context, /, *, text: str) -> None:
-    return await command_by_flag(command=self.attack_command, client=self.bot, ctx=ctx, util=(ctx.author), text=text)
+  @commands.command(name='art', cls=utils.LoggerCommand)
+  async def art(self, ctx: MorkatoContext, *, cmd: CommandConverter) -> None:
+    guild = ctx.morkato_guild
     
-async def setup(bot: commands.Bot) -> None:
+    if not cmd.params:
+      if not cmd.base:
+        await ctx.send('Tá, mas qual é o nome?')
+
+        return
+      
+      arts = guild.get_arts_by_name(cmd.base)
+
+      art = arts[0]
+
+      await ctx.send_art(art)
+      
+      return
+    
+    await utils.process_flags(Art.GROUP, ctx=ctx, base=cmd.base, params=cmd.params)
+    
+async def setup(bot: MorkatoBot) -> None:
   await bot.add_cog(Art(bot))

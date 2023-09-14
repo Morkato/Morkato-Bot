@@ -41,7 +41,7 @@ export default function Attacks(db: PrismaClient['attack']) {
     guild_id = assert(schema_guild_id, guild_id)
     id       = assert(schema_id, id)
 
-    const attack = await db.findUnique({ where: { id_guild_id: { guild_id, id } } })
+    const attack = await db.findUnique({ where: { guild_id_id: { guild_id, id } } })
 
     if(!attack) {
       const error = errors['errorIfAttackNotExists']
@@ -75,7 +75,7 @@ export default function Attacks(db: PrismaClient['attack']) {
     const { art_id, created_at, updated_at, ...rest } = validate<AttackEditParams['data']>(data, {})
 
     try {
-      const editedAttack = await db.update({ where: { id_guild_id: { guild_id, id } }, data: rest })
+      const editedAttack = await db.update({ where: { guild_id_id: { guild_id, id } }, data: rest })
 
       return editedAttack as Attack;
     } catch {
@@ -90,7 +90,7 @@ export default function Attacks(db: PrismaClient['attack']) {
     id       = assert(schema_id, id)
 
     try {
-      const deletedAttack = await db.delete({ where: { id_guild_id: { guild_id, id } } })
+      const deletedAttack = await db.delete({ where: { guild_id_id: { guild_id, id } } })
 
       return deletedAttack as Attack;
     } catch {
