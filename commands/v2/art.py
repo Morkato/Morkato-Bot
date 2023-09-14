@@ -84,9 +84,9 @@ class ArtGroupFlags(utils.FlagGroup):
           return
         
         art = await art.edit(
-          title=payload.get('title'),
-          description=payload.get('description'),
-          url=payload.get('url')
+          title=payload.get('title', utils.UNDEFINED),
+          description=payload.get('description', utils.UNDEFINED),
+          url=payload.get('url', utils.UNDEFINED)
         )
 
         message = 'A arte: **`{0}`** foi editada.'
@@ -140,7 +140,7 @@ class ArtGroupFlags(utils.FlagGroup):
 
       return
     
-    name = param[0] or base
+    name = base or param[0]
 
     arts = ctx.morkato_guild.get_arts_by_name(name)
 
@@ -224,14 +224,16 @@ class ArtGroupFlags(utils.FlagGroup):
 
       return
     
-    if not param:
-      await ctx.send('Ok, mas qual ataque?')
-    
     guild = ctx.morkato_guild
 
     art = guild.get_arts_by_name(base)[0]
 
-    attacks = ctx.bot.database.attacks.where(guild=guild, art_id=art.id, name=param[0])
+    attacks = ctx.bot.database.attacks.where(guild=guild, art_id=art.id, name=param[0] if param else utils.UNDEFINED)
+
+    if not param:
+      await ctx.send_page_embed([ await atk.embed_at() for atk in attacks ])
+
+      return
 
     attack = next(attacks, None)
 

@@ -81,7 +81,7 @@ class AttackCommand(Command):
 
       return
 
-    attack = guild.get_attack_by_name(name)
+    attack = guild.get_attacks_by_name(name)[0]
 
     embed = await attack.embed_at()
 

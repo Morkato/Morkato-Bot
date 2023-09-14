@@ -303,7 +303,6 @@ class Attacks(Sequence[Attack]):
         strip_text=True      
       )
     
-    print('aqui')
     def checker(attack: Attack) -> bool:
       if nis_undefined(id) and not attack.id == id:
         return False
