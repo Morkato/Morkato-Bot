@@ -13,6 +13,9 @@ import Guilds  from 'models/guild'
 import Arts    from 'models/arts'
 
 import Guild  from './pages/guild'
+import Player from './pages/player'
+import Attack from './pages/attack'
+import Art    from './pages/arts'
 
 import express from 'express'
 
@@ -41,6 +44,9 @@ export default (server: WebSocketServer) => {
   app.use(express.json())
   
   app.use('/guilds', then(auth), Guild(server))
+  app.use('/attacks', then(auth), Attack(server))
+  app.use('/arts', then(auth), Player(server))
+  app.use('/players', then(auth), Art(server))
 
   server.on('connection', async sock => {
     sock.send(JSON.stringify({ e: 'HELLO', d: 'This device has connected of gateway!' }))

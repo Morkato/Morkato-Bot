@@ -14,13 +14,13 @@ import {
 export default (server: WebSocketServer) => {
   const route = Router()
 
-  route.get('/:guild_id/arts', then(
+  route.get('/:guild_id', then(
     arts(async (req, res, next, arts) => {
       res.json(arts)
     })
   ))
 
-  route.post('/:guild_id/arts', then(
+  route.post('/:guild_id', then(
     forCreateArt(async (req, res, next, art) => {
       server.clients.forEach(client => {
         client.send(JSON.stringify({ 'e': 'CREATE_ART', d: art }))
@@ -30,13 +30,13 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.get('/:guild_id/arts/:art_id', then(
+  route.get('/:guild_id/:art_id', then(
     art(async (req, res, next, art) => {
       res.json(art)
     })
   ))
 
-  route.post('/:guild_id/arts/:art_id', then(
+  route.post('/:guild_id/:art_id', then(
     forEditArt(async (req, res, next, { before, after }) => {
       server.clients.forEach(client => {
         client.send(JSON.stringify({ 'e': 'EDIT_ART', d: { before, after } }))
@@ -46,7 +46,7 @@ export default (server: WebSocketServer) => {
     })
   ))
 
-  route.delete('/:guild_id/arts/:art_id', then(
+  route.delete('/:guild_id/:art_id', then(
     forDelArt(async (req, res, next, art) => {
       server.clients.forEach(client => {
         client.send(JSON.stringify({ 'e': 'DELETE_ART', d: art }))
