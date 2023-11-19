@@ -1,13 +1,31 @@
 from __future__ import annotations
 
 from typing import (
-  Any
+  TYPE_CHECKING,
+  Any,
+  Set,
+
+  Optional,
+  NoReturn,
+  Union,
+
+  overload
 )
 
-from .gateway  import MorkatoWebSocketManager, WebSocketClosure
+if TYPE_CHECKING:
+  from discord import Guild as DiscordGuild, Message
+  
+  from .attack import ParentAttack, ArtAttack, Attack
+  from .player_item import PlayerItem
+  from .player import Player
+  from .guild  import Guild
+  from .art    import Art
+  from .item   import Item
+
 from .session  import MorkatoSessionController
-from .database import MorkatoDatabaseManager
+from .gateway  import MorkatoWebSocketManager
 from .context  import MorkatoContext
+from .tree     import Tree
 
 from discord.ext import commands
 from discord     import Intents
@@ -18,7 +36,6 @@ from .    import (
   utils
 )
 
-
 import asyncio
 import re
 
@@ -28,22 +45,62 @@ class MorkatoClientManager(commands.Bot):
   def __init__(
     self,
     auth:             str,
+    login:            str,
     command_prefix:   str  = utils.UNDEFINED,
     case_insensitive: bool = utils.UNDEFINED
   ) -> None:
     super(commands.Bot, self).__init__(
       command_prefix=utils.case_undefined(command_prefix, '!'),
       intents=Intents.all(),
-      case_insensitive=utils.case_undefined(case_insensitive, True)
+      case_insensitive=utils.case_undefined(case_insensitive, True),
+      tree_cls=Tree
     )
 
-    self.__api:      MorkatoSessionController = None # type: ignore
-    self.__database: MorkatoDatabaseManager   = None # type: ignore
-    self.__gateway:  MorkatoWebSocketManager  = None # type: ignore
+    self._api:      MorkatoSessionController = None # type: ignore
+    self._ws_morkato:  MorkatoWebSocketManager  = None # type: ignore
 
-    self.logs_channel: discord.TextChannel  = None # type: ignore
+    self._morkato_guilds: Set[Guild]  = set()
+    self._players:        Set[Player] = set()
+    self._attacks:        Set[Attack] = set()
+    self._arts:           Set[Art]    = set()
+    self._items:          Set[Item]   = set()
+    self._player_items:   Set[PlayerItem] = set()
 
+    self._login = login
     self.__auth = auth
+  
+  def _raise_if_guild_not_exists(self) -> NoReturn:
+    raise errors.NotFoundError('Esse servidor requer configuração.')
+
+  def _get_morkato_guild_by_id(self, id: int) -> Guild:
+    result = utils.get(self._morkato_guilds, lambda guild: guild.id == id)
+
+    if not result:
+      self._raise_if_guild_not_exists()
+
+    return result
+    
+  def _get_morkato_guild_by_guild_origin(self, guild: DiscordGuild) -> Guild:
+    result = self._get_morkato_guild_by_id(guild.id)
+
+    cache = getattr(result, '_morkato_origin', None)
+    
+    if not cache or cache.id != guild.id:
+      setattr(result, '_morkato_origin', guild)
+
+    return result
+  
+  @overload
+  def get_morkato_guild(self, id: int) -> Guild: ...
+  @overload
+  def get_morkato_guild(self, guild: DiscordGuild) -> Guild: ...
+  def get_morkato_guild(self, obj: Union[DiscordGuild, int, None] = None, *, guild: Optional[DiscordGuild] = None, id: Optional[int] = None) -> Guild:
+    obj = obj or guild or id
+    
+    if isinstance(obj, int):
+      return self._get_morkato_guild_by_id(obj)
+    
+    return self._get_morkato_guild_by_guild_origin(obj)
   
   async def get_context(self, origin: discord.Message) -> MorkatoContext:
     return await super().get_context(origin, cls=MorkatoContext)
@@ -52,96 +109,63 @@ class MorkatoClientManager(commands.Bot):
   def auth(self) -> str:
     return self.__auth
   
+  @property
+  def api(self) -> MorkatoSessionController:
+    return self._api
+  
+  @property
+  def ws_morkato(self) -> MorkatoWebSocketManager:
+    return self._ws_morkato
+  
   async def __aexit__(self, *args, **kwargs) -> None:
     print('Ih, fechou')
     
-    await self.close_morkato()
-    
     await super().__aexit__(*args, **kwargs)
 
-  async def handle_event(self, e: str, d: Any) -> None:
-    event = self.__gateway.get_event(e)
+    await self._ws_morkato.close()
+    await self._api.close()
+
+  async def connect_morkato(self) -> None:
+    try:
+      while True:
+        await self._ws_morkato.poll_event()
     
-    if not event:
-      return
-    
-    return await event(self, d)
+    except KeyboardInterrupt: ...
 
-  async def start_morkato(self) -> MorkatoWebSocketManager:
-    api      = await MorkatoSessionController(auth=self.__auth).start()
-    gateway  = await MorkatoWebSocketManager.from_session(api)
-    database = await MorkatoDatabaseManager.from_gateway(self, gateway)
+  async def connect(self, *, reconnect: bool = True) -> None:
+    coro_morkato = self.connect_morkato()
+    coro_bot = super().connect(reconnect=reconnect)
 
-    self.__api      = api
-    self.__gateway  = gateway
-    self.__database = database
-
-    return gateway
-
-  async def close_morkato(self) -> bool:
-    res_gateway = await self.__gateway.close()
-    res_api = await self.__api.close()
-
-    return res_gateway and res_api
+    try:
+      await asyncio.gather(coro_morkato, coro_bot)
+    except Exception as err:
+      coro_bot.throw(err)
+      coro_morkato.throw(err)
 
   async def start(self, token: str, *, reconnect: bool = True) -> None:
-    task_discord = asyncio.create_task(super().start(token, reconnect=reconnect))
-    task_morkato = asyncio.create_task(self.pool_events(await self.start_morkato()))
+    self._api         = await MorkatoSessionController(auth=self.__auth).start()
+    self._ws_morkato  = await asyncio.wait_for(MorkatoWebSocketManager.from_client(self, login=self._login), timeout=60)
 
-    return await asyncio.gather(task_discord, task_morkato)
-  
-  
-  @property
-  def api(self) -> MorkatoSessionController:
-    return self.__api
-  
-  @property
-  def gateway(self) -> MorkatoWebSocketManager:
-    return self.__gateway
-
-  @property
-  def database(self) -> MorkatoDatabaseManager:
-    return self.__database
+    return await super().start(token=token, reconnect=reconnect)
   
   async def on_ready(self) -> None:
-    await self.tree.sync()
-
-    guild = self.get_guild(971803172056219728)
+    await self.tree.sync()    
     
-    self.logs_channel = guild.get_channel(1147560459298410526)
+    await self.change_presence(activity = discord.Game("Pudim. O Game (LTS)"), status = discord.Status.dnd)
     
     print(f'Estou conectado, como : {self.user}')
 
-  async def pool_event(self, gateway: MorkatoWebSocketManager) -> None:
-    (event, data) = await gateway.pool_event()
-
-    await self.handle_event(event, data)
-  
-  async def pool_events(self, gateway: MorkatoWebSocketManager) -> None:
-    try:
-      while not gateway.closed:
-        
-        await self.pool_event(gateway)
-    except WebSocketClosure:
-      await self.close_morkato()
-
-      for tries in range(1, 6):
-        wait = 1.4 * tries * 5
-
-        coro = self.send_log(F"Websocket foi desconectado! Tentando uma nova conexão em {wait}s")
-
-        await asyncio.gather(asyncio.sleep(wait), coro)
-
-        try:
-          gateway = await self.start_morkato()
-
-          await self.send_log("Uma nova conexão foi criada!")
-
-          await self.pool_events(gateway)
-        except:
-          await self.close_morkato()
-
-    await self.send_log("Websocket foi desconectado, tente estabelecer uma nova conexão manualmente.")
+  async def on_message(self, message: Message) -> None:
+    if message.author.bot:
+      return
+    
+    if not message.guild and message.author.id == 510948690354110464:
+      await message.author.send('Tô ligado.')
+      
+    if self.user.mention in message.content and message.author.id == 510948690354110464:
+      await message.channel.send('Oba')
+    
+    return await super().on_message(message)
 
   async def on_command_error(self, ctx: commands.Context, err: Exception) -> None:
     if not isinstance(err, commands.errors.CommandInvokeError):
@@ -150,22 +174,27 @@ class MorkatoClientManager(commands.Bot):
     error = err.original
 
     if not isinstance(error, errors.BaseError):
-      await ctx.send(f'Desculpe-me um erro insperado. Comunique a um desenvolvedor, tipo `{type(error).__name__}`, novamente, desculpe-me.')
+      await ctx.send(f'`[{type(error).__name__}: Erro interno, desculpe-me] {error}`')
 
-      raise error
+      raise err
     
     await ctx.send(error.message)
-  
-  async def send_log(self, content: str) -> None:
-    await self.logs_channel.send(content)
 
   async def setup_hook(self) -> None:
-    for file in glob('commands/*.py'):
-      if re.match(r'commands/(ext|flags|utils|v2)/.*', file):
+    gl = glob('extensions/*.py') + glob('extensions/**/*.py')
+    
+    for file in gl:
+      if (
+        re.match(r'extensions/app_commands/(views|ext|flags|utils|v2).*', file)
+        or re.match(r'extensions/(groups|v2).*', file)
+        or not file[-3:] == '.py'
+      ):
         continue
 
-      if file[-3:] == '.py':
-        await self.load_extension(file[:-3].replace('/', '.'))
+      ext = file[:-3].replace('/', '.')
+      print(f"[Setup] Load extension: {ext}")
+      
+      await self.load_extension(ext)
     
 class MorkatoBot(MorkatoClientManager):
   """
@@ -200,6 +229,22 @@ class Cog(commands.Cog):
   def __init__(self, bot: MorkatoBot) -> None:
     self.bot = bot
 
-    self.database = bot.database
-    self.gateway  = bot.gateway
-    self.api      = bot.api
+  @property
+  def api(self):
+    return self.bot.api
+  
+  def get_guild(self, obj: discord.Guild) -> Guild:
+    return self.bot.get_morkato_guild(obj)
+  
+  def get_player(self, member: discord.Member) -> Player:
+    return self.get_guild(member.guild).get_player(member)
+  
+  @overload
+  def get_art(self, guild: discord.Guild, id: int) -> Art: ...
+  @overload
+  def get_art(self, guild: discord.Guild, name: str) -> Art: ...
+  def get_art(self, guild: discord.Guild, obj: Union[str, int]) -> None:
+    return self.get_guild(guild).get_art(obj)
+  
+  def get_attack(self, guild: discord.Guild, name: str) -> Union[ArtAttack, ParentAttack]:
+    return self.get_guild(guild).get_attack(name)

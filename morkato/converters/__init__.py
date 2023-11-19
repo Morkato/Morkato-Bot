@@ -1,1 +1,1 @@
-from .command import CommandConverter
+from .command import CommandConverter, Context
