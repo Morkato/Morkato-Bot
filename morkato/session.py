@@ -22,12 +22,13 @@ from .webkit import (
   URL
 )
 
-from .objects.types import (
+from .types import (
   PlayerBreed,
   ArtType,
   Attack,
   Player,
   Art,
+  Item,
   Guild
 )
 
@@ -75,6 +76,13 @@ assertGuildResponse = createAssert(
 assertArtResponse = createAssert(
   notFoundMessage='Essa arte não existe.',
   alreadyExistsMessage='Essa arte já existe mano :V',
+  badRequestMessage='Erro no lado do servidor.',
+  internalErrorMessage='Pera, pera, mandando aqui.... E erro! Tsc, desculpe-me, erro inesperado.'
+)
+
+assertItemResponse = createAssert(
+  notFoundMessage='Esse item não existe.',
+  alreadyExistsMessage='Esse item já existe pô :V',
   badRequestMessage='Erro no lado do servidor.',
   internalErrorMessage='Pera, pera, mandando aqui.... E erro! Tsc, desculpe-me, erro inesperado.'
 )
@@ -158,28 +166,34 @@ class BaseSessionController:
     return await self.session.close()
 
 class MorkatoSessionController(BaseSessionController):
-  def get_guild(self, id: str) -> CoroContext[Guild]:
+  def get_guild(self, id: int) -> CoroContext[Guild]:
     return CoroContext(self._get_guild(id))
   
-  def get_arts(self, guild_id: str) -> CoroContext[List[Art]]:
+  def get_arts(self, guild_id: int) -> CoroContext[List[Art]]:
     return CoroContext(self._get_arts(guild_id))
   
-  def get_art(self, guild_id: str, id: str) -> CoroContext[Art]:
+  def get_art(self, guild_id: int, id: int) -> CoroContext[Art]:
     return CoroContext(self._get_art(guild_id, id))
+
+  def get_items(self, guild_id: int) -> CoroContext[List[Item]]:
+    return CoroContext(self._get_items(guild_id))
   
-  def get_attacks(self, guild_id: str, art_id: Optional[str] = None) -> CoroContext[List[Attack]]:
+  def get_item(self, guild_id: int, id: int) -> CoroContext[Item]:
+    return CoroContext(self._get_item(guild_id, id))
+  
+  def get_attacks(self, guild_id: int, art_id: int = utils.UNDEFINED) -> CoroContext[List[Attack]]:
     return CoroContext(self._get_attacks(guild_id, art_id))
   
-  def get_attack(self, guild_id: str, id: str) -> CoroContext[Attack]:
+  def get_attack(self, guild_id: int, id: int) -> CoroContext[Attack]:
     return CoroContext(self._get_attack(guild_id, id))
   
-  def get_player(self, guild_id: str, id: str) -> CoroContext[Player]:
+  def get_player(self, guild_id: int, id: int) -> CoroContext[Player]:
     return CoroContext(self._get_player(guild_id, id))
   
-  def get_players(self, guild_id: str) -> CoroContext[List[Player]]:
+  def get_players(self, guild_id: int) -> CoroContext[List[Player]]:
     return CoroContext(self._get_players(guild_id))
   
-  def create_art(self, guild_id: str, *,
+  def create_art(self, guild_id: int, *,
     name:              str,
     type:              ArtType,
     embed_title:       Optional[str] = utils.UNDEFINED,
@@ -193,55 +207,90 @@ class MorkatoSessionController(BaseSessionController):
       embed_description=embed_description,
       embed_url=embed_url
     ))
-  
-  def create_attack(self, guild_id: str, *, 
+
+  def create_item(self, guild_id: int, *,
     name:              str,
-    parent:            Optional[str] = utils.UNDEFINED,
-    art_id:            Optional[str] = utils.UNDEFINED,
+    usable:            bool          = utils.UNDEFINED,
+    stack:             int           = utils.UNDEFINED,
     embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
+  ) -> CoroContext[Item]:
+    return CoroContext(self._create_item(guild_id,
+      name=name,
+      usable=usable,
+      stack=stack,
+      embed_title=embed_title,
+      embed_description=embed_description,
+      embed_url=embed_url
+    ))
+  
+  def create_attack(self, guild_id: int, *, 
+    name:              str,
+    parent:            str           = utils.UNDEFINED,
+    damage:            int           = utils.UNDEFINED,
+    breath:            int           = utils.UNDEFINED,
+    blood:             int           = utils.UNDEFINED,
+    art_id:            int           = utils.UNDEFINED,
+    arm_id:            int           = utils.UNDEFINED,
+    embed_title:       Optional[int] = utils.UNDEFINED,
     embed_description: Optional[str] = utils.UNDEFINED,
     embed_url:         Optional[str] = utils.UNDEFINED
   ) -> CoroContext[Attack]:
     return CoroContext(self._create_attack(guild_id,
       name=name,
       parent=parent,
+      damage=damage,
+      breath=breath,
+      blood=blood,
       art_id=art_id,
+      arm_id=arm_id,
       embed_title=embed_title,
       embed_description=embed_description,
       embed_url=embed_url
     ))
   
-  def create_player(self, guild_id: str, *,
-    id:          str,
+  def create_player(self, guild_id: int, *,
+    id:          int,
     name:        str,
     breed:       PlayerBreed,
-    credibility: Optional[int] = utils.UNDEFINED,
-    cash:        Optional[int] = utils.UNDEFINED,
-    life:        Optional[int] = utils.UNDEFINED,
-    breath:      Optional[int] = utils.UNDEFINED,
-    blood:       Optional[int] = utils.UNDEFINED,
-    exp:         Optional[int] = utils.UNDEFINED,
-    appearance:  Optional[str] = utils.UNDEFINED
+    history:     Optional[str] = utils.UNDEFINED,
+    credibility: int           = utils.UNDEFINED,
+    cash:        int           = utils.UNDEFINED,
+    life:        int           = utils.UNDEFINED,
+    breath:      int           = utils.UNDEFINED,
+    blood:       int           = utils.UNDEFINED,
+    resistance:  int           = utils.UNDEFINED,
+    velocity:    int           = utils.UNDEFINED,
+    exp:         int           = utils.UNDEFINED,
+    force:       int           = utils.UNDEFINED,
+    appearance:  Optional[str] = utils.UNDEFINED,
+    banner:      Optional[str] = utils.UNDEFINED
   ) -> CoroContext[Player]:
     return CoroContext(self._create_player(guild_id,
       id=id,
       name=name,
       breath=breath,
       breed=breed,
+      history=history,
       credibility=credibility,
       cash=cash,
       life=life,
       blood=blood,
+      resistance=resistance,
+      velocity=velocity,
       exp=exp,
-      appearance=appearance
+      force=force,
+      appearance=appearance,
+      banner=banner
     ))
   
-  def edit_art(self, guild_id: str, id: str, *,
-    name:              Optional[str]     = utils.UNDEFINED,
-    type:              Optional[ArtType] = utils.UNDEFINED,
-    embed_title:       Optional[str]     = utils.UNDEFINED,
-    embed_description: Optional[str]     = utils.UNDEFINED,
-    embed_url:         Optional[str]     = utils.UNDEFINED
+  def edit_art(self, guild_id: int, id: int, *,
+    name:              str           = utils.UNDEFINED,
+    type:              ArtType       = utils.UNDEFINED,
+    embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
   ) -> CoroContext[Art]:
     return CoroContext(self._edit_art(guild_id, id,
       name=name,
@@ -251,75 +300,123 @@ class MorkatoSessionController(BaseSessionController):
       embed_url=embed_url
     ))
   
-  def edit_attack(self, guild_id: str, id: str, *, 
-    name:              Optional[str] = utils.UNDEFINED,
-    required_exp:      Optional[int] = utils.UNDEFINED,
+  def edit_item(self, guild_id: int, id: int, *,
+    name:              str           = utils.UNDEFINED,
+    usable:            bool          = utils.UNDEFINED,
+    stack:             int           = utils.UNDEFINED,
+    embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
+  ) -> CoroContext[Item]:
+    return CoroContext(self._edit_item(guild_id, id,
+      name=name,
+      usable=usable,
+      stack=stack,
+      embed_title=embed_title,
+      embed_description=embed_description,
+      embed_url=embed_url
+    ))
+  
+  def edit_attack(self, guild_id: int, id: int, *, 
+    name:              str           = utils.UNDEFINED,
+    required_exp:      int           = utils.UNDEFINED,
+    damage:            int           = utils.UNDEFINED,
+    breath:            int           = utils.UNDEFINED,
+    blood:             int           = utils.UNDEFINED,
     embed_title:       Optional[str] = utils.UNDEFINED,
     embed_description: Optional[str] = utils.UNDEFINED,
     embed_url:         Optional[str] = utils.UNDEFINED
   ) -> CoroContext[Attack]:
     return CoroContext(self._edit_attack(guild_id, id,
       name=name,
+      damage=damage,
+      breath=breath,
+      blood=blood,
       embed_title=embed_title,
       required_exp=required_exp,
       embed_description=embed_description,
       embed_url=embed_url
     ))
   
-  def edit_player(self, guild_id: str, id: str,
-    name:         Optional[str]         = utils.UNDEFINED,
-    breed:        Optional[PlayerBreed] = utils.UNDEFINED,
-    credibility:  Optional[int]         = utils.UNDEFINED,
-    cash:         Optional[int]         = utils.UNDEFINED,
-    life:         Optional[int]         = utils.UNDEFINED,
-    breath:       Optional[int]         = utils.UNDEFINED,
-    blood:        Optional[int]         = utils.UNDEFINED,
-    exp:          Optional[int]         = utils.UNDEFINED,
-    appearance:   Optional[str]         = utils.UNDEFINED
+  def edit_player(self, guild_id: int, id: int,
+    name:         str           = utils.UNDEFINED,
+    breed:        PlayerBreed   = utils.UNDEFINED,
+    history:      Optional[str] = utils.UNDEFINED,
+    credibility:  int           = utils.UNDEFINED,
+    cash:         int           = utils.UNDEFINED,
+    life:         int           = utils.UNDEFINED,
+    breath:       int           = utils.UNDEFINED,
+    blood:        int           = utils.UNDEFINED,
+    resistance:   int           = utils.UNDEFINED,
+    velocity:     int           = utils.UNDEFINED,
+    exp:          int           = utils.UNDEFINED,
+    force:        int           = utils.UNDEFINED,
+    appearance:   Optional[str] = utils.UNDEFINED,
+    banner:       Optional[str] = utils.UNDEFINED
   ) -> CoroContext[Player]:
     return CoroContext(self._edit_player(guild_id, id,
       name=name,
       breath=breath,
       breed=breed,
+      history=history,
       credibility=credibility,
       cash=cash,
       life=life,
       blood=blood,
+      resistance=resistance,
+      velocity=velocity,
       exp=exp,
-      appearance=appearance
+      force=force,
+      appearance=appearance,
+      banner=banner
     ))
   
-  def del_art(self, guild_id: str, id: str) -> CoroContext[Art]:
+  def del_art(self, guild_id: int, id: int) -> CoroContext[Art]:
     return CoroContext(self._del_art(guild_id=guild_id, id=id))
+  
+  def del_arm(self, guild_id: int, id: int) -> CoroContext[Item]:
+    return CoroContext(self._del_arm(guild_id, id))
 
-  def del_attack(self, guild_id: str, id: str) -> CoroContext[Attack]:
+  def del_attack(self, guild_id: int, id: int) -> CoroContext[Attack]:
     return CoroContext(self._del_attack(guild_id=guild_id, id=id))
   
-  def del_player(self, guild_id: str, id: str) -> CoroContext[Player]:
+  def del_player(self, guild_id: int, id: int) -> CoroContext[Player]:
     return CoroContext(self._del_player(guild_id, id))
   
-  async def _get_guild(self, id: str) -> Guild:
+  async def _get_guild(self, id: int) -> Guild:
     async with self.request(Request('GET', f'/guilds/{id}')) as resp:
       await assertGuildResponse(resp)
       
       return await resp.json()
   
-  async def _get_arts(self, guild_id: str) -> List[Art]:
+  async def _get_arts(self, guild_id: int) -> List[Art]:
     async with self.request(Request('GET', f'/arts/{guild_id}')) as res:
       assertArtResponse(res)
 
       return await res.json()
     
-  async def _get_art(self, guild_id: str, id: str) -> Art:
+  async def _get_art(self, guild_id: int, id: int) -> Art:
     async with self.request(Request('GET', f'/arts/{guild_id}/{id}')) as res:
       await assertArtResponse(res)
       
       return await res.json()
+  
+  async def _get_items(self, guild_id: int) -> List[Item]:
+    async with self.request(Request('GET', f'/items/{guild_id}')) as res:
+      await assertItemResponse(res)
+
+      return await res.json()
     
-  async def _get_attacks(self, guild_id: str, art_id: Optional[str] = None) -> List[Attack]:
+  async def _get_item(self, guild_id: int, id: int) -> Item:
+    async with self.request(Request('GET', f'/items/{guild_id}/{id}')) as res:
+      await assertItemResponse(res)
+
+      return await res.json()
+    
+  async def _get_attacks(self, guild_id: int, art_id: int = utils.UNDEFINED) -> List[Attack]:
     params = URLParameters()
 
-    if art_id:
+    if utils.nis_undefined(art_id):
       params.set('art_id', art_id)
     
     async with self.request(Request('GET', URL(f'/attacks/{guild_id}', parameters=params))) as res:
@@ -327,25 +424,25 @@ class MorkatoSessionController(BaseSessionController):
       
       return await res.json()
     
-  async def _get_attack(self, guild_id: str, id: str) -> Attack:
+  async def _get_attack(self, guild_id: int, id: int) -> Attack:
     async with self.request(Request('GET', f'/attacks/{guild_id}/{id}')) as res:
       await assertAttackResponse(res)
 
       return await res.json()
 
-  async def _get_players(self, guild_id: str) -> List[Player]:
+  async def _get_players(self, guild_id: int) -> List[Player]:
     async with self.request(Request('GET', f'/players/{guild_id}')) as res:
       await assertPlayerResponse(res)
 
       return await res.json()
 
-  async def _get_player(self, guild_id: str, id: str) -> Player:
+  async def _get_player(self, guild_id: int, id: int) -> Player:
     async with self.request(Request('GET', f'/players/{guild_id}/{id}')) as res:
       await assertPlayerResponse(res)
       
       return await res.json()
 
-  async def _create_art(self, guild_id: str, *,
+  async def _create_art(self, guild_id: int, *,
     name:              str,
     type:              ArtType,
     embed_title:       Optional[str] = utils.UNDEFINED,
@@ -370,22 +467,75 @@ class MorkatoSessionController(BaseSessionController):
       
       return await res.json()
 
-  async def _create_attack(self, guild_id: str, *, 
+  async def _create_item(self, guild_id: int, *,
     name:              str,
-    parent:            Optional[str] = utils.UNDEFINED,
-    art_id:            Optional[str] = utils.UNDEFINED,
+    usable:            bool          = utils.UNDEFINED,
+    stack:             int           = utils.UNDEFINED,
     embed_title:       Optional[str] = utils.UNDEFINED,
     embed_description: Optional[str] = utils.UNDEFINED,
     embed_url:         Optional[str] = utils.UNDEFINED
+  ) -> Item:
+    nis_undefined = utils.nis_undefined
+
+    payload = { 'name': name }
+    
+    if nis_undefined(usable):
+      payload['usable'] = usable
+
+    if nis_undefined(stack):
+      payload['stack'] = stack
+    
+    if nis_undefined(embed_title):
+      payload['embed_title'] = embed_title
+
+    if nis_undefined(embed_description):
+      payload['embed_description'] = embed_description
+
+    if nis_undefined(embed_url):
+      payload['embed_url'] = embed_url
+
+    async with self.request(Request('POST', f'/items/{guild_id}', body=payload)) as res:
+      await assertItemResponse(res)
+
+      return await res.json()
+
+  async def _create_attack(self, guild_id: int, *, 
+    name:              str,
+    parent:            str = utils.UNDEFINED,
+    art_id:            int = utils.UNDEFINED,
+    arm_id:            int = utils.UNDEFINED,
+    damage:            int = utils.UNDEFINED,
+    breath:            int = utils.UNDEFINED,
+    blood:             int = utils.UNDEFINED,
+    embed_title:       str = utils.UNDEFINED,
+    embed_description: str = utils.UNDEFINED,
+    embed_url:         str = utils.UNDEFINED
   ) -> Attack:
     nis_undefined = utils.nis_undefined
+    is_undefined  = utils.is_undefined
+    
     payload = { 'name': name }
 
+    if is_undefined(parent) and is_undefined(art_id) and is_undefined(arm_id):
+      raise errors.ValidationError('[ValidationError] Pelo menos um parente, arte ou arma.')
+    
     if nis_undefined(parent):
-      payload['parent_id'] = parent
+      payload['parent_id'] = str(parent) if not parent is None else None
     
     if nis_undefined(art_id):
-      payload['art_id'] = art_id
+      payload['art_id'] = str(art_id) if not art_id is None else None
+
+    if nis_undefined(arm_id):
+      payload['arm_id'] = str(arm_id) if not arm_id is None else None
+
+    if nis_undefined(damage):
+      payload['damage'] = damage
+    
+    if nis_undefined(breath):
+      payload['breath'] = breath
+
+    if nis_undefined(blood):
+      payload['blood'] = blood
 
     if nis_undefined(embed_title):
       payload['embed_title'] = embed_title
@@ -401,21 +551,29 @@ class MorkatoSessionController(BaseSessionController):
       
       return await res.json()
   
-  async def _create_player(self, guild_id: str, *,
-    id:          str,
+  async def _create_player(self, guild_id: int, *,
+    id:          int,
     name:        str,
     breed:       PlayerBreed,
-    credibility: Optional[int] = utils.UNDEFINED,
-    cash:        Optional[int] = utils.UNDEFINED,
-    life:        Optional[int] = utils.UNDEFINED,
-    breath:      Optional[int] = utils.UNDEFINED,
-    blood:       Optional[int] = utils.UNDEFINED,
-    exp:         Optional[int] = utils.UNDEFINED,
-    appearance:  Optional[str] = utils.UNDEFINED
+    history:     Optional[str] = utils.UNDEFINED,
+    credibility: int           = utils.UNDEFINED,
+    cash:        int           = utils.UNDEFINED,
+    life:        int           = utils.UNDEFINED,
+    breath:      int           = utils.UNDEFINED,
+    blood:       int           = utils.UNDEFINED,
+    resistance:  int           = utils.UNDEFINED,
+    velocity:    int           = utils.UNDEFINED,
+    exp:         int           = utils.UNDEFINED,
+    force:       int           = utils.UNDEFINED,
+    appearance:  Optional[str] = utils.UNDEFINED,
+    banner:      Optional[str] = utils.UNDEFINED
   ) -> Player:
     nis_undefined = utils.nis_undefined
-    payload = { 'id': id, 'name': name, 'breed': breed }
+    payload = { 'id': str(id), 'name': name, 'breed': breed }
 
+    if nis_undefined(history):
+      payload['history'] = history
+    
     if nis_undefined(credibility):
       payload['credibility'] = credibility
     
@@ -430,24 +588,36 @@ class MorkatoSessionController(BaseSessionController):
 
     if nis_undefined(blood):
       payload['blood'] = blood
+    
+    if nis_undefined(resistance):
+      payload['resistance'] = resistance
+
+    if nis_undefined(velocity):
+      payload['velocity'] = velocity
 
     if nis_undefined(exp):
       payload['exp'] = exp
+
+    if nis_undefined(force):
+      payload['force'] = force
     
     if nis_undefined(appearance):
       payload['appearance'] = appearance
+    
+    if nis_undefined(banner):
+      payload['banner'] = banner
 
     async with self.request(Request('POST', f'/players/{guild_id}', body=payload)) as res:
       await assertPlayerResponse(res)
 
       return await res.json()
     
-  async def _edit_art(self, guild_id: str, id: str, *,
-    name:              Optional[str]     = utils.UNDEFINED,
-    type:              Optional[ArtType] = utils.UNDEFINED,
-    embed_title:       Optional[str]     = utils.UNDEFINED,
-    embed_description: Optional[str]     = utils.UNDEFINED,
-    embed_url:         Optional[str]     = utils.UNDEFINED
+  async def _edit_art(self, guild_id: int, id: int, *,
+    name:              str           = utils.UNDEFINED,
+    type:              ArtType       = utils.UNDEFINED,
+    embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
   ) -> Art:
     payload = {  }
     
@@ -470,10 +640,48 @@ class MorkatoSessionController(BaseSessionController):
       await assertArtResponse(res)
       
       return await res.json()
+
+  async def _edit_item(self, guild_id: int, id: int, *,
+    name:              str           = utils.UNDEFINED,
+    usable:            bool          = utils.UNDEFINED,
+    stack:             int           = utils.UNDEFINED,
+    embed_title:       Optional[str] = utils.UNDEFINED,
+    embed_description: Optional[str] = utils.UNDEFINED,
+    embed_url:         Optional[str] = utils.UNDEFINED
+  ) -> Item:
+    nis_undefined = utils.nis_undefined
+
+    payload = {  }
+
+    if nis_undefined(name):
+      payload['name'] = name
+    
+    if nis_undefined(usable):
+      payload['usable'] = usable
+
+    if nis_undefined(stack):
+      payload['stack'] = stack
+
+    if nis_undefined(embed_title):
+      payload['embed_title'] = embed_title
+
+    if nis_undefined(embed_description):
+      payload['embed_description'] = embed_description
+
+    if nis_undefined(embed_url):
+      payload['embed_url'] = embed_url
+
+    async with self.request(Request('POST', f'/items/{guild_id}/{id}', body=payload)) as res:
+      await assertItemResponse(res)
+
+      return await res.json()
   
-  async def _edit_attack(self, guild_id: str, id: str, *, 
-    name:              Optional[str] = utils.UNDEFINED,
-    required_exp:      Optional[int] = utils.UNDEFINED,
+  async def _edit_attack(self, guild_id: int, id: int, *, 
+    name:              str           = utils.UNDEFINED,
+    required_exp:      int           = utils.UNDEFINED,
+    damage:            int           = utils.UNDEFINED,
+    breath:            int           = utils.UNDEFINED,
+    blood:             int           = utils.UNDEFINED,
     embed_title:       Optional[str] = utils.UNDEFINED,
     embed_description: Optional[str] = utils.UNDEFINED,
     embed_url:         Optional[str] = utils.UNDEFINED
@@ -487,6 +695,15 @@ class MorkatoSessionController(BaseSessionController):
     if nis_undefined(required_exp):
       payload['required_exp'] = required_exp
 
+    if nis_undefined(damage):
+      payload['damage'] = damage
+    
+    if nis_undefined(breath):
+      payload['breath'] = breath
+
+    if nis_undefined(blood):
+      payload['blood'] = blood
+
     if nis_undefined(embed_title):
       payload['embed_title'] = embed_title
 
@@ -495,24 +712,27 @@ class MorkatoSessionController(BaseSessionController):
     
     if nis_undefined(embed_url):
       payload['embed_url'] = embed_url
-
-    print(payload)
     
     async with self.request(Request('POST', f'/attacks/{guild_id}/{id}', body=payload)) as res:
       await assertAttackResponse(res)
 
       return await res.json()
   
-  async def _edit_player(self, guild_id: str, id: str,
-    name:        Optional[str]         = utils.UNDEFINED,
-    breed:       Optional[PlayerBreed] = utils.UNDEFINED,
-    credibility: Optional[int]         = utils.UNDEFINED,
-    cash:        Optional[int]         = utils.UNDEFINED,
-    life:        Optional[int]         = utils.UNDEFINED,
-    breath:      Optional[int]         = utils.UNDEFINED,
-    blood:       Optional[int]         = utils.UNDEFINED,
-    exp:         Optional[int]         = utils.UNDEFINED,
-    appearance:  Optional[str]         = utils.UNDEFINED
+  async def _edit_player(self, guild_id: int, id: int,
+    name:        str           = utils.UNDEFINED,
+    breed:       PlayerBreed   = utils.UNDEFINED,
+    history:     Optional[str] = utils.UNDEFINED,
+    credibility: int           = utils.UNDEFINED,
+    cash:        int           = utils.UNDEFINED,
+    life:        int           = utils.UNDEFINED,
+    breath:      int           = utils.UNDEFINED,
+    blood:       int           = utils.UNDEFINED,
+    resistance:  int           = utils.UNDEFINED,
+    velocity:    int           = utils.UNDEFINED,
+    exp:         int           = utils.UNDEFINED,
+    force:       int           = utils.UNDEFINED,
+    appearance:  Optional[str] = utils.UNDEFINED,
+    banner:      Optional[str] = utils.UNDEFINED
   ) -> Player:
     nis_undefined = utils.nis_undefined
     payload = {  }
@@ -522,6 +742,9 @@ class MorkatoSessionController(BaseSessionController):
     
     if nis_undefined(breed):
       payload['breed'] = breed
+    
+    if nis_undefined(history):
+      payload['history'] = history
     
     if nis_undefined(credibility):
       payload['credibility'] = credibility
@@ -537,34 +760,50 @@ class MorkatoSessionController(BaseSessionController):
 
     if nis_undefined(blood):
       payload['blood'] = blood
+    
+    if nis_undefined(resistance):
+      payload['resistance'] = resistance
+
+    if nis_undefined(velocity):
+      payload['velocity'] = velocity
 
     if nis_undefined(exp):
       payload['exp'] = exp
+
+    if nis_undefined(force):
+      payload['force'] = force
     
     if nis_undefined(appearance):
       payload['appearance'] = appearance
+    
+    if nis_undefined(banner):
+      payload['banner'] = banner
 
     async with self.request(Request('POST', f'/players/{guild_id}/{id}', body=payload)) as res:
       await assertPlayerResponse(res)
 
       return await res.json()
     
-  async def _del_art(self, guild_id: str, id: str) -> Art:
+  async def _del_art(self, guild_id: int, id: int) -> Art:
     async with self.request(Request('DELETE', f'/arts/{guild_id}/{id}')) as res:
       await assertArtResponse(res)
       
       return await res.json()
+    
+  async def _del_item(self, guild_id: int, id: int) -> Item:
+    async with self.request(Request('DELETE', f'/items/{guild_id}/{id}')) as res:
+      await assertItemResponse(res)
 
-  async def _del_attack(self, guild_id: str, id: str) -> Attack:
+      return await res.json()
+
+  async def _del_attack(self, guild_id: int, id: int) -> Attack:
     async with self.request(Request('DELETE', f'/attacks/{guild_id}/{id}')) as res:
       await assertAttackResponse(res)
       
       return await res.json()
   
-  async def _del_player(self, guild_id: str, id: str) -> Player:
+  async def _del_player(self, guild_id: int, id: int) -> Player:
     async with self.request(Request('DELETE', f'/players/{guild_id}/{id}')) as res:
       await assertPlayerResponse(res)
 
       return await res.json()
-
-  
