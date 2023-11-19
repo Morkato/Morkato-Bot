@@ -13,12 +13,22 @@ from typing import (
   List,
   Any
 )
-
-from discord.ext import commands
-from unidecode   import unidecode
+from numerize.numerize import numerize as num_fmt
+from discord.ext       import commands
+from unidecode         import unidecode
 
 import discord
 import re
+
+try:
+  import orjson
+
+  from_json = orjson.loads
+
+except ModuleNotFoundError:
+  import json
+
+  from_json = json.loads
 
 FlagChecker = Literal['author', 'guild', 'channel', 'message']
 
@@ -39,15 +49,13 @@ class _UndefinedMissing:
 
 T = TypeVar('T')
 
+UINT_LIMIT = 4294967295
 UNDEFINED: Any   = _UndefinedMissing()
 GenericGen = Generator[T, Any, Any]
 EmptyCoro = Coroutine[Any, Any, None]
 
 def find(iter: Iterable[T], check: Callable[[T], bool]) -> GenericGen[T]:
   return (item for item in iter if check(item))
-
-a = next(find([1, 2], lambda a: a==1))
-
 
 def get(iter: Iterable[T], check: Callable[[T], bool]) -> Union[T, None]:
   return next(find(iter, check), None)
@@ -73,7 +81,9 @@ def strip_text(
   ignore_accents:   bool = UNDEFINED,
   ignore_empty:     bool = UNDEFINED,
   case_insensitive: bool = UNDEFINED,
-  strip_text:       bool = UNDEFINED
+  strip_text:       bool = UNDEFINED,
+
+  empty: str = UNDEFINED
 ) -> str:
   if is_empty_text(text):
     return text
@@ -85,7 +95,7 @@ def strip_text(
      text = unidecode(text)
 
   if ignore_empty:
-     text = re.sub(r'\s+', '-', text)
+     text = re.sub(r'\s+', case_undefined(empty, '-'), text)
   
   if case_insensitive:
      text = text.lower()
@@ -120,6 +130,7 @@ def message_checker(ctx: commands.Context, flags: List[FlagChecker]):
       return False
     
     return True
+  
   return check
 
 def reaction_checker(ctx: commands.Context, message: discord.Message, flags: List[FlagChecker]):
@@ -143,3 +154,28 @@ def reaction_checker(ctx: commands.Context, message: discord.Message, flags: Lis
     return True
   
   return check
+
+def in_range(num: Union[int, float], r: tuple[Union[int, float], Union[int, float]]) -> bool:
+  if not isinstance(num, (int, float)):
+    raise TypeError("Numbers only.")
+  
+  if not len(r) == 2:
+    raise TypeError("Just a ray with two dimensions")
+
+  start, end = min(r), max(r)
+
+  if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
+    raise TypeError("Numbers only.")
+
+  return num == start if start == end else num >= start and num <= end
+
+def get_attack(guild: "Guild", message: discord.Message):
+  fmt_content = strip_text(message.content, strip_text=True, ignore_accents=True, ignore_empty=True, case_insensitive=True)
+
+  attacks = (attack for attack in guild.attacks if strip_text(attack.name, strip_text=True, ignore_accents=True, ignore_empty=True, case_insensitive=True) in fmt_content)
+
+  return max(attacks, key=lambda atk: len(atk.name))
+
+async def async_all(iter: Iterable[Coroutine[Any, Any, Any]]) -> None:
+  for coro in iter:
+    await coro

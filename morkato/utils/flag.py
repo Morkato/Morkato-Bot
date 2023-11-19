@@ -13,6 +13,7 @@ from typing import (
 
 if TYPE_CHECKING:
   from morkato.context import MorkatoContext
+  from morkato.client  import Cog
 
 from .etc import EmptyCoro, UNDEFINED, case_undefined
 
@@ -31,13 +32,13 @@ def make_callback(call: FlagCallback):
   if length < 1:
     raise Exception(f'Internal error in event `{call.__name__}`')
   
-  async def wrapper(self, ctx: MorkatoContext, base: Union[str, None], param: List[str]) -> None:
+  async def wrapper(self, ctx: MorkatoContext, base: Union[str, None], param: List[str], params: Dict[str, List[str]]) -> None:
     required_params = [self, ctx]
-    optional_params = [base, param]
+    optional_params = [base, param, params]
 
-    params = required_params + optional_params[:length - 1]
+    parameters = required_params + optional_params[:length - 1]
 
-    return await call(*params)
+    return await call(*parameters)
   
   return wrapper
 
@@ -52,8 +53,31 @@ class Flag:
     self.callback = make_callback(call)
     self.aliases  = case_undefined(aliases, [])
 
-  async def __call__(self, ctx: MorkatoContext, base: Union[str, None], param: List[str]) -> None:
-    return await self.callback(self.group, ctx, base, param)
+  async def on_error(self, ctx: MorkatoContext, err: Exception) -> None:
+    if hasattr(self, '_err'):
+      return await self._err(self.group, ctx, err)
+    
+    raise err
+
+  def error(self, func) -> Any:
+    signatured = inspect.signature(func)
+
+    parameters = signatured.parameters
+
+    length = len(parameters) - 1
+
+    if length < 1 or not asyncio.iscoroutinefunction(func):
+      raise TypeError
+    
+    self._err = func
+
+    return func
+
+  async def __call__(self, ctx: MorkatoContext, base: Union[str, None], param: List[str], params: Dict[str, List[str]]) -> None:
+    try:    
+      return await self.callback(self.group, ctx, base, param, params)
+    except Exception as err:
+      await self.on_error(ctx, err)
 
 class GroupFlagMeta(type):
   __flags__: List[Flag] = []
@@ -72,7 +96,10 @@ class GroupFlagMeta(type):
     return super().__new__(cls, name, bases, attrs, **kwargs)
 
 class FlagGroup(metaclass=GroupFlagMeta):
-  def __init__(self) -> None:
+  def __init__(self, cog: Cog) -> None:
+    self.cog = cog
+    self.bot = cog.bot
+    
     for flag in self.__class__.__flags__:
       flag.group = self
 
@@ -90,7 +117,9 @@ async def process_flags(group: FlagGroup, *, ctx: MorkatoContext, base: Union[st
   if not params:
     return
   
-  key, value = next(iter(params.items()))
+  iterable = iter(params.items())
+  
+  key, value = next(iterable)
 
   event = next((flag for flag in group.__class__.__flags__ if flag.name == key or key in flag.aliases), None)
 
@@ -98,5 +127,7 @@ async def process_flags(group: FlagGroup, *, ctx: MorkatoContext, base: Union[st
     await ctx.send('Essa flag não existe :/')
 
     return
-  
-  await event(ctx, base, value)
+
+  params.pop(key, None)
+
+  await event(ctx, base, value, params)
