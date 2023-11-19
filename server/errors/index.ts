@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid'
+import { uuid } from 'morkato/utils/uuid'
 
 export interface ErrorParams {
   message?: string
@@ -21,7 +21,7 @@ export class BaseError extends Error {
   key?: string
   type?: string
   databaseErrorCode?: number
-  
+
   constructor({
     message,
     action,
@@ -159,4 +159,4 @@ export class UnprocessableEntityError extends BaseError {
   }
 }
 
-export default {  }
+export default {}
