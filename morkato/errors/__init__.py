@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING
 
+from discord.embeds import Embed
+
 if TYPE_CHECKING:
   from discord.embeds import Embed
 
@@ -19,6 +21,14 @@ class BaseError(Exception):
 class NotFoundError(BaseError):
   def __init__(self, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
     message = message or "Não foi possível achar esse item."
+    action = action or "Tente novamente com outro nome."
+    embeds = embeds or []
+
+    super().__init__(message, action, embeds)
+
+class Excluded(BaseError):
+  def __init__(self, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
+    message = message or "Esse item existe, porém foi desativado."
     action = action or "Tente novamente com outro nome."
     embeds = embeds or []
 
@@ -51,3 +61,11 @@ class InternalServerError(BaseError):
     super().__init__(message, action, embeds)
 
     self.error = error
+
+class ValidationError(BaseError):
+  def __init__(self, message: Optional[str] = None, action: Optional[str] = None, embeds: Optional[list[Embed]] = None) -> None:
+    message = message or 'Erro de validação, veja se você digitou algo de errado.'
+    action = action or 'Tente novamente, talvez mais tarde.'
+    embeds = embeds or []
+
+    super().__init__(message, action, embeds)
