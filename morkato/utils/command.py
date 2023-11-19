@@ -17,4 +17,4 @@ class LoggerCommand(commands.Command):
 
     after = time.time() - before
 
-    await ctx.send(f'Response time: **`{round(after * 100, 2)}ms`**')
+    await ctx.send(f'Process time: **`{round(ctx.get_counter() * 100, 2)}ms`**\nResponse time: **`{round(after * 100, 2)}ms`**')
