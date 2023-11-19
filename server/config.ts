@@ -1,42 +1,36 @@
-export type Permission = 
-  | 'CREATE:GUILD'
-  | 'CREATE:ART'
-  | 'CREATE:ATTACK'
-  | 'CREATE:PLAYER'
-  | 'EDIT:GUILD'
-  | 'EDIT:ART'
-  | 'EDIT:ATTACK'
-  | 'EDIT:PLAYER'
-  | 'DELETE:GUILD'
-  | 'DELETE:ART'
-  | 'DELETE:ATTACK'
-  | 'DELETE:PLAYER'
-
+export type Permission =
+  | 'MANAGE:GUILDS'
+  | 'MANAGE:ARTS'
+  | 'MANAGE:ATTACKS'
+  | 'MANAGE:PLAYERS'
+  | 'MANAGE:ITEMS'
+  | 'MANAGE:PLAYER:ITEMS'
 
 export type User = {
-  login: string
+  name: string
+  expire_at: number
   permissions: Permission[]
 }
 export const users: Record<string, User> = {
-  Anonymous: {
-    login: 'anonymous',
+  anonymous: {
+    name: 'anonymous',
+    expire_at: -1,
     permissions: []
   },
-  MorkatoBot: {
-    login: '...{more 64}',
+  morkato: {
+    name: 'Morkato Bot',
+    expire_at: -1, // Infinite.
     permissions: [
-      'CREATE:GUILD',
-      'CREATE:ART',
-      'CREATE:ATTACK',
-      'CREATE:PLAYER',
-      'EDIT:GUILD',
-      'EDIT:ART',
-      'EDIT:ATTACK',
-      'EDIT:PLAYER',
-      'DELETE:GUILD',
-      'DELETE:ART',
-      'DELETE:ATTACK',
-      'DELETE:PLAYER'
+      'MANAGE:GUILDS',
+      'MANAGE:ARTS',
+      'MANAGE:ATTACKS',
+      'MANAGE:PLAYERS',
+      'MANAGE:ITEMS',
+      'MANAGE:PLAYER:ITEMS',
     ]
   }
+}
+
+export function hasPermission(usr: User, permission: Permission) {
+  return usr.permissions.includes(permission)
 }
