@@ -5,6 +5,7 @@ docker-compose.yml
 
 # Nodeks
 
+server/models/validator/*
 node_modules
 .next
 
