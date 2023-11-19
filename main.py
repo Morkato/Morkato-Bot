@@ -15,7 +15,7 @@ def main() -> int:
 
     return -1
 
-  bot = MorkatoBot(auth=TOKEN)
+  bot = MorkatoBot(auth=TOKEN, login="morkato")
   
   bot.run(TOKEN)
   

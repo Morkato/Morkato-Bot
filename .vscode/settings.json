@@ -2,7 +2,6 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "cSpell.language": "en,pt,pt_BR",
-  
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "files.exclude": {
@@ -13,21 +12,35 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     ".next": true,
+    "**/__pycache__": true,
+    ".vercel": true,
     "node_modules": true,
     "dist": true
   },
   "cSpell.ignoreWords": [
     "KEKKIJUTSU",
+    "Kekkijutsus",
+    "kekkijutsus",
     "Morkato",
     "aiohttp",
+    "appearanceurl",
+    "decompressobj",
     "dotenv",
+    "includebot",
     "kekki",
     "kekkijutsu",
     "levelname",
     "morkato",
     "numerize",
     "orjson",
+    "pedit",
+    "pregister",
+    "rcreate",
+    "redit",
+    "rmove",
     "unidecode",
+    "urole",
+    "usrole",
     "yarl"
-  ],
+  ]
 }
