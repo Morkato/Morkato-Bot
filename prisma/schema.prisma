@@ -11,6 +11,11 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
+enum Bool {
+  true
+  false
+}
+
 enum ArtType {
   RESPIRATION
   KEKKIJUTSU
@@ -23,45 +28,28 @@ enum PlayerBreed {
   HYBRID
 }
 
-enum PlayerRank {
-  F
-  E
-  D
-  C
-  B
-  A
-  AA
-  AAA
-  AAAA
-  S
-  SS
-  SSS
-  SSSS
-}
-
 enum DialogChoose {
   PLAYER
   NPC
 }
 
 model Guild {
-  id String @id
+  id String @id(map: "guild_pkey")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  arts        Art[]
-  attacks     Attack[]
-  players     Player[]
-  quests      Quest[]
-  DialogQuest DialogQuest[]
-  arms        Arm[]
+  arts      Art[]
+  attacks   Attack[]
+  players   Player[]
+  inventory PlayerItem[]
+  items     Item[]
 
   @@map("guilds")
 }
 
 model Art {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade)
 
   name String
   id   String
@@ -73,12 +61,13 @@ model Art {
   embed_description String?
   embed_url         String?
 
+  exclude Bool @default(false)
+
   attacks Attack[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at BigInt
 
-  @@id([id, guild_id])
+  @@id([guild_id, id], map: "art_pkey")
   @@map("arts")
 }
 
@@ -86,13 +75,14 @@ model Attack {
   name String
   id   String
 
-  guild   Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  art     Art?     @relation(fields: [art_id, guild_id], references: [id, guild_id], onDelete: Cascade, onUpdate: Cascade)
+  guild   Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  art     Art?     @relation(fields: [art_id, guild_id], references: [id, guild_id])
+  item    Item?    @relation(fields: [guild_id, item_id], references: [guild_id, id])
   attacks Attack[] @relation("ParentAttack")
 
   guild_id String
   art_id   String?
-  arm_id   String?
+  item_id  String?
 
   parent Attack? @relation("ParentAttack", fields: [parent_id, guild_id], references: [id, guild_id])
 
@@ -100,94 +90,68 @@ model Attack {
 
   required_exp Int @default(0)
 
+  damage Int @default(0)
+  breath Int @default(0)
+  blood  Int @default(0)
+
+  exclude Bool @default(false)
+
   embed_title       String?
   embed_description String?
   embed_url         String?
 
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  Arm         Arm?     @relation(fields: [armGuild_id, armId], references: [guild_id, id])
-  armGuild_id String?
-  armId       String?
+  updated_at BigInt
 
-  @@id([guild_id, id])
+  @@id([guild_id, id], map: "attack_pkey")
   @@map("attacks")
 }
 
 model Player {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  guild     Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  inventory PlayerItem[]
 
   name        String
-  credibility Int    @default(0)
+  credibility Int     @default(0)
+  history     String?
+
+  mission Int?
 
   guild_id String
   id       String
   breed    PlayerBreed
 
-  cash Int        @default(0)
-  rank PlayerRank @default(F)
+  cash Int @default(0)
 
-  life   Int @default(0)
-  blood  Int @default(0)
-  breath Int @default(0)
-  exp    Int @default(0)
+  life       Int @default(0)
+  blood      Int @default(0)
+  breath     Int @default(0)
+  exp        Int @default(0)
+  force      Int @default(0)
+  resistance Int @default(0)
+  velocity   Int @default(1)
+  reflex     Int @default(1)
 
   appearance String?
+  banner     String?
 
-  @@id([guild_id, id])
+  updated_at BigInt
+
+  @@id([guild_id, id], map: "player_pkey")
   @@map("players")
 }
 
-model Quest {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+model Item {
+  guild   Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  players PlayerItem[]
 
-  id       String
   guild_id String
+  id       String
 
-  name String
-
-  required_breed   PlayerBreed?
-  required_rank    PlayerRank
-  allowed_channels String[]
-  required_exp     Int
-
-  title       String?
+  name        String
   description String?
-  url         String?
-  icon        String?
 
-  dialogs DialogQuest[]
-
-  @@id([guild_id, id])
-  @@map("quests")
-}
-
-model DialogQuest {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  quest Quest @relation(fields: [guild_id, quest_id], references: [guild_id, id], onDelete: Cascade)
-
-  id       String
-  guild_id String
-  quest_id String
-
-  positon Int
-
-  contents String[]
-  choose   DialogChoose
-
-  @@id([guild_id, quest_id, id])
-  @@unique([guild_id, quest_id, positon], map: "from_position")
-  @@map("dialog_quests")
-}
-
-model Arm {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  guild_id String
-  id       String
-
-  name String
-  role String?
+  stack  Int  @default(1)
+  usable Bool @default(false)
 
   embed_title       String?
   embed_description String?
@@ -195,6 +159,25 @@ model Arm {
 
   attacks Attack[]
 
-  @@id([guild_id, id])
-  @@map("arms")
+  updated_at BigInt
+
+  @@id([guild_id, id], map: "item_pkey")
+  @@map("items")
+}
+
+model PlayerItem {
+  guild  Guild  @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [guild_id, player_id], references: [guild_id, id], onDelete: Cascade)
+  item   Item   @relation(fields: [guild_id, item_id], references: [guild_id, id], onDelete: Cascade)
+
+  guild_id  String
+  item_id   String
+  player_id String
+
+  stack Int @default(1)
+
+  created_at Int @db.Integer
+
+  @@id([guild_id, player_id, item_id], map: "inventory_pkey")
+  @@map("inventory")
 }
