@@ -5,7 +5,7 @@ __all__ = (
 )
 
 class Guild(TypedDict):
-  id:   str
+  id: str
 
   created_at: str
   updated_at: str

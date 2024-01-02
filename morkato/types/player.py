@@ -5,15 +5,11 @@ from typing import (
 )
 
 __all__ = (
-  'PlayerBreed',
+  'PlayerBreedType',
   'Player'
 )
 
-PlayerBreed = Literal['HUMAN', 'ONI', 'HYBRID']
-
-class PlayerItem(TypedDict):
-  item_id: set
-  stack: int
+PlayerBreedType = Literal['HUMAN', 'ONI', 'HYBRID']
 
 class Player(TypedDict):
   name:        str
@@ -22,7 +18,7 @@ class Player(TypedDict):
   
   guild_id: str
   id:       str
-  breed:    PlayerBreed
+  breed:    PlayerBreedType
 
   cash: int
 
@@ -37,5 +33,4 @@ class Player(TypedDict):
   appearance: Union[str, None]
   banner:     Union[str, None]
 
-  updated_at: int
-
+  updated_at: Union[int, None]

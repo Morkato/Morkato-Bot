@@ -20,7 +20,7 @@
   "cSpell.ignoreWords": [
     "KEKKIJUTSU",
     "Kekkijutsus",
-    "kekkijutsus",
+    "Messageable",
     "Morkato",
     "aiohttp",
     "appearanceurl",
@@ -29,8 +29,10 @@
     "includebot",
     "kekki",
     "kekkijutsu",
+    "kekkijutsus",
     "levelname",
     "morkato",
+    "notfound",
     "numerize",
     "orjson",
     "pedit",
@@ -42,5 +44,18 @@
     "urole",
     "usrole",
     "yarl"
+  ],
+  "cSpell.words": [
+    "alreadyexists",
+    "asserr",
+    "descricao",
+    "fightingstyle",
+    "fightstyle",
+    "fkey",
+    "frun",
+    "geterr",
+    "Objectable",
+    "PYCHARM",
+    "respiracao"
   ]
 }

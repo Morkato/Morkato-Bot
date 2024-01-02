@@ -1,0 +1,82 @@
+import type { Item, ItemNotifyType, ItemCreateFunction, ItemCreateParameter } from 'type:models/item'
+import type { Database } from 'type:models/database'
+
+import { format, isUniqueItemByName } from 'utils/item'
+import { prismaError, errors } from 'errors/prisma'
+import { assert, schemas } from 'utils/schema'
+import { validate } from 'schemas'
+import { uuid } from 'utils/uuid'
+
+import { whereItem } from './where'
+
+function geterr(err: any, guild_id: string) {
+  const type = prismaError(err)
+
+  if (type === 'guild.notfound') {
+    return () => errors['guild.notfound'](guild_id);
+  }
+
+  return () => errors['generic.unknown']("Internal Error", "models/item/create")
+}
+
+export function createItem(database: Database): ItemCreateFunction {
+  const session = database.session.item
+
+  const where = whereItem(database)
+
+  return async ({ guild_id, data }) => {
+    guild_id = assert(schemas.id, guild_id)
+
+    const {
+      name,
+      description,
+      stack,
+      usable,
+      embed_title,
+      embed_description,
+      embed_url
+    } = validate(data, {
+      name: 'required',
+      description: 'optional',
+      stack: 'optional',
+      usable: 'optional',
+      embed_title: 'optional',
+      embed_description: 'optional',
+      embed_url: 'optional'
+    }) as ItemCreateParameter['data']
+
+    if (!isUniqueItemByName({ name, items: await where({ guild_id }) })) {
+      const error = errors['item.alreadyexists']
+
+      throw error(guild_id, name);
+    }
+
+    try {
+      const prisma = await session.create({
+        data: {
+          guild_id: guild_id,
+          id: uuid(),
+
+          name: name,
+          description: description,
+
+          stack: stack,
+          usable: usable ? 'true' : 'false',
+          embed_title: embed_title,
+          embed_description: embed_description,
+          embed_url: embed_url
+        }
+      })
+
+      const item = format(prisma)
+
+      database.notify<ItemNotifyType, Item>({ type: 'item.create', data: item })
+
+      return item;
+    } catch (err) {
+      const error = geterr(err, guild_id)
+
+      throw error();
+    }
+  } // Function: ANonymous ({ guild_id, data })
+} // Function: createItem

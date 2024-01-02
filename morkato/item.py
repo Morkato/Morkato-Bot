@@ -1,226 +1,312 @@
 from __future__ import annotations
 
-from typing_extensions import Self
 from typing import (
+  TYPE_CHECKING,
+  ClassVar,
+  Optional,
   Union,
-
-  List,
-  TYPE_CHECKING
+  Dict,
+  List
 )
 
 if TYPE_CHECKING:
-  from .utils.abc import Snowflake
+  from typing_extensions import Self
 
-  from .types import (
-    Item as TypeItem
-  )
+  from .types.item import Item as TypeItem, PlayerItem as TypePlayerItem
+  
+  from .state import MorkatoConnectionState
+  from .player import Player
+  from .http  import HTTPClient
+  from .guild import Guild
 
-  from . import (
-    MorkatoClientManager,
-    ItemAttack,
-    Guild
-  )
+from discord.embeds import Embed
+
+from .errors import ErrorType, geterr
+from .attack import ItemAttack
+from .http   import Route
+from .utils.etc import (
+  attack_format_discord,
+  format_text,
+  get,
+  fmt
+)
 
 from datetime import datetime
-from .errors import NotFoundError
-from .       import utils
-
-import discord
-
-LIMIT_PAGE = 10
 
 class Item:
-  ITEMS: List[Item] = []
+  LIMIT_PAGE: ClassVar[int] = 10
 
-  @staticmethod
-  def get(guild: Union[Snowflake, int], id: int) -> Union[Item, None]:
-    guild_id = guild if isinstance(guild, int) else guild.id
-
-    unique = hash((guild_id, id))
-
-    return utils.get(Item.ITEMS, lambda i: hash(i) == unique)
-  
-  @staticmethod
-  def create(client: MorkatoClientManager, payload: TypeItem) -> Item:
-    item = Item.get(int(payload['guild_id']), int(payload['id']))
-
-    if not item:
-      item = Item(client, payload)
-
-      Item.ITEMS.append(item)
-
-    return item
+  FOOTER_STYLE: ClassVar[str] = "ID: {self.id}"
+  ATTACK_FORMATTER_STYLE: ClassVar[str] = "{index}° - !a `{item.name}: {attack.name}`"
+  DEFAULT_DESCRIPTION: ClassVar[str] = "No description"
 
   def __init__(
     self,
-    client:  MorkatoClientManager,
-    payload: TypeItem
+    state: MorkatoConnectionState,
+    guild: Guild,
+    data: TypeItem
   ) -> None:
-    self.client = client
-    
-    self._morkato_guild: Union[Guild, None]        = None # Cache for Guild MorkatoBOT
-    self._morkato_role:  Union[discord.Role, None] = None # Cache for Discord Role
+    self.state = state
+    self.guild = guild
 
-    self._load_variables(payload)
+    self._id = int(data['id'])
+
+    self._load_variables(data)
+    self.clear()
   
   def __repr__(self) -> str:
-    return f'<Item name={self._name!r} stack={self._stack} usable={self._usable} attacks={self.attacks}>'
+    return f'<{self.__class__.__name__} name={self._name!r} usable={self._usable} stack={self._stack}>'
   
-  def __hash__(self) -> int:
-    return hash((self._guild_id, self._id))
-
-  def _load_variables(self, payload: TypeItem) -> None:
-    self._name = payload['name']
-    self._description = payload['description']
-
-    self._guild_id = int(payload['guild_id'])
-    self._id       = int(payload['id'])
-
-    self._usable = payload['usable']
-    self._stack  = payload['stack']
+  def _load_variables(self, data: TypeItem) -> None:
+    if int(data['guild_id']) != self.guild.id:
+      raise RuntimeError
     
-    self._title       = payload['embed_title']
-    self._description = payload['embed_description']
-    self._image_url   = payload['embed_url']
+    self._name = data['name']
+    self._description = data['description']
 
-    self._updated_at = datetime.fromtimestamp(payload['updated_at'] / 1000)
+    self._embed_title = data['embed_title']
+    self._embed_description = data['embed_description']
+    self._embed_image = data['embed_url']
 
-  @property
-  def guild(self) -> Guild:
-    if not self._morkato_guild:
-      self._morkato_guild = self.client.get_morkato_guild(self._guild_id)
+    self._stack = data['stack']
+    self._usable = data['usable']
 
-    if self._morkato_guild.id != self._guild_id: # Sync Cache
-      self._morkato_guild = None
+    self._updated_at = datetime.fromtimestamp(data['updated_at'] / 1000) if data['updated_at'] is not None else None
 
-      return self.guild
-    
-    return self._morkato_guild
+  def clear(self) -> None:
+    self._attacks: Dict[int, ItemAttack] = {  }
+
+  def _get_http(self) -> HTTPClient:
+    return self.state.http
   
-  def get_attack(self, name: str) -> ItemAttack:
-    fmt = lambda text: utils.strip_text(text,
-      strip_text=True,
-      ignore_empty=True,
-      ignore_accents=True,
-      case_insensitive=True
-    )
-
-    name = fmt(name)
-
-    attacks = (attack for attack in self.guild._attacks.item_attacks if attack._item_id == self.id)
-
-    result = utils.get(attacks, lambda attack: fmt(attack.name) == name)
-
-    if not result:
-      raise NotFoundError(f'Esse ataque não existe no item: **`{self._name}`**.')
-
-    return result
-
   @property
   def attacks(self) -> List[ItemAttack]:
-    return sorted((attack for attack in self.guild._attacks.item_attacks if attack.item_id == self.id), key=lambda attack: attack._id)
-
-  @property
-  def created_at(self) -> datetime:
-    return utils.created_at(self)
-  
-  @property
-  def updated_at(self) -> datetime:
-    return self._updated_at
-  
-  @property
-  def guild_id(self) -> int:
-    return self._guild_id
+    return sorted(self._attacks.values(), key=lambda attack: attack._id)
   
   @property
   def name(self) -> str:
     return self._name
   
   @property
-  def description(self) -> Union[str, None]:
-    return self._description
-  
-  @property
   def id(self) -> int:
     return self._id
   
   @property
-  def title(self) -> Union[str, None]:
-    return self._title
-  
-  @property
   def description(self) -> Union[str, None]:
     return self._description
   
   @property
-  def image_url(self) -> Union[str, None]:
-    return self._image_url
+  def embed_title(self) -> Union[str, None]:
+    return self._embed_title
+
+  @property
+  def embed_description(self) -> Union[str, None]:
+    return self._embed_description
+
+  @property
+  def embed_image(self) -> Union[str, None]:
+    return self._embed_image
   
   @property
-  def embed(self) -> discord.Embed:
-    return self.embed_at()
+  def stack(self) -> int:
+    return self._stack
   
-  async def edit(
+  @property
+  def usable(self) -> bool:
+    return self._usable
+  
+  @property
+  def updated_at(self) -> datetime:
+    return self._updated_at
+  
+  @property
+  def embeds(self) -> List[Embed]:
+    return self.embed_at()
+
+  def _get_attack_by_id(self, id: int) -> Union[ItemAttack, None]:
+    return self._attacks.get(id)
+  
+  def _get_attack_by_name(self, name: str) -> Union[ItemAttack, None]:
+    text_fmt = fmt
+
+    name = text_fmt(name)
+    attacks = self._attacks.values()
+
+    return get(attacks, lambda attack: text_fmt(attack._name) == name)
+  
+  def get_attack(self, name_or_id: Union[str, int]) -> ItemAttack:
+    result = self._get_attack_by_id(name_or_id) if isinstance(name_or_id, int) else self._get_attack_by_name(name_or_id)
+
+    if result is None:
+      raise geterr(ErrorType.ATTACK_NOTFOUND)
+    
+    return result
+  
+  async def create_attack(
     self,
-    name:        str          = utils.UNDEFINED,
-    stack:       int          = utils.UNDEFINED,
-    usable:      bool         = utils.UNDEFINED,
-    title:       str          = utils.UNDEFINED,
-    description: str          = utils.UNDEFINED,
-    url:         str          = utils.UNDEFINED
-  ) -> Self:
-    nis_undefined = utils.nis_undefined
+    name:              str                 ,
+    required_exp:      Optional[int] = None,
+    damage:            Optional[int] = None,
+    breath:            Optional[int] = None,
+    blood:             Optional[int] = None,
+    embed_title:       Optional[str] = None,
+    embed_description: Optional[str] = None,
+    embed_url:         Optional[str] = None
+  ) -> ItemAttack:
+    http = self._get_http()
+    payload = { "name": name, "item_id": str(self._id) }
 
-    payload = {  }
-
-    if nis_undefined(name):
-      payload['name'] = name
-
-    if nis_undefined(stack):
-      payload['stack'] = stack
+    if required_exp is not None:
+      payload["required_exp"] = required_exp
     
-    if nis_undefined(usable):
-      payload['usable'] = usable
+    if damage is not None:
+      payload["damage"] = damage
     
-    if nis_undefined(title):
-      payload['embed_title'] = title
-
-    if nis_undefined(description):
-      payload['embed_description'] = description
-
-    if nis_undefined(url):
-      payload['embed_url'] = url
-
-    if not payload:
-      return self
+    if breath is not None:
+      payload["breath"] = breath
     
-    data = await self.client.api.edit_item(guild_id=self.guild_id, id=self.id, **payload)
+    if blood is not None:
+      payload["blood"] = blood
+    
+    if embed_title is not None:
+      payload["embed_title"] = None
 
-    self._load_variables(data)
+    if embed_description is not None:
+      payload["embed_description"] = embed_description
+    
+    if embed_url is not None:
+      payload["embed_url"] = embed_url
 
-    return self
+    data = await http.request(Route('POST', "/attacks/{gid}", gid=self.guild._id), json=payload)
+
+    return ItemAttack(self.state, self, data)
+  
+  def _add_attack(self, attack: ItemAttack) -> None:
+    self._attacks[attack.id] = attack
+    self.guild._attacks[attack.id] = attack
+
+  def _create_embed(
+    self,
+    start:       int, *,
+    title:       Optional[str] = None,
+    description: Optional[str] = None,
+    url:         Optional[str] = None,
+    
+    cache:       Optional[List[ItemAttack]] = None
+  ) -> Embed:
+    if cache is None:
+      cache = self.attacks
+
+    chunk = (attack for attack in cache[start:start+self.LIMIT_PAGE] if attack._parent_id is None)
+
+    cls = self.__class__
+    ftx = format_text
+
+    title = title or self._embed_title
+    description = description or self._embed_description
+    url = url or self._embed_image
+
+    embed = Embed(
+      title=ftx(title, name=self._name) if title is not None else self._name,
+      description=ftx(description, name=self._name, description=self._description) if description is not None else cls.DEFAULT_DESCRIPTION
+    )
+
+    if url is not None:
+      embed.set_image(url=url)
+    embed.set_footer(text=cls.FOOTER_STYLE.format(self=self))
+    embed.add_field(name='Attacks', value='**%s**' % '\n'.join(attack_format_discord(self.ATTACK_FORMATTER_STYLE, idx, attack, item=self) for (idx, attack) in enumerate(chunk, start=1)))
+
+    return embed
   
   def embed_at(
     self, *,
-    title:       str = utils.UNDEFINED,
-    description: str = utils.UNDEFINED,
-    url:         str = utils.UNDEFINED
-  ) -> List[discord.Embed]:
-    title       = utils.case_undefined(title, self.title)
-    description = utils.case_undefined(description, self.description)
-    url         = utils.case_undefined(url, self.image_url)
-
-    make_embed = lambda: discord.Embed(
-      title = self.name if not title else utils.format_text(title, name=self.name),
-      description='No description' if not description else utils.format_text(description, name=self.name)
-    ).set_image(url=url).set_footer(text=f'ID: {self.id}')
-
+    title:       Optional[str] = None,
+    description: Optional[str] = None,
+    url:         Optional[str] = None
+  ) -> List[Embed]:
     attacks = self.attacks
+    chunks = range(0, len(attacks), self.LIMIT_PAGE)
+    embeds = [self._create_embed(chunk, title=title, description=description, url=url, cache=attacks) for chunk in chunks]
 
-    if not attacks:
-      return [make_embed(),]
+    return embeds
+
+class PlayerItem:
+  DEFAULT_AMOUNT: ClassVar[int] = 1
+
+  def __init__(
+    self,
+    state: MorkatoConnectionState,
+    player: Player,
+    item: Item,
+    data: TypePlayerItem
+  ) -> None:
+    self.state = state
+    self.player = player
+    self.item = item
+
+    self.guild = player.guild
+
+    if self.guild.id != self.item.guild.id:
+      # Impossible block, but is prevent.
+      
+      raise RuntimeError("Algo deu errado, a guilda do player não é a mesma do item.")
     
-    return [
-      make_embed().add_field(name='Attacks', value='\n'.join((f'**{index} - !a `{self.name}: {attack.name}`**' for index, attack in enumerate(attacks[i:i+LIMIT_PAGE], start=i+1))))
-      for i in range(0, len(attacks), LIMIT_PAGE)
-    ]
+    self._load_variables(data)
+  
+  def __repr__(self) -> str:
+    return f'<PlayerItem player_name={self.player_name!r} item_name={self.item_name!r} player_id={self.player_id} item_id={self.item_id} amount={self._amount}>'
+  
+  def _load_variables(self, data: TypePlayerItem) -> None:
+    guild_id = int(data['guild_id'])
+    item_id = int(data['item_id'])
+    player_id = int(data['player_id'])
+
+    if (guild_id != self.guild.id or self.player.id != player_id or self.item.id != item_id):
+      # Impossible block, but prevent.
+
+      raise RuntimeError("Algo deu errado, as informações não são iguais.")
+    
+    self._amount = data['stack']
+    self._created_at = datetime.fromtimestamp(data['created_at'] / 1000)
+
+  @property
+  def amount(self) -> int:
+    return self._amount
+
+  @property
+  def item_name(self) -> str:
+    return self.item._name
+  
+  @property
+  def item_id(self) -> str:
+    return self.item._id
+  
+  @property
+  def item_description(self) -> Union[str, None]:
+    return self.item._description
+  
+  @property
+  def item_stack(self) -> int:
+    return self.item._stack
+  
+  @property
+  def item_usable(self) -> bool:
+    return self.item._usable
+  
+  @property
+  def player_name(self) -> int:
+    return self.player._name
+  
+  @property
+  def player_id(self) -> int:
+    return self.player._id
+  
+  async def use(self, amount: Optional[int] = None) -> Self:
+    amount = amount or self.DEFAULT_AMOUNT
+    
+    return await self.add(-abs(amount))
+  
+  async def add(self, amount: Optional[int] = None) -> Self:
+    amount = amount or self.DEFAULT_AMOUNT
+    
+    raise NotImplementedError

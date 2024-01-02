@@ -2,33 +2,33 @@ from __future__ import annotations
 
 from typing import (
   TYPE_CHECKING,
+  Generic,
   List
 )
 
-from discord.ext.commands import Context
-
 if TYPE_CHECKING:
-  from .client import MorkatoBot
-
   from .player import Player
-  from .attack import Attack
-  from .guild  import Guild
-  from .art    import Art
+  from .guild import Guild
 
-  import discord
+  from discord.message import Message
+  from discord.embeds import Embed
 
-from . import errors, utils
-
+from discord.ext.commands.context import Context
 from functools import cached_property
 
-import time
+from .types._etc import MorkatoBotT, BotAppT
+from .utils.etc import reaction_checker
+from .errors import ErrorType, NotFoundError
 
-class MorkatoContext(Context['MorkatoBot']):
-  def __init__(self, *args, **kwargs) -> None:
-    super().__init__(*args, **kwargs)
+class AppBotContext(Context[BotAppT], Generic[BotAppT]):
+  @property
+  def isDev(self) -> bool:
+    if self.bot._dev is None or self.prefix is None:
+      return False
+    
+    return self.bot._dev.match(self.prefix)
 
-    self.counter = float('inf')
-
+class MorkatoContext(AppBotContext[MorkatoBotT], Generic[MorkatoBotT]):
   @cached_property
   def player(self) -> Player:
     return self.morkato_guild.get_player(self.author)
@@ -37,18 +37,7 @@ class MorkatoContext(Context['MorkatoBot']):
   def morkato_guild(self) -> Guild:
     return self.bot.get_morkato_guild(self.guild)
   
-  def get_counter(self) -> float:
-    return self.counter
-  
-  def debug_counter(self) -> None:
-    if self.counter == float('inf'):
-      self.counter = time.perf_counter()
-
-      return
-    
-    self.counter = time.perf_counter() - self.counter
-
-  async def send_page_embed(self, embeds: List[discord.Embed]) -> discord.Message:
+  async def send_page_embed(self, embeds: List[Embed]) -> Message:
     message = await self.send(embed=embeds[0])
 
     length = len(embeds)
@@ -63,7 +52,7 @@ class MorkatoContext(Context['MorkatoBot']):
 
     while True:
       try:
-        reaction, user = await self.bot.wait_for('reaction_add', timeout=20, check=utils.reaction_checker(self, message, [ 'author', 'channel', 'guild', 'message' ]))
+        reaction, user = await self.bot.wait_for('reaction_add', timeout=20, check=reaction_checker(self, message, [ 'author', 'channel', 'guild', 'message' ]))
       except:
         await message.clear_reactions()
 
@@ -80,25 +69,22 @@ class MorkatoContext(Context['MorkatoBot']):
 
       await message.edit(embed=embeds[index])
   
-  def get_player_embed(self, embed: discord.Embed) -> discord.Embed:
+  def charge_player_embeds(self, embeds: List[Embed]) -> List[Embed]:
+    return [ self.charge_player_embed(embed) for embed in embeds ]
+  
+  def charge_player_embed(self, embed: Embed) -> Embed:
+    player_name = "anonymous"
+    avatar = None
+
     try:
       player = self.player
 
-      return embed.set_author(name = player.name, icon_url = player.appearance or self.author.display_avatar.url)
-    except errors.NotFoundError:
-      return embed.set_author(name = 'Anonymous')
+      player_name = player._name
+      avatar = player._appearance or self.author.display_avatar.url
+    except NotFoundError as error:
+      if not error.type == ErrorType.PLAYER_NOTFOUND:
+        raise error from None
 
-  async def send_art(self, art: Art) -> discord.Message:    
-    embeds = [ self.get_player_embed(embed) for embed in art.embed_at()]
+    embed.set_author(name=player_name, icon_url=avatar)
 
-    return await self.send_page_embed(embeds)
-  
-  async def send_attack(self, attack: Attack) -> discord.Message:
-    embed = self.get_player_embed(attack.embed_at())
-
-    await self.send(embed=embed)
-
-  async def send_player(self, player: Player = utils.UNDEFINED) -> discord.Message:
-    player = player or self.player
-
-    return await self.send(embed=player.embed)
+    return embed
