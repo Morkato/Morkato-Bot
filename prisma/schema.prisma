@@ -49,7 +49,7 @@ model Guild {
 }
 
 model Art {
-  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade, map: "fkey.guild_id")
 
   name String
   id   String
@@ -65,7 +65,7 @@ model Art {
 
   attacks Attack[]
 
-  updated_at BigInt
+  updated_at BigInt?
 
   @@id([guild_id, id], map: "art_pkey")
   @@map("arts")
@@ -75,16 +75,16 @@ model Attack {
   name String
   id   String
 
-  guild   Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
-  art     Art?     @relation(fields: [art_id, guild_id], references: [id, guild_id])
-  item    Item?    @relation(fields: [guild_id, item_id], references: [guild_id, id])
+  guild   Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade, map: "fkey.guild_id")
+  art     Art?     @relation(fields: [art_id, guild_id], references: [id, guild_id], map: "fkey.art_id")
+  item    Item?    @relation(fields: [guild_id, item_id], references: [guild_id, id], map: "fkey.item_id")
   attacks Attack[] @relation("ParentAttack")
 
   guild_id String
   art_id   String?
   item_id  String?
 
-  parent Attack? @relation("ParentAttack", fields: [parent_id, guild_id], references: [id, guild_id])
+  parent Attack? @relation("ParentAttack", fields: [parent_id, guild_id], references: [id, guild_id], map: "fkey.parent_id")
 
   parent_id String?
 
@@ -100,14 +100,14 @@ model Attack {
   embed_description String?
   embed_url         String?
 
-  updated_at BigInt
+  updated_at BigInt?
 
   @@id([guild_id, id], map: "attack_pkey")
   @@map("attacks")
 }
 
 model Player {
-  guild     Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  guild     Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade, map: "fkey.guild_id")
   inventory PlayerItem[]
 
   name        String
@@ -134,14 +134,14 @@ model Player {
   appearance String?
   banner     String?
 
-  updated_at BigInt
+  updated_at BigInt?
 
   @@id([guild_id, id], map: "player_pkey")
   @@map("players")
 }
 
 model Item {
-  guild   Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  guild   Guild        @relation(fields: [guild_id], references: [id], onDelete: Cascade, map: "fkey.guild_id")
   players PlayerItem[]
 
   guild_id String
@@ -150,8 +150,9 @@ model Item {
   name        String
   description String?
 
-  stack  Int  @default(1)
-  usable Bool @default(false)
+  stack      Int  @default(1) @db.SmallInt
+  usable     Bool @default(false)
+  equippable Int  @default(0) @db.SmallInt
 
   embed_title       String?
   embed_description String?
@@ -159,24 +160,24 @@ model Item {
 
   attacks Attack[]
 
-  updated_at BigInt
+  updated_at BigInt?
 
   @@id([guild_id, id], map: "item_pkey")
   @@map("items")
 }
 
 model PlayerItem {
-  guild  Guild  @relation(fields: [guild_id], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [guild_id, player_id], references: [guild_id, id], onDelete: Cascade)
-  item   Item   @relation(fields: [guild_id, item_id], references: [guild_id, id], onDelete: Cascade)
+  guild  Guild  @relation(fields: [guild_id], references: [id], onDelete: Cascade, map: "fkey.guild_id")
+  player Player @relation(fields: [guild_id, player_id], references: [guild_id, id], onDelete: Cascade, map: "fkey.player_id")
+  item   Item   @relation(fields: [guild_id, item_id], references: [guild_id, id], onDelete: Cascade, map: "fkey.item_id")
 
   guild_id  String
   item_id   String
   player_id String
 
-  stack Int @default(1)
+  stack Int @default(1) @db.SmallInt
 
-  created_at Int @db.Integer
+  created_at BigInt @db.BigInt
 
   @@id([guild_id, player_id, item_id], map: "inventory_pkey")
   @@map("inventory")

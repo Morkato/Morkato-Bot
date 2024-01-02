@@ -18,5 +18,4 @@ class Art(TypedDict):
 
   guild_id: str
 
-  created_at: str
-  updated_at: str
+  updated_at: Union[str, None]

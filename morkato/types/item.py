@@ -18,4 +18,11 @@ class Item(TypedDict):
   embed_description: Optional[str]
   embed_url:         Optional[str]
 
-  updated_at: int
+  updated_at: Optional[int]
+
+class PlayerItem(TypedDict):
+  guild_id: str
+  item_id: str
+  player_id: str
+  stack: int
+  created_at: int
