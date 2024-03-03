@@ -1,5 +1,3 @@
-import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
-
 import type { Art, ArtDeleteFunction, ArtNotifyType } from "type:models/art"
 import type { Database } from "type:models/database"
 
@@ -7,18 +5,14 @@ import { errors, prismaError } from 'errors/prisma'
 import { assert, schemas } from 'utils/schema'
 import { format } from 'utils/art'
 
-export function geterr(err: PrismaClientKnownRequestError, guild_id: string, id: string) {
-  const type = prismaError(err)
-
+export function geterr(type: string, guild_id: string, id: string) {
   if (type === 'guild.notfound') {
     return () => errors['guild.notfound'](guild_id);
-  }
-
-  if (type == 'art.notfound') {
+  } else if (type == 'art.notfound') {
     return () => errors['art.notfound'](guild_id, id);
   }
 
-  return () => errors['generic.unknown']("Internal Error", "models.art.create");
+  return () => errors['generic.unknown']("Internal Error", "models.art.delete");
 } // Function: geterr
 
 export function deleteArt(database: Database): ArtDeleteFunction {
@@ -39,7 +33,7 @@ export function deleteArt(database: Database): ArtDeleteFunction {
 
       return art;
     } catch (err) {
-      const error = geterr(err, guild_id, id)
+      const error = geterr(prismaError(err), guild_id, id)
 
       throw error();
     }

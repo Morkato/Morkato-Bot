@@ -17,6 +17,7 @@ export function format({
 
   guild_id,
 
+  created_by,
   updated_at
 }: PrismaArt): Art {
   return {
@@ -32,7 +33,8 @@ export function format({
 
     guild_id: guild_id,
 
-    updated_at: updated_at === null ? null : Number(updated_at)
+    created_by: created_by,
+    updated_at: updated_at === null ? null : updated_at.getTime()
   };
 }
 

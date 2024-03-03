@@ -8,13 +8,19 @@ import { editItem } from './edit'
 import { deleteItem } from './delete'
 
 export function prepareItemDatabase(database: Database): ItemDatabase {
-  const where  = whereItem(database)
+  const find   = whereItem(database)
   const get    = getItem(database)
   const create = createItem(database)
   const edit   = editItem(database)
   const del    = deleteItem(database)
 
-  return Object.freeze({ where, get, create, edit, del });
+  return {
+    findItem: find,
+    getItem: get,
+    createItem: create,
+    editItem: edit,
+    delItem: del
+  };
 } // Function: prepareItemDatabase
 
 export default prepareItemDatabase;

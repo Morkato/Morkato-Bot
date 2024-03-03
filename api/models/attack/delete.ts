@@ -1,5 +1,3 @@
-import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
-
 import type { Attack, AttackDeleteFunction, AttackNotifyType } from "type:models/attack"
 import type { Database } from "type:models/database"
 
@@ -7,7 +5,7 @@ import { assert, schemas } from 'utils/schema'
 import { prismaError, errors } from "errors/prisma"
 import { format } from "utils/attack"
 
-function geterr(err: PrismaClientKnownRequestError, { guild_id, id }: Pick<Attack, 'guild_id' | 'id'>) {
+function geterr(err: unknown, { guild_id, id }: Pick<Attack, 'guild_id' | 'id'>) {
   const type = prismaError(err)
 
   if (type === 'guild.notfound') {

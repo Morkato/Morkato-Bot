@@ -13,6 +13,7 @@ export type Art = {
 
   guild_id: string
 
+  created_by: string | null
   updated_at: null | number
 }
 
@@ -29,11 +30,11 @@ export type ArtEditFunction = ({ guild_id, id, data }: ArtEditParameter) => Prom
 export type ArtDeleteFunction = ({ guild_id, id }: ArtDeleteParameter) => Promise<Art>
 
 export type ArtDatabase = {
-  where: ArtWhereFunction
-  get: ArtGetherFunction
-  create: ArtCreateFunction
-  edit: ArtEditFunction
-  del: ArtDeleteFunction
+  findArt: ArtWhereFunction
+  getArt: ArtGetherFunction
+  createArt: ArtCreateFunction
+  editArt: ArtEditFunction
+  delArt: ArtDeleteFunction
 }
 
 export type ArtNotifyType =

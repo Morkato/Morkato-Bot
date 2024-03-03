@@ -13,7 +13,7 @@ export function getAttack(database: Database): AttackGetherFunction {
     id       = assert(schemas.id,       id)
 
     const attack = await session.findUnique({
-      where: { guild_id_id: { guild_id, id } }
+      where: { guild_id_id: { guild_id, id } },
     })
 
     if (!attack) {

@@ -14,6 +14,7 @@ export function format({
   embed_title,
   embed_description,
   embed_url,
+  created_by,
   updated_at
 }: PrismaItem): Item {
   return {
@@ -28,7 +29,8 @@ export function format({
     embed_description: embed_description,
     embed_url: embed_url,
 
-    updated_at: updated_at === null ? null : Number(updated_at)
+    created_by: created_by,
+    updated_at: updated_at === null ? null : updated_at.getTime()
   }
 }
 

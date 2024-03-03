@@ -1,47 +1,30 @@
-import type { Session } from 'type:gateway/session'
-
-import { prepareGatewaySubscriber } from 'models/gateway'
-import { prepareWebSocketServer } from 'gateway/server'
-import { prepareDatabase } from 'models/database'
-
-import playerRouter from './pages/player'
-import attackRouter from './pages/attack'
-import guildRouter from './pages/guild'
-import itemRouter from './pages/item'
-import artRouter from './pages/art'
+import type { Logger } from 'type:logging'
 
 import express from 'express'
-import auth from 'middleware/auth'
-import cors from 'cors'
+
+import configureMiddlewares from 'extensions/middlewares'
+import configureRoutes from 'extensions/router'
+import configureCors from 'extensions/cors'
+
+import { setupLogging } from 'morkato/logging'
+
+import { getLogger } from 'logging'
 
 export default () => {
-  const clients: Session[] = []
-
-  const database = prepareDatabase()
-  const gateway = prepareWebSocketServer(5550, database, clients)
-  const subscriber = prepareGatewaySubscriber(clients)
+  setupLogging(process.env.LOGGER_LEVELS ?? "debug,info,warning,error,critical")
+  
+  const logger = getLogger("morkato.app")
   const app = express()
 
-  app.use(express.json())
-  app.use(auth())
-  app.use(cors({
-    origin: [ 'http://localhost:3000' ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: [
-      'Content-Type',
-      'Content-Length',
-      'Authorization',
-      'X-Access-Control'
-    ]
-  }))
+  logger.debug("Starting Morkato APP")
 
-  app.use('/arts', artRouter(database))
-  app.use('/items', itemRouter(database))
-  app.use('/guilds', guildRouter(database))
-  app.use('/attacks', attackRouter(database))
-  app.use('/players', playerRouter(database))
+  configureCors(app)
+  configureMiddlewares(app)
+  configureRoutes(app)
+  
+  return (func: (logger: Logger) => void) => {
+    app.listen(5500, () => func(logger))
 
-  database.subscribe(subscriber)
-
-  return app;
-}
+    return app;
+  };
+} 

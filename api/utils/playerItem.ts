@@ -13,6 +13,6 @@ export function format({
     player_id: player_id,
     item_id: item_id,
     stack: stack,
-    created_at: Number(created_at)
+    created_at: created_at.getTime()
   };
 }

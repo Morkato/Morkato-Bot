@@ -1,5 +1,5 @@
-import type { Database } from "type:models/database"
 import type { ArtDatabase } from "type:models/art"
+import type { Database } from "type:models/database"
 
 import { whereArt } from './where'
 import { getArt } from './get'
@@ -7,14 +7,20 @@ import { createArt } from './create'
 import { editArt } from './edit'
 import { deleteArt } from './delete'
 
-export function prepareDatabaseArt(database: Database): ArtDatabase {
-  const where = whereArt(database)
+export function prepareArtDatabase(database: Database): ArtDatabase {
+  const find = whereArt(database)
   const get = getArt(database)
   const create = createArt(database)
   const edit = editArt(database)
   const del = deleteArt(database)
 
-  return { where, get, create, edit, del };
-} // Function: prepareDatabaseArt
+  return {
+    findArt: find,
+    getArt: get,
+    createArt: create,
+    editArt: edit,
+    delArt: del
+  };
+} // Function: prepareArtDatabase
 
-export default prepareDatabaseArt;
+export default prepareArtDatabase;

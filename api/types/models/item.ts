@@ -13,6 +13,7 @@ export type Item = {
   embed_description: string | null
   embed_url: string | null
 
+  created_by: string | null
   updated_at: null | number
 }
 
@@ -26,14 +27,14 @@ export type ItemWhereFunction = ({ guild_id }: ItemWhereParameter) => Promise<It
 export type ItemGetherFunction = ({ guild_id, id }: ItemGetherParameter) => Promise<Item>
 export type ItemCreateFunction = ({ guild_id, data }: ItemCreateParameter) => Promise<Item>
 export type ItemEditFunction = ({ guild_id, id, data }: ItemEditParameter) => Promise<Item>
-export type ItemDeleteFunction = ({ guild_id, id }) => Promise<Item>
+export type ItemDeleteFunction = ({ guild_id, id }: ItemDeleteParameter) => Promise<Item>
 
 export type ItemDatabase = {
-  where: ItemWhereFunction
-  get: ItemGetherFunction
-  create: ItemCreateFunction
-  edit: ItemEditFunction
-  del: ItemDeleteFunction
+  findItem: ItemWhereFunction
+  getItem: ItemGetherFunction
+  createItem: ItemCreateFunction
+  editItem: ItemEditFunction
+  delItem: ItemDeleteFunction
 }
 
 export type ItemNotifyType =

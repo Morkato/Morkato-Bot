@@ -3,12 +3,12 @@ import type { Player } from 'type:models/player'
 
 export function format({
   name,
+  surname,
   breed,
   cash,
   exp,
   credibility,
   history,
-  mission,
   guild_id,
   id,
   life,
@@ -23,6 +23,7 @@ export function format({
 }: PrismaPlayer): Player {
   return {
     name: name,
+    surname: surname,
     breed: breed,
     cash: cash,
     exp: exp,
@@ -38,6 +39,6 @@ export function format({
     velocity: velocity,
     appearance: appearance,
     banner: banner,
-    updated_at: updated_at === null ? null : Number(updated_at)
+    updated_at: updated_at === null ? null : updated_at.getTime()
   }
 }
