@@ -6,6 +6,7 @@ export type Player = {
   breed: PlayerBreed
 
   name: string
+  surname: string | null
   credibility: number
   history: string | null
 
@@ -38,11 +39,11 @@ export type PlayerEditFunction = ({ guild_id, id, data }: PlayerEditParameter) =
 export type PlayerDeleteFunction = ({ guild_id, id }: PlayerDeleteParameter) => Promise<Player>
 
 export type PlayerDatabase = {
-  where: PlayerWhereFunction
-  get: PlayerGetherFunction
-  create: PlayerCreateFunction
-  edit: PlayerEditFunction
-  del: PlayerDeleteFunction
+  findPlayer: PlayerWhereFunction
+  getPlayer: PlayerGetherFunction
+  createPlayer: PlayerCreateFunction
+  editPlayer: PlayerEditFunction
+  delPlayer: PlayerDeleteFunction
 }
 
 export type PlayerNotifyType =

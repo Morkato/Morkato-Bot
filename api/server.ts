@@ -1,5 +1,7 @@
-import prepareApp from './app'
+import prepareApp from 'app'
 
-const app = prepareApp()
+const runApp = prepareApp()
 
-app.listen(5500, () => console.log("server running..."))
+const app = runApp((logger) => {
+  logger.info("Server has listening...")
+})

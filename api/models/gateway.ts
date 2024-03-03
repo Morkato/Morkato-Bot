@@ -1,4 +1,4 @@
-import type { NotifyType, Subscriber } from "type:models/database"
+import type { Subscriber } from "type:models/database"
 import type { Session } from "type:gateway/session"
 
 import type { Player } from "type:models/player"
@@ -21,7 +21,7 @@ export function prepareGatewaySubscriber(clients: Session[]): Subscriber {
   }
 }
 
-const events = Object.freeze<Partial<Record<NotifyType, (clients: Session[], d: unknown) => Promise<void>>>>({
+const events: Record<string, (clients: Session[], d: any) => Promise<void>> = Object.freeze({
   "player.create": async (clients, player: Player) => {
     for (const client of clients) {
       const usr = client.getIdentify()

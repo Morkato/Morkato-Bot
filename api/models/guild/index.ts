@@ -7,12 +7,12 @@ import { createGuild } from './create'
 import { deleteGuild } from './delete'
 
 export function prepareDatabaseGuild(database: Database): GuildDatabase {
-  const where = whereGuild(database)
-  const get   = getGuild(database)
-  const create = createGuild(database)
-  const del = deleteGuild(database)
-
-  return Object.freeze({ where, get, create, del });
+  return {
+    findGuild: whereGuild(database),
+    getGuild: getGuild(database),
+    createGuild: createGuild(database),
+    delGuild: deleteGuild(database)
+  };
 } // Function: prepareDatabaseGuild
 
 export default prepareDatabaseGuild;

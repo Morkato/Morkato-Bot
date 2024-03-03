@@ -21,11 +21,11 @@ export type PlayerItemEditFunction = ({ guild_id, player_id, item_id, data }: Pl
 export type PlayerItemDeleteFunction = ({ guild_id, player_id, item_id }: PlayerItemDeleteParameter) => Promise<PlayerItem>
 
 export type PlayerItemDatabase = {
-  where: PlayerItemWhereFunction
-  get: PlayerItemGetherFunction
-  create: PlayerItemCreateFunction
-  edit: PlayerItemEditFunction
-  del: PlayerItemDeleteFunction
+  findPlayerItem: PlayerItemWhereFunction
+  getPlayerItem: PlayerItemGetherFunction
+  createPlayerItem: PlayerItemCreateFunction
+  editPlayerItem: PlayerItemEditFunction
+  delPlayerItem: PlayerItemDeleteFunction
 }
 
 export type PlayerItemNotifyType =

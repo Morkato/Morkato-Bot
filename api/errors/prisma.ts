@@ -1,5 +1,3 @@
-import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
-
 import { NotFoundError, AlreadyExistsError, InternalServerError } from "."
 
 export const anonymous = 'generic.unknown'
@@ -7,6 +5,13 @@ export const anonymous = 'generic.unknown'
 const pes = {
   P2002: {
     fkey: {
+      guild_id: 'guild.alreadyexists',
+      art_id: 'art.alreadyexists',
+      item_id: 'item.alreadyexists',
+      parent_id: 'attack.alreadyexists',
+      player_id: 'player.alreadyexists'
+    },
+    key: {
       guild_id: 'guild.alreadyexists',
       art_id: 'art.alreadyexists',
       item_id: 'item.alreadyexists',
@@ -25,10 +30,10 @@ const pes = {
   }
 }
 
-export function prismaError(err: PrismaClientKnownRequestError): string {
+export function prismaError(err: any): string {
   try {
     const fields = (err.meta.field_name as string).split(' ', 1)[0].split(/\./g)
-    const errors = pes[err.code] ?? anonymous
+    const errors = (pes as any)[err.code] ?? anonymous
     let type = errors
 
     for (let field of fields) {

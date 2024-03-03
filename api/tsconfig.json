@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "type:*": [
+        "types/*"
+      ],
+      "*": [
+        "./*"
+      ]
+    },
+    "outDir": "./out",
+    "rootDir": "./",
+    "strict": true
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "jest.config.ts",
+    "spec"
+  ]
+}

@@ -1,8 +1,8 @@
 import type { ArtGetherFunction } from 'type:models/art'
 import type { Database } from 'type:models/database'
 
-import { errors, prismaError } from 'errors/prisma'
 import { assert, schemas } from 'utils/schema'
+import { errors } from 'errors/prisma'
 import { format } from 'utils/art'
 
 export function getArt(database: Database): ArtGetherFunction {
@@ -10,7 +10,7 @@ export function getArt(database: Database): ArtGetherFunction {
   
   return async ({ guild_id, id }) => {
     guild_id = assert(schemas.id, guild_id) as string
-    id       = assert(schemas.id, id) as string
+    id       = assert(schemas.id, id)       as string
 
     const art = await session.findUnique({
       where: { guild_id_id: { guild_id, id } }

@@ -1,4 +1,5 @@
 import { ValidationError } from 'errors'
+import { is_valid } from 'utils/uuid'
 
 import Joi from 'joi'
 
@@ -27,7 +28,7 @@ export function validate(
   })
 
   for (const key of Object.keys(keys)) {
-    const callback = schemas[key]
+    const callback = schemas[key as keyof typeof schemas]
     finalSchema.concat(callback())
   }
 
@@ -60,6 +61,18 @@ export const schemas = {
   remove: () => Joi.object({
     remove: uint()
   }),
+  intents: () => Joi.object({
+    intents: Joi
+      .number()
+      .when('$required.intents', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
+  }),
+  created_by: () => Joi.object({
+    created_by: Joi
+    .string()
+    .min(6)
+    .regex(/^[0-9]+$/)
+    .when('$required.created_by', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
+  }),
   name: () => Joi.object({
     name: Joi.string()
       .trim()
@@ -67,6 +80,14 @@ export const schemas = {
       .max(32)
       .regex(/^[^-+>@&$\s].+[^-+>@&$\s]$/)
       .when('$required.name', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
+  }),
+  surname: () => Joi.object({
+    surname: Joi.string()
+      .trim()
+      .min(2)
+      .max(12)
+      .regex(/^[^-+>@&$\s].*[^-+>@&$\s]$/)
+      .when('$required.surname', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
   }),
   description: () => Joi.object({
     description: Joi.string()
@@ -93,7 +114,6 @@ export const schemas = {
     id: Joi
       .string()
       .min(6)
-      .regex(/^[0-9]+$/)
       .when('$required.id', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
   }),
   guild_id: () => Joi.object({
@@ -196,6 +216,14 @@ export const schemas = {
   usable: () => Joi.object({
     usable: Joi.boolean()
       .when('$required.usable', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
+  }),
+  title: () => Joi.object({
+    title: Joi.string()
+      .trim()
+      .allow(null)
+      .min(1)
+      .max(96)
+      .when('$required.title', { is: 'required', then: Joi.required(), otherwise: Joi.optional() })
   }),
   embed_title: () => Joi.object({
     embed_title: Joi.string()

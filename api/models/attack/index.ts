@@ -7,14 +7,20 @@ import { createAttack } from './create'
 import { editAttack } from './edit'
 import { deleteAttack } from './delete'
 
-export function prepareDatabaseAttack(database: Database): AttackDatabase {
-  const where = whereAttack(database)
+export function prepareAttackDatabase(database: Database): AttackDatabase {
+  const find = whereAttack(database)
   const get = getAttack(database)
   const create = createAttack(database)
   const edit = editAttack(database)
   const del = deleteAttack(database)
 
-  return { where, get, create, edit, del };
+  return {
+    findAttack: find,
+    getAttack: get,
+    createAttack: create,
+    editAttack: edit,
+    delAttack: del
+  };
 } // Function: prepareDatabaseAttack
 
-export default prepareDatabaseAttack;
+export default prepareAttackDatabase;

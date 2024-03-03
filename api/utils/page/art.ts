@@ -1,16 +1,7 @@
 import type { Request } from "express"
 
-import { InternalServerError } from "errors"
+import { extractParam } from "./etc"
 
 export function extractArtID(req: Request) {
-  const id = req.params.art_id
-
-  if (typeof id === 'string') {
-    return id;
-  }
-
-  throw new InternalServerError({
-    message: "Erro interno",
-    errorLocationCode: 'utils/page/art'    
-  })
+  return extractParam(req, 'art_id')
 }

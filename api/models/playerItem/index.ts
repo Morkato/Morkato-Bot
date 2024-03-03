@@ -8,13 +8,19 @@ import { editPlayerItem } from './edit'
 import { deletePlayerItem } from './delete'
 
 export function prepareDatabasePlayerItem(database: Database): PlayerItemDatabase {
-  const where  = wherePlayerItem(database)
+  const find   = wherePlayerItem(database)
   const get    = getPlayerItem(database)
   const create = createPlayerItem(database)
   const edit   = editPlayerItem(database)
   const del    = deletePlayerItem(database)
 
-  return Object.freeze({ where, get, create, edit, del });
+  return {
+    findPlayerItem: find,
+    getPlayerItem: get,
+    createPlayerItem: create,
+    editPlayerItem: edit,
+    delPlayerItem: del
+  };
 }
 
 export default prepareDatabasePlayerItem;

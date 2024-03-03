@@ -47,7 +47,7 @@ export function createPlayerItem(database: Database): PlayerItemCreateFunction {
 
           stack: stack,
 
-          created_at: Date.now()
+          created_at: new Date()
         }
       })
 

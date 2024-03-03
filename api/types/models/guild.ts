@@ -1,8 +1,5 @@
 export type Guild = {
   id: string
-
-  created_at: Date
-  updated_at: Date
 }
 
 export type GuildWhereParameter = {  }
@@ -16,10 +13,10 @@ export type GuildCreateFunction = ({ data }: GuildCreateParameter) => Promise<Gu
 export type GuildDeleteFunction = ({ id }: GuildDeleteParameter) => Promise<Guild>
 
 export type GuildDatabase = {
-  where: GuildWhereFunction
-  get: GuildGetherFunction
-  create: GuildCreateFunction
-  del: GuildDeleteFunction
+  findGuild: GuildWhereFunction
+  getGuild: GuildGetherFunction
+  createGuild: GuildCreateFunction
+  delGuild: GuildDeleteFunction
 }
 
 export type GuildNotifyType =

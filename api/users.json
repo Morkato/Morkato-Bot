@@ -6,6 +6,7 @@
       "MANAGE:GUILDS",
       "MANAGE:PLAYERS",
       "MANAGE:PLAYER:ITEMS",
+      "MANAGE:PLAYER:ARTS",
       "MANAGE:ITEMS",
       "MANAGE:ATTACKS",
       "MANAGE:ARTS"
