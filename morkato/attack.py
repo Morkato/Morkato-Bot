@@ -1,238 +1,121 @@
 from __future__ import annotations
-
+from .utils import NoNullDict, extract_datetime_from_snowflake
+from typing_extensions import Self
+from datetime import datetime
 from typing import (
   TYPE_CHECKING,
+  SupportsInt,
   Optional,
-  Sequence,
-  Union,
-  List
+  Tuple
 )
-
 if TYPE_CHECKING:
-  from typing_extensions import Self
-
-  from .types.attack import Attack as TypeAttack
-  
+  from .types import Attack as AttackPayload
   from .state import MorkatoConnectionState
-  from .http  import HTTPClient
   from .guild import Guild
-  from .item  import Item
-  from .art   import Art
-
-from discord.embeds import Embed
-from .http import Route
-from .utils.etc import (
-  format_text,
-  num_fmt,
-  find
-)
-
-from datetime import datetime
-
+  from .art import Art
+class AttackIntents:
+  UNAVOIDABLE = (1 << 2)
+  INDEFENSIBLE = (1 << 3)
+  AREA = (1 << 4)
+  NOT_COUNTER_ATTACKABLE = (1 << 5)
+  COUNTER_ATTACKABLE = (1 << 6)
+  DEFENSIVE = (1 << 7)
+  ALL_INTENTS: Tuple[int] = (UNAVOIDABLE, INDEFENSIBLE, AREA, NOT_COUNTER_ATTACKABLE, COUNTER_ATTACKABLE, DEFENSIVE)
+  @classmethod
+  def all(cls) -> AttackIntents:
+    intents = cls()
+    intents.set(cls.UNAVOIDABLE)
+    intents.set(cls.INDEFENSIBLE)
+    intents.set(cls.AREA)
+    intents.set(cls.NOT_COUNTER_ATTACKABLE)
+    intents.set(cls.COUNTER_ATTACKABLE)
+    intents.set(cls.DEFENSIVE)
+    return intents
+  def __init__(self, initial: SupportsInt = 0) -> None:
+    self.__value = int(initial)
+  def __repr__(self) -> str:
+    return repr(self.__value)
+  def __int__(self) -> int:
+    return self.__value
+  def has_intent(self, intent: int) -> bool:
+    if not intent in self.ALL_INTENTS:
+      return False
+    return (self.__value & intent) != 0
+  def is_empty(self) -> bool:
+    return self.__value == 0
+  def set(self, intent: int) -> None:
+    self.__value |= intent
+  @property
+  def unavoidable(self) -> bool:
+    return (self.__value & self.UNAVOIDABLE) != 0
+  @property
+  def indefensible(self) -> bool:
+    return (self.__value & self.INDEFENSIBLE) != 0
+  @property
+  def area(self) -> bool:
+    return (self.__value & self.AREA) != 0
+  @property
+  def not_counter_attackable(self) -> bool:
+    return (self.__value & self.NOT_COUNTER_ATTACKABLE) != 0
+  @property
+  def counter_attackable(self) -> bool:
+    return (self.__value & self.COUNTER_ATTACKABLE) != 0
+  @property
+  def defensive(self) -> bool:
+    return (self.__value & self.DEFENSIVE) != 0
 class Attack:
-  def __init__(
-    self,
-    state: MorkatoConnectionState,
-    guild: Guild,
-    data: TypeAttack
-  ) -> None:
+  def __init__(self, state: MorkatoConnectionState, guild: Guild, art: Art, payload: AttackPayload) -> None:
     self.state = state
     self.guild = guild
-
-    self._id = int(data['id'])
-
-    self._load_variables(data)
-  
-  def __repr__(self) -> str:
-    return f'<{self.__class__.__name__} name={self._name!r} id={self._id} state>'
-
-  def _load_variables(self, data: TypeAttack) -> None:
-    self._name = data['name']
-    self._required_exp = data['required_exp']
-
-    self._damage = data['damage']
-    self._breath = data['breath']
-    self._blood = data['blood']
-
-    self._embed_title = data['embed_title']
-    self._embed_description = data['embed_description']
-    self._embed_image = data['embed_url']
-
-    self._parent_id = int(data['parent_id']) if data['parent_id'] is not None else None
-    
-    self._updated_at = datetime.fromtimestamp(data['updated_at'] / 1000) if data['updated_at'] is not None else None
-  
-  def _get_http(self) -> HTTPClient:
-    return self.state.http
-  
-  @property
-  def name(self) -> str:
-    return self._name
-  
-  @property
-  def id(self) -> int:
-    return self._id
-  
-  @property
-  def embed(self) -> Embed:
-    return self.embed_at()
-  
-  @property
-  def parent(self) -> Union[Attack, None]:
-    if self._parent_id is None:
-      return
-    
-    result = self.guild._get_attack_by_id(self._parent_id)
-    
-    return result
-  
-  @property
-  def children(self) -> List[Attack]:
-    def check(attack: Attack) -> bool:
-      return attack._parent_id == self._id
-    
-    return sorted(find(self.guild._attacks.values(), check), key=lambda child: child._id)
-
-  async def edit(
-    self,
-    name:              Optional[str] = None,
-    required_exp:      Optional[int] = None,
-    damage:            Optional[int] = None,
-    breath:            Optional[int] = None,
-    blood:             Optional[int] = None,
-    embed_title:       Optional[str] = None,
-    embed_description: Optional[str] = None,
-    embed_url:         Optional[str] = None
-  ) -> Self:
-    http = self._get_http()
-    payload = {  }
-
-    if name is not None:
-      payload["name"] = name
-
-    if required_exp is not None:
-      payload["required_exp"] = required_exp
-    
-    if damage is not None:
-      payload["damage"] = damage
-    
-    if breath is not None:
-      payload["breath"] = breath
-    
-    if blood is not None:
-      payload["blood"] = blood
-    
-    if embed_title is not None:
-      payload["embed_title"] = None
-
-    if embed_description is not None:
-      payload["embed_description"] = embed_description
-    
-    if embed_url is not None:
-      payload["embed_url"] = embed_url
-
-    if not payload:
-      return self
-    
-    data = await http.request(Route('POST', '/attacks/{gid}/{aid}', gid=self.guild.id, aid=self._id), json=payload)
-    self._load_variables(data)
-
-    return self
-
-  def embed_at(self, *,
-    title:       Optional[str] = None,
-    description: Optional[str] = None,
-    url:         Optional[str] = None
-  ) -> Embed:
-    format  = format_text
-    
-    title       = title or self._embed_title
-    description = description or self._embed_description
-    url         = url or self._embed_image
-    
-    damage = num_fmt(self._damage, 2)
-    breath = num_fmt(self._breath, 2)
-    blood  = num_fmt(self._blood,  2)
-    
-    embed = Embed(
-      title=format(title, name=self.name) if title else title,
-      description=format(description,
-        name=self.name,
-        damage=damage,
-        breath=breath,
-        blood=blood
-      ) if description else 'No description'
-    )
-
-    if url:
-      embed.set_image(url=url)
-
-    embed.set_footer(text=f'ID: {self.id}')
-
-    return embed
-
-class ArtAttack(Attack):
-  def __init__(
-    self,
-    state: MorkatoConnectionState,
-    art: Art,
-    data: TypeAttack
-  ) -> None:
     self.art = art
-
-    super().__init__(state, art.guild, data)
-
-  def _load_variables(self, data: TypeAttack) -> None:
-    if int(data['art_id']) != self.art._id:
-      raise RuntimeError
-    
-    return super()._load_variables(data)
-  
+    self.id = int(payload["id"])
+    self.from_payload(payload)
+  def from_payload(self, payload: AttackPayload) -> None:
+    self.name = payload["name"]
+    self.name_prefix_art = payload["name_prefix_art"]
+    self.description = payload["description"]
+    self.banner = payload["banner"]
+    self.damage = payload["damage"]
+    self.breath = payload["breath"]
+    self.blood = payload["blood"]
+    self.intents = AttackIntents(payload["intents"])
   @property
-  def parent(self) -> Union[ArtAttack, None]:
-    if self._parent_id is None:
-      return
-    
-    result = self.art._attacks.get(self._parent_id)
-    
-    return result
-  
+  def created_at(self) -> datetime:
+    return extract_datetime_from_snowflake(self)
   @property
-  def children(self) -> Sequence[ArtAttack]:
-    def check(attack: ArtAttack) -> bool:
-      return isinstance(attack, self.__class__) and attack._parent_id == self._id
-    
-    return sorted(find(self.art._attacks.values(), check), key=lambda child: child._id)
-
-class ItemAttack(Attack):
-  def __init__(
-    self,
-    state: MorkatoConnectionState,
-    item: Item,
-    data: TypeAttack
-  ) -> None:
-    self.item = item
-    
-    super().__init__(state, item.guild, data)
-
-  def _load_variables(self, data: TypeAttack) -> None:
-    if int(data['item_id']) != self.item._id:
-      raise RuntimeError
-  
-    return super()._load_variables(data)
-  
-  @property
-  def parent(self) -> Union[Attack, None]:
-    if self._parent_id is None:
-      return
-    
-    result = self.item._attacks.get(self._parent_id)
-    
-    return result
-  
-  @property
-  def children(self) -> Sequence[ItemAttack]:
-    def check(attack: ItemAttack) -> bool:
-      return isinstance(attack, self.__class__) and attack._parent_id == self._id
-    
-    return sorted(find(self.item._attacks.values(), check), key=lambda child: child._id)
+  def updated_at(self) -> Optional[datetime]:
+    if self._updated_at is not None:
+      return datetime.fromtimestamp(self._updated_at / 1000.0)
+    return None
+  async def edit(
+    self, *,
+    name: Optional[str] = None,
+    name_prefix_art: Optional[str] = None,
+    description: Optional[str] = None,
+    resume_description: Optional[str] = None,
+    banner: Optional[str] = None,
+    damage: Optional[int] = None,
+    breath: Optional[int] = None,
+    blood: Optional[int] = None,
+    intents: Optional[AttackIntents] = None
+  ) -> Self:
+    kwargs = NoNullDict(
+      name=name,
+      name_prefix_art=name_prefix_art,
+      description=description,
+      resume_description=resume_description,
+      banner=banner,
+      damage=damage,
+      breath=breath,
+      blood=blood,
+      intents=intents
+    )
+    if kwargs:
+      payload = await self.state.update_attack(self.guild.id, self.id, **kwargs)
+      self.from_payload(payload)
+    return self
+  async def delete(self) -> Self:
+    payload = await self.state.delete_attack(self.guild.id, self.id)
+    self.from_payload(payload)
+    self.art._del_attack(self)
+    return self

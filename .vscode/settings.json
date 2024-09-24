@@ -1,8 +1,5 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
   "cSpell.language": "en,pt,pt_BR",
-  "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "files.exclude": {
     "**/.git": true,
@@ -11,11 +8,7 @@
     "**/CVS": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
-    ".next": true,
-    "**/__pycache__": true,
-    ".vercel": true,
-    "node_modules": true,
-    "dist": true
+    "**/__pycache__": true
   },
   "cSpell.ignoreWords": [
     "KEKKIJUTSU",
@@ -47,15 +40,39 @@
   ],
   "cSpell.words": [
     "alreadyexists",
+    "arrowleft",
+    "ARROWLEFTEMOJI",
+    "arrowright",
+    "ARROWRIGHTEMOJI",
+    "artname",
+    "artp",
+    "artquery",
     "asserr",
+    "attackable",
+    "attackname",
+    "attackp",
+    "autoping",
+    "combable",
     "descricao",
     "fightingstyle",
     "fightstyle",
+    "fillvalue",
     "fkey",
     "frun",
+    "fullname",
+    "Fullname",
     "geterr",
+    "guildp",
+    "itemp",
+    "kwargs",
+    "nsfw",
     "Objectable",
+    "Playernable",
+    "playerp",
+    "punregister",
     "PYCHARM",
-    "respiracao"
+    "respiracao",
+    "unsync",
+    "Unsync"
   ]
 }
