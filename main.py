@@ -1,25 +1,18 @@
-from morkato  import MorkatoBot
-from decouple import config
+from morkato.ext.bot import MorkatoBot
+from morkato.utils import load_modules
+from dotenv import load_dotenv
+import discord
+import os
 
-from sys import exit
-
-import dotenv
-
-def main() -> int:
-  dotenv.load_dotenv()
-  
-  try:
-    TOKEN: str = config('BOT_TOKEN')
-  except:
-    print('Insira no ".env" uma chave chamada: BOT_TOKEN com seu token do discord.')
-
-    return -1
-
-  bot = MorkatoBot(auth=TOKEN, login="morkato")
-  
-  bot.run(TOKEN)
-  
-  return 0
-
-if __name__ == '__main__':
-  exit(main())
+bot = MorkatoBot(
+  command_prefix='!',
+  intents=discord.Intents.all()
+)
+if __name__ == "__main__":
+  load_dotenv()
+  BOT_TOKEN = os.getenv("BOT_TOKEN")
+  APP_DIR = os.getenv("APP_DIR") or "app"
+  if BOT_TOKEN is None:
+    exit(1)
+  load_modules(APP_DIR)
+  bot.run(BOT_TOKEN, root_logger=True)
