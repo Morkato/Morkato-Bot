@@ -1,37 +1,32 @@
-from discord.ext.commands.errors import (ConversionError, CommandInvokeError)
-from morkato.ext.context import MorkatoContext
+from aiohttp.client_exceptions import ClientConnectorError
+from morkato.work.builder import UnknownMessageContent
+from morkato.work.context import MorkatoContext
+from morkato.work.extension import exception
+from morkato.work.project import registry
+from app.extension import BaseExtension
 from app.errors import AppError
-from morkato.ext.extension import (
-  ApplicationExtension,
-  extension,
-  exception
+from typing import (
+  ClassVar
 )
 
-@extension
-class GlobalErrorExtension(ApplicationExtension):
-  @exception(CommandInvokeError)
-  async def on_command_invoke_error(self, ctx: MorkatoContext, exc: CommandInvokeError) -> None:
-    original = exc.original
-    if isinstance(original, AppError):
-      return await self.on_app_error(ctx, original)
-    elif isinstance(original, NotImplementedError):
-      return await self.on_not_implemented_error(ctx, original)
-    await self.on_exception(ctx, original)
-  @exception(ConversionError)
-  async def on_conversion_error(self, ctx: MorkatoContext, exc: ConversionError) -> None:
-    original = exc.original
-    if isinstance(original, AppError):
-      return await self.on_app_error(ctx, original)
-    elif isinstance(original, NotImplementedError):
-      return await self.on_not_implemented_error(ctx, original)
-    await self.on_exception(ctx, original)
+@registry
+class GlobalErrorExtension(BaseExtension):
+  LANGUAGE: ClassVar[str]
+  async def setup(self):
+    self.LANGUAGE = self.builder.PT_BR
   @exception(AppError)
   async def on_app_error(self, ctx: MorkatoContext, exc: AppError) -> None:
-    await ctx.send(exc.message, reference=ctx.message)
-  @exception(NotImplementedError)
-  async def on_not_implemented_error(self, ctx: MorkatoContext, exc: NotImplementedError) -> None:
-    await ctx.send("Ocorreu um erro no qual não sei lidar, perdoa-me.", reference=ctx.message)
+    content = exc.build(self.builder, self.LANGUAGE)
+    await ctx.send(content, reference=ctx.message)
+  @exception(UnknownMessageContent)
+  async def on_unknown_message_content(self, ctx: MorkatoContext, exc: UnknownMessageContent) -> None:
+    await ctx.send("Unknown message content for key: **`%s.%s`**" % (exc.language, exc.key))
+  @exception(ClientConnectorError)
+  async def on_client_connector_error(self, ctx: MorkatoContext, exc: ClientConnectorError) -> None:
+    exception = AppError("errorMorkatoAPIRatedServiceDoNotListening")
+    await self.on_app_error(ctx, exception)
   @exception(Exception)
   async def on_exception(self, ctx: MorkatoContext, exc: Exception) -> None:
-    await ctx.send("Ocorreu um erro inesperado, favor, notifique a meu desenvolvedor (ErrorType: **`%s`**; Stack: Console)" % type(exc).__name__)
+    exc_type = type(exc)
+    await ctx.send("**`[%s repr(exc): %s] Ocorreu um erro inesperado. Favor, notificar ao meu desenvolvedor.`**" % (f"{exc_type.__module__}.{exc_type.__name__}", getattr(exc, "message", None)), reference=ctx.message)
     raise exc

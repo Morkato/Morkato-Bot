@@ -1,23 +1,28 @@
-from morkato.ext.extension import (ApplicationExtension, extension)
-from morkato.ext.context import MorkatoContext
-from app.checks import has_guild_permissions
-from discord.interactions import Interaction
-from discord import app_commands as apc
-from discord.channel import TextChannel
-from morkato.ext.bot import MorkatoBot
+from morkato.work.project import registry
 from morkato.utils import NoNullDict
+from app.checks import has_guild_permissions
+from app.extension import BaseExtension
+from discord.interactions import Interaction
+from discord.channel import TextChannel
+from discord import app_commands as apc
 
 guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
 
-@extension
-class Utility(ApplicationExtension):
-  @apc.command(name="ping", description="[Utilitários] Mostra meu ping atual.")
-  async def ping(self, ctx: MorkatoContext) -> None:
-    await ctx.send("Pong! **`%sms`**" % round(ctx.bot.latency * 1000, 2))
+@registry
+class Utility(BaseExtension):
+  LANGUAGE = "ptBR"
+  @apc.command(
+    name="ping",
+    description="[Utilitários] Mostra meu ping atual."
+  )
+  async def ping(self, interaction: Interaction) -> None:
+    await interaction.response.defer()
+    content = self.builder.get_content(self.LANGUAGE, "onPing", round(interaction.client.latency * 1000, 2))
+    await interaction.edit_original_response(content=content)
   @apc.command(name="wipe-category", description="[Utilitários] Wipe category from channel")
   @apc.guild_only()
   @apc.check(guild_perms)
-  async def wipe_category(self, interaction: Interaction[MorkatoBot], channel: TextChannel) -> None:
+  async def wipe_category(self, interaction: Interaction, channel: TextChannel) -> None:
     await interaction.response.defer()
     if channel.category_id == interaction.channel.category_id:
       await interaction.edit_original_response(content="Você não pode realizar está operação executando este comando nesta categoria.")

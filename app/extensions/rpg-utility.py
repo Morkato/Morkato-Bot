@@ -1,11 +1,12 @@
-from discord.interactions import Interaction
 from morkato.types import (AbilityType, NpcType, ArtType)
+from morkato.errors import (NotFoundError, MorkatoHTTPType)
+from morkato.work.builder import MessageBuilder
+from morkato.work.project import registry
 from morkato.attack import AttackIntents
+from discord.interactions import Interaction
 from discord import app_commands as apc
-from morkato.ext.extension import (
-  ApplicationExtension,
-  extension
-)
+from discord.user import User
+from app.extension import BaseExtension
 from typing import (
   Optional,
   ClassVar,
@@ -16,8 +17,9 @@ import app.utils
 
 has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
 
-@extension
-class RPGUtility(ApplicationExtension):
+@registry
+class RPGUtility(BaseExtension):
+  LANGUAGE: ClassVar[str] = MessageBuilder.PT_BR
   ART_CREATED: ClassVar[str] = "Uma nova arte com o nome: **`{art.name}`** foi criada!"
   ATTACK_INTENTS_CHOICES = [
     apc.Choice(name="Indesviável", value=AttackIntents.UNAVOIDABLE),
@@ -50,7 +52,8 @@ class RPGUtility(ApplicationExtension):
       description=description,
       banner=banner
     )
-    await interaction.edit_original_response(content=self.ART_CREATED.format(art=art))
+    content = self.builder.get_content(self.LANGUAGE, "onArtCreate", art.name)
+    await interaction.edit_original_response(content=content)
   @apc.command(
     name="art-update",
     description="[RPG Utilitários] atualiza uma arte existente."
@@ -67,7 +70,13 @@ class RPGUtility(ApplicationExtension):
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     art = await app.utils.ArtConverter()._get_art_by_guild(guild, art_query)
-    await art.edit(name=name, type=type, description=desc, banner=banner)
+    await art.edit(
+      name = name,
+      type = type,
+      description = desc,
+      banner = banner
+    )
+    
     await interaction.edit_original_response(content="A arte chamada: **`%s`** foi atualizada!" % art.name)
   @apc.command(
     name="attack-create",
@@ -198,14 +207,58 @@ class RPGUtility(ApplicationExtension):
     content = "Um novo npc chamado: **`%s`** foi criado (Apelido: %s)." % (npc.name, npc.surname)
     await interaction.edit_original_response(content=content + "\n**OBS:** É impossível um jogador conseguir controlar este npc, por isso as variáveis **`self`** e **`this`** estarão indisponíveis.")
   @apc.command(
-    name="ability-create",
-    description="[RPG Utilitários] Cria uma nova habilidade."
+    name="set-player-type",
+    description="[RPG Utilitários] Monta o contexto para um jogador"
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
-  async def ability_create(self, interaction: Interaction, name: str, type: AbilityType, percent: int, *, description: Optional[str], banner: Optional[str]) -> None:
+  async def create_player(self, interaction: Interaction, type: NpcType) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await guild.create_ability(name=name, type=type, percent=percent, npc_kind=0, description=description, banner=banner)
-    content = "Uma nova habilidade chamada: **`%s`** com a chance de %s/100 de ser obtida em roll (Use: `/ability-set-player-type` para habilitar o roll)" % (ability.name, ability.percent)
+    player = await guild.create_player(interaction.user, type)
+    content = "Seu contexto agora é **`%s`** (Quando o contexto é definido, é impossível editá-lo. Apague-o caso se arrependa).\n**`%s`**" % (type, player)
     await interaction.edit_original_response(content=content)
+  
+  @apc.command(
+    name="preset",
+    description="[RPG Utilitários] Excluí o contexto para um jogador"
+  )
+  @apc.guild_only()
+  async def player_reset(self, interaction: Interaction, user: User) -> None:
+    if not interaction.user.guild_permissions.manage_guild:
+      await interaction.response.send_message("Você não tem permissão suficiente para executar esta ação.")
+      return
+    await interaction.response.defer()
+    guild = await self.get_morkato_guild(interaction.guild)
+    player = guild.get_cached_player(user.id)
+    if player is None:
+      try:
+        player = await guild.fetch_player(user.id)
+      except NotFoundError as exc:
+        if exc.type != MorkatoHTTPType.PLAYER_NOTFOUND:
+          raise exc
+        await interaction.edit_original_response(content="Este jogador ainda não possuí contexto, o que você quer excluir?")
+        return
+    await player.delete()
+    await interaction.edit_original_response(content="Foi excluído o contexto do jogador: **`%s`**" % (user.name))
+  @apc.command(
+    name="pregister",
+    description="[RPG Utilitários] Registra um jogador"
+  )
+  @apc.guild_only()
+  async def player_register(
+    self, interaction: Interaction, *,
+    user: User,
+    name: str,
+    surname: str
+  ) -> None:
+    guild = await self.get_morkato_guild(interaction.guild)
+    player = guild.get_cached_player(interaction.user.id)
+    if player is None:
+      player = await guild.fetch_player(interaction.user.id)
+    if player.already_registered():
+      content = self.builder.get_content(self.LANGUAGE, "onPlayerAlreadyRegistered")
+      await interaction.response.send_message(content)
+      return
+    await interaction.response.defer()
+    npc = await player.registry(name, surname)
+    await interaction.edit_original_response(content=repr(npc))

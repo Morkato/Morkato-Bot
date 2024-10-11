@@ -1,41 +1,178 @@
-from morkato.ext.extension import (ApplicationExtension, extension, command)
-from app.embeds import (AttackBuilder, ArtBuilder)
-from morkato.ext.context import MorkatoContext
-from morkato.attack import Attack
-from typing import Annotated
-from morkato.art import Art
+from morkato.work.context import MorkatoContext
+from morkato.work.extension import command
+from morkato.work.project import registry
+from morkato.guild import LazyGuildObjectListProtocol
+from morkato.errors import PlayerNotFoundError
+from morkato.ability import Ability
+from morkato.family import Family
+from morkato.player import Player
+from morkato.guild import Guild
+from app.types import ObjectWithPercentT
+from app.extension import BaseExtension
+from app.view import RegistryPlayerUi
 from random import randint
-from app.utils import (
-  AttackConverter,
-  ArtConverter
+from typing import (
+  Optional,
+  Callable,
+  Dict
 )
+import app.converters
+import app.embeds
+import app.errors
 
-@extension
-class RPGCommands(ApplicationExtension):
-  @command(name="art")
-  async def art(self, ctx: MorkatoContext, *, art: Annotated[Art, ArtConverter]) -> None:
-    builder = ArtBuilder(art)
-    await ctx.send_embed(builder, resolve_all=True)
-  @command(name="attack", aliases=['a'])
-  async def attack(self, ctx: MorkatoContext, *, attack: Annotated[Attack, AttackConverter]) -> None:
-    builder = AttackBuilder(attack)
-    await ctx.send_embed(builder, resolve_all=True)
-  @command(name="ability")
-  async def ability(self, ctx: MorkatoContext) -> None:
-    if not ctx.morkato_guild.abilities.already_loaded():
-      await ctx.morkato_guild.abilities.resolve()
-    total = ctx.morkato_guild.abilities_percent
+@registry
+class RPGCommands(BaseExtension):
+  LANGUAGE: str
+  async def setup(self) -> None:
+    self.LANGUAGE = self.builder.PT_BR
+  async def registry_family(self, ctx: MorkatoContext, player: Player) -> Family:
+    families = sorted(player._families.values(), key=lambda family: len(family.name), reverse=True)
+    if len(families) == 0:
+      raise NotImplementedError
+    family = await ctx.send_select_menu(
+      models=families,
+      title=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuTitle"),
+      description=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuDescription", ctx.author.name),
+      selected_line_style=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
+      line_style=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuLineStyle"),
+      key=lambda family: app.embeds.FamilyBuilder(family)
+    )
+    await player.update(family=family)
+    content = self.get_content(self.LANGUAGE, "onRegistryPlayerFamily", ctx.author.name, family.name)
+    await ctx.send(content)
+    return family
+  async def registry_player(self, ctx: MorkatoContext, guild: Guild) -> Optional[Player]:
+    embed = await app.embeds.PlayerChoiceTypeBuilder().build(0)
+    view = RegistryPlayerUi(guild, ctx.bot.loop)
+    message = await ctx.send(embed=embed, view=view)
+    player = await view.get()
+    await message.delete()
+    return player
+  async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
+    player = guild.get_cached_player(id)
+    if player is None:
+      player = await guild.fetch_player(id)
+    return player
+  async def get_or_registry_player(self, ctx: MorkatoContext, guild: Guild) -> Player:
+    try:
+      return await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    except PlayerNotFoundError:
+      return await self.registry_player(ctx, guild)
+  async def roll(
+    self, models: LazyGuildObjectListProtocol[ObjectWithPercentT], *,
+    filter: Optional[Callable[[ObjectWithPercentT], bool]] = None
+  ) -> ObjectWithPercentT:
+    if not models.already_loaded():
+      await models.resolve()
+    if len(models) == 0:
+      raise NotImplementedError
+    objs = [elem for elem in models if filter(elem)] if filter is not None else models
+    if len(objs) == 0:
+      raise NotImplementedError
+    total = sum(obj.percent for obj in objs)
     generated = randint(0, total)
-    filter_callback = lambda ability: True # Checks filter with context
     current = 0
-    for ability in ctx.morkato_guild.abilities:
-      if not filter_callback(ability):
-        total -= ability.percent
-        if generated > total:
-          generated -= ability.percent
-        continue
-      current += ability.percent
+    for obj in objs:
+      current += obj.percent
       is_valid = 0 >= generated - current
       if is_valid:
         break
-    await ctx.send("Você obteve: **`%s`**, com a chance: **`%s`** (Número sorteado: **`%s`** de **`%s`**)" % (ability.name, ability.percent, generated, total))
+    return obj
+  def filter_family(self, player: Player, family: Family) -> bool:
+    return (
+      family.npc_kind == player.expected_npc_kind
+        and not player.has_family(family)
+    )
+  def filter_ability(self, player: Player, ability: Ability) -> bool:
+    return (
+      player.family.get_ability(ability.id) is None
+        and not player.has_ability(ability)
+        and player.is_valid_ability(ability)
+    )
+  @command(
+    name = "sim-ability-roll",
+    description = "[RPG] Simula os rolls de habilidade."
+  )
+  async def sim_ability_roll(self, ctx: MorkatoContext, /, quantity: int) -> None:
+    if not quantity in range(1, 1000000):
+      content = self.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
+      await ctx.send(content)
+      return
+    guild = await self.get_morkato_guild(ctx.guild)
+    await self.resolve(guild.abilities)
+    rolled_abilities: Dict[int, int] = {}
+    for i in range(quantity):
+      ability = await self.roll(guild.abilities)
+      rolled: Optional[int] = rolled_abilities.get(ability.id)
+      rolled = 1 if rolled is None else rolled + 1
+      rolled_abilities[ability.id] = rolled
+    abilities = sorted(guild.abilities, key=lambda ability: len(ability.name))
+    result = app.embeds.EmbedBuilderRolledObject(
+      models = abilities,
+      rolled = rolled_abilities,
+      quantity = quantity,
+      style = self.get_content(self.LANGUAGE, "simAbilityRollLineStyle"),
+      title = self.get_content(self.LANGUAGE, "simAbilityRollTitle")
+    )
+    await ctx.send_embed(result, resolve_all=True)
+  @command(
+    name = "sim-family-roll",
+    description = "[RPG] Simula os rolls de famílias."
+  )
+  async def sim_family_roll(self, ctx: MorkatoContext, /, quantity: int) -> None:
+    if not quantity in range(1, 1000000):
+      content = self.builder.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
+      await ctx.send(content)
+      return
+    guild = await self.get_morkato_guild(ctx.guild)
+    await self.resolve(guild.families)
+    rolled_families: Dict[int, int] = {}
+    for i in range(quantity):
+      family = await self.roll(guild.families)
+      rolled: Optional[int] = rolled_families.get(family.id)
+      rolled = 1 if rolled is None else rolled + 1
+      rolled_families[family.id] = rolled
+    families = sorted(guild.families, key=lambda family: len(family.name))
+    result = app.embeds.EmbedBuilderRolledObject(
+      models = families,
+      rolled = rolled_families,
+      quantity = quantity,
+      style = self.get_content(self.LANGUAGE, "simFamilyRollLineStyle"),
+      title = self.get_content(self.LANGUAGE, "simFamilyRollTitle")
+    )
+    await ctx.send_embed(result, resolve_all=True)
+  @command(name="family")
+  async def family(self, ctx: MorkatoContext) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    await self.resolve(guild.families)
+    if len(guild.families) == 0:
+      raise app.errors.AppError("onFamilyEmpty")
+    player = await self.get_or_registry_player(ctx, guild)
+    family = await self.roll(guild.families, filter=lambda family: self.filter_family(player, family))
+    is_valid = player.family_roll != 0
+    if is_valid:
+      await player.sync_family(family)
+    builder = app.embeds.FamilyRegistryPlayer(family, is_valid, ctx.bot.user)
+    await ctx.send_embed(builder, resolve_all=True)
+  @command(name="ability")
+  async def ability(self, ctx: MorkatoContext, *, ability_query: Optional[str]) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    if ability_query is not None:
+      ability = await self.convert(app.converters.AbilityConverter, ctx, ability_query, guild = guild)
+      builder = app.embeds.AbilityBuilder(ability)
+      await ctx.send_embed(builder)
+      return
+    await self.resolve(guild.abilities)
+    if len(guild.abilities) == 0:
+      raise app.errors.AppError("onAbilityEmpty")
+    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    if player.family is None:
+      if player.family_roll != 0:
+        raise app.errors.AppError("onUnChoiceFamilyPlayerForRollAbilityHasRolls", player.family_roll)
+      await self.registry_family(ctx, player)
+    ability = await self.roll(guild.abilities, filter=lambda ability: self.filter_ability(player, ability))
+    is_valid = player.ability_roll != 0
+    if is_valid:
+      await player.sync_ability(ability)
+    builder = app.embeds.AbilityRegistryPlayer(ability, is_valid, ctx.bot.user.display_avatar.url)
+    await ctx.send_embed(builder, resolve_all=True)
