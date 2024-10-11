@@ -1,14 +1,38 @@
+from __future__ import annotations
 from aiohttp import ClientResponse
-from typing import Optional
+from enum import Enum
+from typing import (
+  Dict,
+  Any
+)
 
+class MorkatoHTTPType(Enum):
+  PLAYER_NOTFOUND = "PLAYER_NOTFOUND"
+  PLAYER_ALREADYEXISTS = "PLAYER_ALREADYEXISTS"
+  GENERIC = "GENERIC"
+class ModelType(Enum):
+  ABILITY = "ABILITY"
+  FAMILY = "FAMILY"
+  PLAYER = "PLAYER"
+  ATTACK = "ATTACK"
+  ART = "ART"
+  NPC = "NPC"
+  GENERIC = "GENERIC"
 class MorkatoException(Exception):
   pass
 class HTTPException(MorkatoException):
-  def __init__(self, response: ClientResponse, message: Optional[str]):
+  def __init__(self, response: ClientResponse, extra: Dict[str, Any]):
     self.response: ClientResponse = response
     self.status: int = response.status
-    self.text: str = message
+    self.extra = extra
 class NotFoundError(HTTPException):
-  pass
+  def __init__(self, response: ClientResponse, model: ModelType, extra: Dict[str, Any]) -> None:
+    super().__init__(response, extra)
+    self.model = model
+    self.guild_id = int(extra["guild_id"])
+    self.id = int(extra["id"])
+class PlayerNotFoundError(NotFoundError):
+  def __init__(self, response: ClientResponse, extra: Dict[str, Any]) -> None:
+    super().__init__(response, ModelType.PLAYER, extra)
 class MorkatoServerError(HTTPException):
   pass

@@ -14,6 +14,18 @@ T = TypeVar('T')
 K = TypeVar('K')
 V = TypeVar('V')
 
+class _MissingSpecialType:
+  __slots__ = ()
+  def __eq__(self, other: Any) -> bool:
+    return False
+  def __bool__(self) -> bool:
+    return False
+  def __hash__(self) -> int:
+    return 0
+  def __repr__(self) -> str:
+    return "<Missing ...>"
+MISSING: Any = _MissingSpecialType()
+del _MissingSpecialType
 class CircularDict(OrderedDict[K, V]):
   def __init__(self, maxlen: int) -> None:
     self.maxlen = maxlen

@@ -26,6 +26,7 @@ class Art:
   FIGHTING_STYLE: FightingStyleType = "FIGHTING_STYLE"
   def __init__(self, state: MorkatoConnectionState, guild: Guild, payload: ArtPayload) -> None:
     self.state = state
+    self.http = state.http
     self.guild = guild
     self.id = int(payload["id"])
     self.from_payload(payload)
@@ -56,7 +57,13 @@ class Art:
     self.guild._attacks.pop(attack.id, None)
   def get_attack(self, id: int) -> Optional[Attack]:
     return self._attacks.get(id)
-  async def edit(self, *, name: Optional[str] = None, type: Optional[ArtType] = None, description: Optional[str] = None, banner: Optional[str] = None) -> Self:
+  async def edit(
+    self, *,
+    name: Optional[str] = None,
+    type: Optional[ArtType] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> Self:
     kwargs = NoNullDict(
       name=name,
       type=type,
@@ -64,32 +71,30 @@ class Art:
       banner=banner
     )
     if kwargs:
-      payload = await self.state.update_art(self.guild.id, self.id, **kwargs)
+      payload = await self.http.update_art(self.guild.id, self.id, **kwargs)
       self.from_payload(payload)
     return self
   async def delete(self) -> Self:
-    payload = await self.state.delete_art(self.guild.id, self.id)
+    payload = await self.http.delete_art(self.guild.id, self.id)
     self.from_payload(payload)
-    self.guild._del_art(self)
+    self.guild.arts.remove(self)
     return self
   async def create_attack(self,
     name: str, *,
     name_prefix_art: Optional[str] = None,
     description: Optional[str] = None,
-    resume_description: Optional[str] = None,
     banner: Optional[str] = None,
     damage: Optional[int] = None,
     breath: Optional[int] = None,
     blood: Optional[int] = None,
     intents: Optional[AttackIntents] = None
   ) -> Attack:
-    payload = await self.state.create_attack(
+    payload = await self.http.create_attack(
       self.guild.id,
       self.id,
       name=name,
       name_prefix_art=name_prefix_art,
       description=description,
-      resume_description=resume_description,
       banner=banner,
       damage=damage,
       breath=breath,

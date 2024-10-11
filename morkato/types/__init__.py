@@ -16,6 +16,16 @@ NpcType = Literal[HumanType, OniType, HybridType]
 AlwaysActivateType = Literal["ALWAYS_ACTIVATE"]
 RequiredActivateType = Literal["REQUIRED_ACTIVATE"]
 AbilityType = Literal[AlwaysActivateType, RequiredActivateType]
+class Guild(TypedDict):
+  human_initial_life: int
+  oni_initial_life: int
+  hybrid_initial_life: int
+  breath_initial: int
+  blood_initial: int
+  family_roll: int
+  ability_roll: int
+  roll_category_id: Optional[str]
+  off_category_id: Optional[str]
 class Art(TypedDict):
   name: str
   guild_id: str
@@ -69,6 +79,18 @@ class Family(TypedDict):
   guild_id: str
   id: str
   name: str
+  percent: int
+  npc_kind: NpcType
   description: Optional[str]
   banner: Optional[str]
-  abilities: List[Ability]
+  abilities: List[str]
+class Player(TypedDict):
+  guild_id: str
+  id: str
+  npc: Optional[Npc]
+  ability_roll: int
+  family_roll: int
+  is_prodigy: bool
+  has_mark: bool
+  family_id: Optional[str]
+  expected_npc_type: NpcType
