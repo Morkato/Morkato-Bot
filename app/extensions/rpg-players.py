@@ -2,7 +2,9 @@ from morkato.work.project import registry
 from app.extension import BaseExtension
 from discord import app_commands as apc
 from discord import (Interaction, User)
+from typing import Optional
 import app.errors
+import app.embeds
 
 @registry
 class RPGPlayer(BaseExtension):
@@ -18,7 +20,8 @@ class RPGPlayer(BaseExtension):
     self, interaction: Interaction, *,
     user: User,
     name: str,
-    surname: str
+    surname: str,
+    icon: Optional[str]
   ) -> None:
     if not interaction.user.guild_permissions.manage_guild:
       user = interaction.user
@@ -27,5 +30,6 @@ class RPGPlayer(BaseExtension):
     if player.already_registered():
       raise app.errors.AppError("onPlayerAlreadyRegistered")
     await interaction.response.defer()
-    npc = await player.registry(name, surname)
-    await interaction.edit_original_response(content=repr(npc))
+    npc = await player.registry(name, surname, icon=icon)
+    embed = await app.embeds.NpcCardBuilder(npc).build(0)
+    await interaction.edit_original_response(embed=embed)

@@ -66,6 +66,12 @@ class Guild:
   async def fetch_npc(self, id: Union[str, int]) -> Npc:
     payload = await self.http.fetch_npc(self.id, id)
     npc = Npc(self.state, self, payload)
+    ability_ids = (int(id) for id in payload["abilities"])
+    for ability_id in ability_ids:
+      ability = self.abilities.get(ability_id)
+      if ability is None:
+        raise RuntimeError
+      npc._abilities[ability.id] = ability
     self._add_npc(npc)
     return npc
   async def fetch_player(self, id: int) -> Player:

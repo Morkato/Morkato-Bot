@@ -3,11 +3,14 @@ from morkato.work.embeds import EmbedBuilder
 from morkato.ability import Ability
 from morkato.family import Family
 from morkato.attack import Attack
+from morkato.npc import Npc
+from morkato.art import Art
 from discord.embeds import Embed
 from morkato.types import ArtType
+from discord.colour import Colour
 from discord.user import User
-from morkato.art import Art
 from .types import RolledObjectModel
+from itertools import chain
 from typing import (
   ClassVar,
   Dict,
@@ -78,6 +81,38 @@ class AbilityBuilder(BaseEmbedBuilder):
     )
     if self.ability.banner is not None:
       embed.set_image(url=self.ability.banner)
+    return embed
+  def length(self) -> int:
+    return 1
+class NpcCardBuilder(BaseEmbedBuilder):
+  def __init__(self, npc: Npc) -> None:
+    self.npc = npc
+  def get_color(self) -> int:
+    if self.npc.type == self.npc.HUMAN:
+      return Colour.from_rgb(0, 255, 0)
+    elif self.npc.type == self.npc.ONI:
+      return Colour.from_rgb(255, 0, 0)
+    return Colour.from_rgb(0, 0, 255)
+  async def build(self, page: int) -> Embed:
+    embed = Embed(
+      colour=self.get_color()
+    )
+    name = f"{self.npc.name} [🖤 {self.npc.max_life}]"
+    if self.npc.type in (self.npc.HUMAN, self.npc.HYBRID):
+      name += f"[💨 {self.npc.max_breath}]"
+    if self.npc.type in (self.npc.ONI, self.npc.HYBRID):
+      name += f"[🩸 {self.npc.max_blood}]"
+    embed.set_author(
+      name = name,
+      icon_url = self.npc.icon
+    )
+    abilities = chain(self.npc.family._abilities.values(), self.npc._abilities.values())
+    description = ''
+    description += f"> **୨ `👪`﹒**Família: {self.npc.family.name}\n"
+    description += f"> **୨ `🔋`﹒**Energia: {self.npc.energy}%\n"
+    description += f"> **୨ `🌹`﹒**Habilidades:\n\n"
+    description += '\n'.join(f"> **{idx} - **Habilidade: **{ability.name}**" for (idx, ability) in enumerate(abilities, start=1))
+    embed.description = description
     return embed
   def length(self) -> int:
     return 1

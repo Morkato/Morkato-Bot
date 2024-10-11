@@ -373,10 +373,12 @@ class HTTPClient:
     route = Route("POST", "/families/{guild_id}/{family_id}/abilities/{ability_id}", guild_id=guild_id, family_id=family_id, ability_id=ability_id)
     await self.request(route)
 
-  async def registry_player(self, guild_id: int, player_id: int, *, name: str, surname: str) -> PlayerPayload:
+  async def registry_player(self, guild_id: int, player_id: int, *, name: str, surname: str, icon: Optional[str] = None) -> PlayerPayload:
     route = Route("POST", "/players/{guild_id}/{player_id}/npc", guild_id=guild_id, player_id=player_id)
     payload = {
       "name": name,
       "surname": surname
     }
+    if icon is not None:
+      payload["icon"] = icon
     return await self.request(route, json=payload)

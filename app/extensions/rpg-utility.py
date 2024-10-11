@@ -240,25 +240,3 @@ class RPGUtility(BaseExtension):
         return
     await player.delete()
     await interaction.edit_original_response(content="Foi excluído o contexto do jogador: **`%s`**" % (user.name))
-  @apc.command(
-    name="pregister",
-    description="[RPG Utilitários] Registra um jogador"
-  )
-  @apc.guild_only()
-  async def player_register(
-    self, interaction: Interaction, *,
-    user: User,
-    name: str,
-    surname: str
-  ) -> None:
-    guild = await self.get_morkato_guild(interaction.guild)
-    player = guild.get_cached_player(interaction.user.id)
-    if player is None:
-      player = await guild.fetch_player(interaction.user.id)
-    if player.already_registered():
-      content = self.builder.get_content(self.LANGUAGE, "onPlayerAlreadyRegistered")
-      await interaction.response.send_message(content)
-      return
-    await interaction.response.defer()
-    npc = await player.registry(name, surname)
-    await interaction.edit_original_response(content=repr(npc))
