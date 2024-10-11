@@ -1,0 +1,9 @@
+ptBR:
+  errorMorkatoAPIRatedServiceDoNotListening: "Está ação requer minha API, que está fora de serviço no momento, perdoa-me."
+  onNotImplementedError: "Parece que está ação não foi implementada completamente."
+  errorArtNotFoundError: "A arte (Respiração, Kekkijutsu ou Estilo de Luta) chamada: **%s** não existe."
+  errorPlayerAlreadyRegisteredFamily: "Você já está sincronizado com uma família."
+  errorPlayerHasFamilyRolls: "Você ainda possui %s rolls."
+enUS:
+  onMorkatoAPIRatedServiceDoNotListening: "This action requires my API, which is currently out of service, sorry forgive me"
+  onNotImplementedError: "This action has not been fully implemented."
