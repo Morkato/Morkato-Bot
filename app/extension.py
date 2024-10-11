@@ -6,6 +6,7 @@ from morkato.work.extension import Extension
 from morkato.guild import (Guild, LazyGuildObjectListProtocol)
 from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
+from morkato.player import Player
 from morkato.abc import Snowflake
 from typing import (TypeVar, Union, Type, Any)
 import discord
@@ -36,6 +37,11 @@ class BaseExtension(Extension):
   async def resolve(self, models: LazyGuildObjectListProtocol[Any], /) -> None:
     if not models.already_loaded():
       await models.resolve()
+  async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
+    player = guild.get_cached_player(id)
+    if player is None:
+      player = await guild.fetch_player(id)
+    return player
   def from_archive(self, filepath: str, /) -> None:
     self.builder.from_archive(filepath)
   def get_content(self, language: str, key: str, /, *args, **parameters) -> str:

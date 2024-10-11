@@ -48,11 +48,6 @@ class RPGCommands(BaseExtension):
     player = await view.get()
     await message.delete()
     return player
-  async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
-    player = guild.get_cached_player(id)
-    if player is None:
-      player = await guild.fetch_player(id)
-    return player
   async def get_or_registry_player(self, ctx: MorkatoContext, guild: Guild) -> Player:
     try:
       return await self.get_cached_or_fetch_player(guild, ctx.author.id)
