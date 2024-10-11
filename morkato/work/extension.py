@@ -1,15 +1,9 @@
-from morkato.state import MorkatoConnectionState
-from discord.interactions import Interaction
 from .command import MorkatoCommand, Command
 from .types import ListenerFuncType, Coro
 from discord.ext.commands import Command
 from discord import app_commands as apc
 from .context import MorkatoContext
-from morkato.http import HTTPClient
 from typing_extensions import Self
-from morkato.abc import Snowflake
-from morkato.guild import Guild
-from discord import ui
 from typing import (
   Coroutine,
   Optional,
@@ -97,44 +91,10 @@ class ExtensionMeta(type):
 class Extension(metaclass=ExtensionMeta):
   __extension_name__: str
   __extension_app_commands__: Dict[str, apc.Command[None, ..., Any]]
-  __extension_commands__: Dict[str, Command[Any, ..., Any]]
+  __extension_commands__: Dict[str, MorkatoCommand]
   __extension_listeners__: Dict[str, List[Callable[..., Coro]]]
   __errors_handlers__: Dict[Type[Any], ErrorCallback]
   async def setup(self) -> None:
     pass
   async def close(self) -> None:
     pass
-class ApplicationExtension(Extension):
-  def __init__(self, connection: MorkatoConnectionState, http: HTTPClient) -> None:
-    self.connection = connection
-    self.http = http
-  async def get_morkato_guild(self, guild: Snowflake) -> Guild:
-    morkato = self.connection.get_cached_guild(guild.id)
-    if morkato is None:
-      morkato = self.connection.create_guild(guild.id)
-    return morkato
-  async def send_confirmation(self, interaction: Interaction, **options) -> bool:
-    view = ConfirmationView()
-    if interaction.response.is_done():
-      await interaction.edit_original_response(view=view, **options)
-    else:
-      await interaction.response.send_message(view=view, **options)
-    return await view.get_value()
-class ConfirmationView(ui.View):
-  CHECK = '✅'
-  UNCHECK = '❌'
-  def __init__(self) -> None:
-    super().__init__(timeout=20)
-    self.confirmed = False
-  async def get_value(self) -> bool:
-    await self.wait()
-    return self.confirmed
-  @ui.button(emoji=CHECK, custom_id="check")
-  async def check(self, interaction: Interaction, btn: ui.Button) -> None:
-    await interaction.response.defer()
-    self.confirmed = True
-    self.stop()
-  @ui.button(emoji=UNCHECK, custom_id="uncheck")
-  async def uncheck(self, interaction: Interaction, btn: ui.Button) -> None:
-    await interaction.response.defer()
-    self.stop()

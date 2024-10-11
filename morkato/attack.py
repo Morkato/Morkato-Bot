@@ -66,6 +66,7 @@ class AttackIntents:
 class Attack:
   def __init__(self, state: MorkatoConnectionState, guild: Guild, art: Art, payload: AttackPayload) -> None:
     self.state = state
+    self.http = state.http
     self.guild = guild
     self.art = art
     self.id = int(payload["id"])
@@ -111,11 +112,11 @@ class Attack:
       intents=intents
     )
     if kwargs:
-      payload = await self.state.update_attack(self.guild.id, self.id, **kwargs)
+      payload = await self.http.update_attack(self.guild.id, self.id, **kwargs)
       self.from_payload(payload)
     return self
   async def delete(self) -> Self:
-    payload = await self.state.delete_attack(self.guild.id, self.id)
+    payload = await self.http.delete_attack(self.guild.id, self.id)
     self.from_payload(payload)
     self.art._del_attack(self)
     return self

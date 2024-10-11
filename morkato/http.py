@@ -1,12 +1,28 @@
-from typing_extensions import Self
-from .errors import (HTTPException, NotFoundError, MorkatoServerError)
+from .errors import (HTTPException, PlayerNotFoundError, NotFoundError, MorkatoServerError, MorkatoHTTPType, ModelType)
 from urllib.parse import quote
+from .utils import NoNullDict
+from typing_extensions import Self
 from typing import (
   Optional,
   ClassVar,
+  SupportsInt,
   Union,
   Dict,
+  List,
   Any
+)
+from .types import (
+  Ability as AbilityPayload,
+  Player as PlayerPayload,
+  Family as FamilyPayload,
+  Attack as AttackPayload,
+  Guild as GuildPayload,
+  Npc as NpcPayload,
+  Art as ArtPayload,
+  ArtWithAttacks,
+  AbilityType,
+  NpcType,
+  ArtType
 )
 
 import logging
@@ -27,19 +43,15 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
   except KeyError:
     pass
   return text
-
 class Route:
   BASE: ClassVar[str] = os.getenv("URL", "http://localhost:5500")
   def __init__(self, method: str, path: str, **parameters):
     self.path: str = path
     self.method: str = method
     url = self.BASE + self.path
-    
     if parameters:
       url = url.format_map({k: quote(v) if isinstance(v, str) else v for k, v in parameters.items()})
-    
     self.url: str = url
-
 class HTTPClient:
   def __init__(
     self,
@@ -66,7 +78,7 @@ class HTTPClient:
     }
     return await self.__session.ws_connect(url, **kwargs)
   async def static_login(self) -> None:
-    if self.loop == None:
+    if self.loop is None:
       self.loop = asyncio.get_running_loop()
     if self.connector is None:
       self.connector = aiohttp.TCPConnector(limit=0)
@@ -85,7 +97,8 @@ class HTTPClient:
     }
     if "json" in kwargs:
       headers["Content-Type"] = "application/json; charset=utf-8"
-      kwargs["data"] = orjson.dumps(kwargs.pop("json"))
+      json = kwargs.pop("json")
+      kwargs["data"] = orjson.dumps(json)
     kwargs["headers"] = headers
     method = route.method
     url = route.url
@@ -95,16 +108,275 @@ class HTTPClient:
           status = response.status
           data = await json_or_text(response)
           logger.debug("%s %s retornou: %s", method, url, status)
-          if not status in range(200, 300):
-            message = data.get("message")
-            if status == 404:
-              raise NotFoundError(response, message)
-            elif status >= 500:
-              raise MorkatoServerError(response, message)
-            raise HTTPException(response, message)
-          return data
+          if status in range(200, 300):
+            return data
+          extra = data.get("extra", {})
+          if status == 404:
+            model_name = data["model"]
+            model = ModelType[model_name]
+            if model == ModelType.PLAYER:
+              raise PlayerNotFoundError(response, extra)
+            raise NotFoundError(response, ModelType.GENERIC, extra)
+          elif status >= 500:
+            raise MorkatoServerError(response, extra)
+          raise HTTPException(response, extra)
       except OSError as err:
         if tries < 4 and err.errno in (54, 10054):
           await asyncio.sleep(1 + tries * 2)
           continue
         raise
+  async def fetch_guild(self, id: int) -> GuildPayload:
+    route = Route("GET", "/guilds/{id}", id=id)
+    return await self.request(route)
+  async def fetch_arts(self, guild_id: int) -> List[Union[ArtWithAttacks, ArtPayload]]:
+    route = Route("GET", "/arts/{gid}", gid=guild_id)
+    payload = await self.request(route)
+    return payload
+  async def fetch_npc(self, guild_id: int, id_or_surname: Union[str, int]) -> NpcPayload:
+    route = Route("GET", "/npcs/{guild_id}/{id}", guild_id=guild_id, id=id_or_surname)
+    payload = await self.request(route)
+    return payload
+  async def fetch_player(self, guild_id: int, id: int) -> PlayerPayload:
+    route = Route("GET", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  async def fetch_families(self, guild_id: int) -> List[FamilyPayload]:
+    route = Route("GET", "/families/{guild_id}", guild_id=guild_id)
+    return await self.request(route)
+  async def fetch_abilities(self, guild_id: int) -> List[AbilityPayload]:
+    route = Route("GET", "/abilities/{guild_id}", guild_id=guild_id)
+    return await self.request(route)
+  async def create_art(
+    self, guild_id: int, *,
+    name: str,
+    type: ArtType,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> ArtPayload:
+    route = Route("POST", "/arts/{gid}", gid=guild_id)
+    payload = NoNullDict(
+      name = name,
+      type = type,
+      description = description,
+      banner = banner
+    )
+    return await self.request(route, json=payload)
+  async def update_art(
+    self, guild_id: int, id: int, *,
+    name: Optional[str] = None,
+    type: Optional[ArtType] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> Union[ArtPayload, ArtWithAttacks]:
+    route = Route("PUT", "/arts/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      name = name,
+      type = type,
+      description = description,
+      banner = banner
+    )
+    payload = await self.request(route, json=payload)
+    return payload
+  async def delete_art(self, guild_id: int, id: int) -> Union[ArtWithAttacks, ArtPayload]:
+    route = Route("DELETE", "/arts/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  async def create_attack(
+    self, guild_id: int, art_id: int, *,
+    name: str,
+    name_prefix_art: Optional[str] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None,
+    damage: Optional[int] = None,
+    breath: Optional[int] = None,
+    blood: Optional[int] = None,
+    intents: Optional[SupportsInt] = None
+  ) -> AttackPayload:
+    route = Route("POST", "/attacks/{guild_id}/{art_id}", guild_id=guild_id, art_id=art_id)
+    payload = NoNullDict(
+      name = name,
+      name_prefix_art = name_prefix_art,
+      description = description,
+      banner = banner,
+      damage = damage,
+      breath = breath,
+      blood = blood
+    )
+    if intents is not None:
+      payload.update(intents=int(intents))
+    return await self.request(route, json=payload)
+  async def update_attack(
+    self, guild_id: int, id: int, *,
+    name: Optional[str] = None,
+    name_prefix_art: Optional[str] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None,
+    damage: Optional[int] = None,
+    breath: Optional[int] = None,
+    blood: Optional[int] = None,
+    intents: Optional[SupportsInt] = None
+  ) -> AttackPayload:
+    route = Route("PUT", "/attacks/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      name = name,
+      name_prefix_art = name_prefix_art,
+      description = description,
+      banner = banner,
+      damage = damage,
+      breath = breath,
+      blood = blood
+    )
+    if intents is not None:
+      payload.update(intents=int(intents))
+    return await self.request(route, json=payload)
+  async def delete_attack(self, guild_id: int, id: int) -> AttackPayload:
+    route = Route("DELETE", "/attacks/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  async def create_npc(
+    self, guild_id: int, family_id: int, *,
+    name: str,
+    surname: str,
+    type: NpcType,
+    icon: Optional[str] = None
+  ) -> NpcPayload:
+    route = Route("POST", "/npcs/{guild_id}", guild_id=guild_id)
+    payload = NoNullDict(
+      family_id = family_id,
+      name = name,
+      surname = surname,
+      type = type,
+      icon = icon
+    )
+    return await self.request(route, json=payload)
+  async def create_ability(
+    self, guild_id: int, *,
+    name: str,
+    type: AbilityType,
+    percent: int,
+    npc_kind: SupportsInt,
+    immutable: Optional[bool] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> AbilityPayload:
+    route = Route("POST", "/abilities/{guild_id}", guild_id=guild_id)
+    payload = NoNullDict(
+      name = name,
+      type = type,
+      percent = percent,
+      npc_kind = int(npc_kind),
+      immutable = immutable,
+      description = description,
+      banner = banner
+    )
+    return await self.request(route, json=payload)
+  async def update_ability(
+    self, guild_id: int, id: int, *,
+    name: Optional[str] = None,
+    type: Optional[AbilityType] = None,
+    percent: Optional[int] = None,
+    npc_kind: Optional[SupportsInt] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> AbilityPayload:
+    route = Route("PUT", "/abilities/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      name = name,
+      type = type,
+      percent = percent,
+      description = description,
+      banner = banner
+    )
+    if npc_kind is not None:
+      payload.update(npc_kind=int(npc_kind))
+    return await self.request(route, json=payload)
+  async def delete_ability(self, guild_id: int, id: int) -> AbilityPayload:
+    route = Route("DELETE", "/abilities/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  async def create_family(
+    self, guild_id: int, *,
+    name: str,
+    npc_kind: NpcType,
+    percent: int,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> FamilyPayload:
+    route = Route("POST", "/families/{guild_id}", guild_id=guild_id)
+    payload = NoNullDict(
+      name = name,
+      npc_kind = npc_kind,
+      percent = percent,
+      description = description,
+      banner = banner
+    )
+    return await self.request(route, json=payload)
+  async def update_family(
+    self, guild_id: int, id: int, *,
+    name: Optional[str] = None,
+    percent: Optional[int] = None,
+    description: Optional[str] = None,
+    banner: Optional[str] = None
+  ) -> FamilyPayload:
+    route = Route("PUT", "/families/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      name = name,
+      percent = percent,
+      description = description,
+      banner = banner
+    )
+    return await self.request(route, json=payload)
+  async def delete_family(self, guild_id: int, id: int) -> FamilyPayload:
+    route = Route("DELETE", "/families/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  async def create_player(
+    self, guild_id: int, id: int, *,
+    npc_kind: NpcType,
+    ability_roll: Optional[int] = None,
+    family_roll: Optional[int] = None,
+    is_prodigy: Optional[bool] = None,
+    has_mark: Optional[bool] = None
+  ) -> PlayerPayload:
+    route = Route("POST", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      expected_npc_kind = npc_kind,
+      ability_roll = ability_roll,
+      family_roll = family_roll,
+      is_prodigy = is_prodigy,
+      has_mark = has_mark
+    )
+    return await self.request(route, json=payload)
+  async def update_player(
+    self, guild_id: int, id: int, *,
+    ability_roll: Optional[int] = None,
+    family_roll: Optional[int] = None,
+    family_id: Optional[int] = None,
+    is_prodigy: Optional[bool] = None,
+    has_mark: Optional[bool] = None
+  ) -> PlayerPayload:
+    route = Route("PUT", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      ability_roll = ability_roll,
+      family_roll = family_roll,
+      family_id = family_id,
+      is_prodigy = is_prodigy,
+      has_mark = has_mark
+    )
+    return await self.request(route, json=payload)
+  async def delete_player(self, guild_id: int, id: int) -> PlayerPayload:
+    route = Route("DELETE", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
+    return await self.request(route)
+  
+  async def sync_player_family(self, guild_id: int, player_id: int, family_id: int) -> None:
+    route = Route("POST", "/players/{guild_id}/{player_id}/families/{family_id}", guild_id=guild_id, player_id=player_id, family_id=family_id)
+    await self.request(route)
+  async def sync_player_ability(self, guild_id: int, player_id: int, ability_id: int) -> None:
+    route = Route("POST", "/players/{guild_id}/{player_id}/abilities/{ability_id}", guild_id=guild_id, player_id=player_id, ability_id=ability_id)
+    await self.request(route)
+  async def sync_family_ability(self, guild_id: int, family_id: int, ability_id: int) -> None:
+    route = Route("POST", "/families/{guild_id}/{family_id}/abilities/{ability_id}", guild_id=guild_id, family_id=family_id, ability_id=ability_id)
+    await self.request(route)
+
+  async def registry_player(self, guild_id: int, player_id: int, *, name: str, surname: str) -> PlayerPayload:
+    route = Route("POST", "/players/{guild_id}/{player_id}/npc", guild_id=guild_id, player_id=player_id)
+    payload = {
+      "name": name,
+      "surname": surname
+    }
+    return await self.request(route, json=payload)

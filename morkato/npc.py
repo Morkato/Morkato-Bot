@@ -10,22 +10,22 @@ from typing import (
 )
 if TYPE_CHECKING:
   from .state import MorkatoConnectionState
+  from .family import Family
   from .guild import Guild
 
 class Npc:
-  def __init__(self, state: MorkatoConnectionState, guild: Guild, payload: NpcPayload) -> None:
+  def __init__(self, state: MorkatoConnectionState, guild: Guild, family: Family, payload: NpcPayload) -> None:
     self.state = state
+    self.http = state.http
+    self.family = family
     self.guild = guild
     self.id = int(payload["id"])
     self.from_payload(payload)
   def from_payload(self, payload: NpcPayload) -> None:
-    self.family_id: Optional[str] = None
     self.name = payload["name"]
     self.surname = payload["surname"]
     self.icon = payload["type"]
     self.energy = payload["energy"]
-    if payload.get("family_id") is not None and self.family_id is None:
-      self.family_id = int(payload["family_id"])
     self.max_life = payload["max_life"]
     self.max_breath = payload["max_breath"]
     self.max_blood = payload["max_blood"]
