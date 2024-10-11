@@ -65,6 +65,7 @@ class Npc(TypedDict):
   current_breath: int
   current_blood: int
   icon: Optional[str]
+  abilities: List[str]
 class Ability(TypedDict):
   guild_id: str
   id: str

@@ -64,11 +64,12 @@ class Player:
     await self.http.sync_player_ability(self.guild.id, self.id, ability.id)
     self._abilities[ability.id] = ability
     self.ability_roll -= 1
-  async def registry(self, name: str, surname: str) -> Npc:
-    payload = await self.http.registry_player(self.guild.id, self.id, name=name, surname=surname)
+  async def registry(self, name: str, surname: str, *, icon: Optional[str] = None) -> Npc:
+    payload = await self.http.registry_player(self.guild.id, self.id, name=name, surname=surname, icon=icon)
     self.from_payload(payload)
     if self.npc is None:
       raise RuntimeError
+    self.npc._abilities.update(self._abilities)
     return self.npc
   async def update(
     self, *,
