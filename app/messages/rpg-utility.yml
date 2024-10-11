@@ -1,0 +1,9 @@
+ptBR:
+  onArtCreate: "A arte chamada: **%s** foi criada!" # app.extensions.`rpg-utility`.RPGUtility.art_create
+  onRespirationCreate: "A respiração chamada: **%s** foi criada!" # app.extensions.`rpg-utility`.RPGUtility.art_create
+  onKekkijutsuCreate: "O kekkijutsu chamado: **%s** foi criado!" # app.extensions.`rpg-utility`.RPGUtility.art_create
+  onFightingStyleCreate: "O estilo de luta: **%s** foi criado!" # app.extensions.`rpg-utility`.RPGUtility.art_create
+  onArtUpdate: "A arte chamada: **%s** foi atualizado!" # app.extensions.`rpg-utility`.RPGUtility.art_update
+  onRespirationUpdate: "A respiração chamada: **%s** foi atualizado!" # app.extensions.`rpg-utility`.RPGUtility.art_update
+  onKekkijutsuUpdate: "O kekkijutsu chamado: **%s** foi atualizados!" # app.extensions.`rpg-utility`.RPGUtility.art_update
+  onFightingStyleUpdate: "O estilo de luta: **%s** foi atualizados!" # app.extensions.`rpg-utility`.RPGUtility.art_update

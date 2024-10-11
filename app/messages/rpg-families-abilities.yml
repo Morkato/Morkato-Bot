@@ -1,0 +1,12 @@
+ptBR:
+  onFamilyCreate: "A família chamada: %s foi criada!"
+  onEmptyKwargsWhenUpdateFamily: "Pera... Você quer editar o que mesmo? Nada?"
+  onFamilyUpdate: "A família cujo o nome: %s foi atualizada!"
+  onFamilyDelete: "A família chamada: %s foi excluída!"
+  onSyncFamilyWithPlayer: "A família chamada: **%s** foi sincronizada com o jogador: **`%s`**"
+  onAbilityCreate: "A habilidade chamada: %s foi criada!"
+enUS:
+  onFamilyCreate: "The family named: %s has been created!"
+  onEmptyKwargsWhenUpdateFamily: "Wait... What do you want to update? Nothing?"
+  onFamilyUpdate: "The family named: %s has been updated!"
+  onFamilyDelete: "The family named: %s has been deleted!"

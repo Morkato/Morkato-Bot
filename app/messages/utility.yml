@@ -1,0 +1,2 @@
+ptBR:
+  onPing: "Pong! Minha latência é **`%sms`**."
