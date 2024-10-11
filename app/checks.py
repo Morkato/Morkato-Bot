@@ -14,5 +14,5 @@ def has_guild_permissions(**perms):
     missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
     if not missing:
       return True
-    return commands.MissingPermissions(missing)
+    raise commands.MissingPermissions(missing)
   return predicate
