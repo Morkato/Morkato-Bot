@@ -36,6 +36,8 @@ class Npc:
     self.type = payload["type"]
     self.icon = payload["icon"]
     self.energy = payload["energy"]
+    self.prodigy = payload["prodigy"]
+    self.mark = payload["mark"]
     self.max_life = payload["max_life"]
     self.max_breath = payload["max_breath"]
     self.max_blood = payload["max_blood"]

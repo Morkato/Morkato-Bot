@@ -58,6 +58,8 @@ class Npc(TypedDict):
   type: NpcType
   family_id: Optional[str]
   energy: int
+  is_prodigy: bool
+  has_mark: bool
   max_life: int
   max_breath: int
   max_blood: int
