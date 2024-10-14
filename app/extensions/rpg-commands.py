@@ -189,3 +189,39 @@ class RPGCommands(BaseExtension):
     await player.update(prodigy_roll=player.prodigy_roll - 1, flags=new_flags)
     content = self.get_content(self.LANGUAGE, "onPlayerGetProdigy")
     await ctx.send(content)
+  @command(name="mark")
+  async def mark(self, ctx: MorkatoContext) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    flags = player.flags
+    if player.mark_roll == 0:
+      raise app.errors.AppError("onPlayerEmptyMarkRoll")
+    if flags.mark:
+      raise app.errors.AppError("onPlayerAlreadyIsMark")
+    generated = randint(0, 20)
+    if generated != 1:
+      await player.update(mark_roll=player.mark_roll - 1)
+      raise app.errors.AppError("onPlayerGetUpMark")
+    new_flags = flags.copy()
+    new_flags.set(flags.MARK)
+    await player.update(mark_roll=player.mark_roll - 1, flags=new_flags)
+    content = self.get_content(self.LANGUAGE, "onPlayerGetMark")
+    await ctx.send(content)
+  @command(name="berserk")
+  async def berserk(self, ctx: MorkatoContext) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    flags = player.flags
+    if player.berserk_roll == 0:
+      raise app.errors.AppError("onPlayerEmptyBerserkRoll")
+    if flags.berserk:
+      raise app.errors.AppError("onPlayerAlreadyIsBerserk")
+    generated = randint(0, 20)
+    if generated != 1:
+      await player.update(berserk_roll=player.berserk_roll - 1)
+      raise app.errors.AppError("onPlayerGetUpBerserk")
+    new_flags = flags.copy()
+    new_flags.set(flags.BERSERK)
+    await player.update(berserk_roll=player.berserk_roll - 1, flags=new_flags)
+    content = self.get_content(self.LANGUAGE, "onPlayerGetBerserk")
+    await ctx.send(content)
