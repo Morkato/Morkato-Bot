@@ -235,6 +235,7 @@ class HTTPClient:
     name: str,
     surname: str,
     type: NpcType,
+    flags: Optional[SupportsInt] = None,
     icon: Optional[str] = None
   ) -> NpcPayload:
     route = Route("POST", "/npcs/{guild_id}", guild_id=guild_id)
@@ -242,7 +243,37 @@ class HTTPClient:
       family_id = family_id,
       name = name,
       surname = surname,
+      flags = flags,
       type = type,
+      icon = icon
+    )
+    return await self.request(route, json=payload)
+  async def update_npc(
+    self, guild_id: int, id: int, *,
+    name: Optional[str] = None,
+    surname: Optional[str] = None,
+    flags: Optional[SupportsInt] = None,
+    type: Optional[NpcType] = None,
+    max_life: Optional[int] = None,
+    max_breath: Optional[int] = None,
+    max_blood: Optional[int] = None,
+    current_life: Optional[int] = None,
+    current_breath: Optional[int] = None,
+    current_blood: Optional[int] = None,
+    icon: Optional[str] = None
+  ) -> NpcPayload:
+    route = Route("PUT", "/npcs/{guild_id}/{id}", guild_id=guild_id, id=id)
+    payload = NoNullDict(
+      name = name,
+      surname = surname,
+      flags = flags,
+      type = type,
+      max_life = max_life,
+      max_breath = max_breath,
+      max_blood = max_blood,
+      current_life = current_life,
+      current_breath = current_breath,
+      current_blood = current_blood,
       icon = icon
     )
     return await self.request(route, json=payload)
@@ -330,34 +361,44 @@ class HTTPClient:
     npc_kind: NpcType,
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
-    is_prodigy: Optional[bool] = None,
-    has_mark: Optional[bool] = None
+    prodigy_roll: Optional[int] = None,
+    mark_roll: Optional[int] = None,
+    berserk_roll: Optional[int] = None,
+    flags: Optional[SupportsInt] = None
   ) -> PlayerPayload:
     route = Route("POST", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
     payload = NoNullDict(
       expected_npc_kind = npc_kind,
       ability_roll = ability_roll,
       family_roll = family_roll,
-      is_prodigy = is_prodigy,
-      has_mark = has_mark
+      prodigy_roll = prodigy_roll,
+      mark_roll = mark_roll,
+      berserk_roll = berserk_roll
     )
+    if flags is not None:
+      payload["flags"] = int(flags)
     return await self.request(route, json=payload)
   async def update_player(
     self, guild_id: int, id: int, *,
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
     family_id: Optional[int] = None,
-    is_prodigy: Optional[bool] = None,
-    has_mark: Optional[bool] = None
+    prodigy_roll: Optional[int] = None,
+    mark_roll: Optional[int] = None,
+    berserk_roll: Optional[int] = None,
+    flags: Optional[SupportsInt] = None
   ) -> PlayerPayload:
     route = Route("PUT", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
     payload = NoNullDict(
       ability_roll = ability_roll,
       family_roll = family_roll,
       family_id = family_id,
-      is_prodigy = is_prodigy,
-      has_mark = has_mark
+      prodigy_roll = prodigy_roll,
+      mark_roll = mark_roll,
+      berserk_roll = berserk_roll
     )
+    if flags is not None:
+      payload["flags"] = int(flags)
     return await self.request(route, json=payload)
   async def delete_player(self, guild_id: int, id: int) -> PlayerPayload:
     route = Route("DELETE", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)

@@ -16,22 +16,22 @@ else:
 class MorkatoCommandTree(apc.CommandTree[MorkatoBot]):
   async def on_error(self, interaction: Interaction, exception: apc.AppCommandError) -> None:
     context = await MorkatoContext.from_interaction(interaction)
-    extension_manager = self.client.extension_manager
+    project = self.client.project
     base_exception: Optional[Exception] = None
     if isinstance(exception, (apc.CommandInvokeError)):
       base_exception = exception.original
     exc_cls = type(exception)
-    callback = extension_manager.catching.get(exc_cls)
+    callback = project.catching.get(exc_cls)
     if callback is not None:
       await callback.invoke(context, exception)
       return
     if base_exception is None:
       return await super().on_error(interaction, exception)
     base_exc_cls = type(base_exception)
-    callback = extension_manager.catching.get(base_exc_cls)
+    callback = project.catching.get(base_exc_cls)
     if callback is None:
       try:
-        catching = (callback for (cls, callback) in extension_manager.catching.items() if issubclass(base_exc_cls, cls))
+        catching = (callback for (cls, callback) in project.catching.items() if issubclass(base_exc_cls, cls))
         callback = next(catching)
       except StopIteration:
         return await super().on_error(interaction, exception)

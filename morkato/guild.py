@@ -110,16 +110,20 @@ class Guild:
     self, user: Snowflake, npc_kind: NpcType, *,
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
-    is_prodigy: Optional[bool] = None,
-    has_mark: Optional[bool] = None
+    prodigy_roll: Optional[int] = None,
+    mark_roll: Optional[int] = None,
+    berserk_roll: Optional[int] = None,
+    flags: Optional[SupportsInt] = None
   ) -> Player:
     payload = await self.http.create_player(
       self.id, user.id,
       npc_kind = npc_kind,
       ability_roll = ability_roll,
       family_roll = family_roll,
-      is_prodigy = is_prodigy,
-      has_mark = has_mark
+      prodigy_roll = prodigy_roll,
+      mark_roll = mark_roll,
+      berserk_roll = berserk_roll,
+      flags = flags
     )
     player = Player(self.state, self, payload)
     self._add_player(player)

@@ -106,14 +106,19 @@ class NpcCardBuilder(BaseEmbedBuilder):
       name = name,
       icon_url = self.npc.icon
     )
-    prodigy = "Sim" if self.npc.prodigy else "Não"
-    mark = "Sim" if self.npc.mark else "Não"
+    flags = self.npc.flags
+    prodigy = "Sim" if flags.prodigy else "Não"
     abilities = chain(self.npc.family._abilities.values(), self.npc._abilities.values())
     description = ''
     description += f"> **୨ `👪`﹒**Família: {self.npc.family.name}\n"
     description += f"> **୨ `🔋`﹒**Energia: {self.npc.energy}%\n"
     description += f"> **୨ `🥇`﹒**Prodígio: {prodigy}\n"
-    description += f"> **୨ `💢`﹒**Marca: {mark}\n"
+    if self.npc.type in (self.npc.HUMAN, self.npc.HYBRID):
+      mark = "Sim" if flags.mark else "Não"
+      description += f"> **୨ `💢`﹒**Marca: {mark}\n"
+    if self.npc.type in (self.npc.ONI, self.npc.HYBRID):
+      berserk = "Sim" if flags.berserk else "Não"
+      description += f"> **୨ `💢`﹒**Berserk: {berserk}\n"
     description += f"> **୨ `🌹`﹒**Habilidades:\n\n"
     description += '\n'.join(f"> **{idx} - **Habilidade: **{ability.name}**" for (idx, ability) in enumerate(abilities, start=1))
     embed.description = description

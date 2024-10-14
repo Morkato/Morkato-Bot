@@ -1,9 +1,10 @@
 from __future__ import annotations
+from .npc import (Npc, NpcFlags)
 from .utils import NoNullDict
-from .npc import Npc
 from typing_extensions import Self
 from typing import (
   TYPE_CHECKING,
+  SupportsInt,
   Optional,
   Dict
 )
@@ -32,8 +33,10 @@ class Player:
   def from_payload(self, payload: PlayerPayload) -> None:
     self.ability_roll = payload["ability_roll"]
     self.family_roll = payload["family_roll"]
-    self.is_prodigy = payload["is_prodigy"]
-    self.has_mark = payload["has_mark"]
+    self.prodigy_roll = payload["prodigy_roll"]
+    self.mark_roll = payload["mark_roll"]
+    self.berserk_roll = payload["berserk_roll"]
+    self.flags = NpcFlags(payload["flags"])
     self.family_id = int(payload["family_id"]) if payload["family_id"] is not None else None
     if self.family is None and self.family_id is not None:
       self.family = self.guild.families.get(self.family_id)
@@ -76,17 +79,19 @@ class Player:
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
     family: Optional[Snowflake] = None,
-    is_prodigy: Optional[bool] = None,
-    has_mark: Optional[bool] = None,
-    npc_kind: Optional[NpcType] = None
+    prodigy_roll: Optional[int] = None,
+    mark_roll: Optional[int] = None,
+    berserk_roll: Optional[int] = None,
+    flags: Optional[SupportsInt] = None
   ) -> Self:
     payload = NoNullDict(
       ability_roll=ability_roll,
       family_roll=family_roll,
       family_id=family.id if family is not None else None,
-      is_prodigy=is_prodigy,
-      has_mark=has_mark,
-      npc_kind=npc_kind
+      prodigy_roll = prodigy_roll,
+      mark_roll = mark_roll,
+      berserk_roll = berserk_roll,
+      flags = flags
     )
     if payload:
       payload = await self.http.update_player(self.guild.id, self.id, **payload)

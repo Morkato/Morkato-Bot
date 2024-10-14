@@ -20,7 +20,6 @@ class AttackIntents:
   NOT_COUNTER_ATTACKABLE = (1 << 5)
   COUNTER_ATTACKABLE = (1 << 6)
   DEFENSIVE = (1 << 7)
-  ALL_INTENTS: Tuple[int] = (UNAVOIDABLE, INDEFENSIBLE, AREA, NOT_COUNTER_ATTACKABLE, COUNTER_ATTACKABLE, DEFENSIVE)
   @classmethod
   def all(cls) -> AttackIntents:
     intents = cls()
@@ -38,8 +37,6 @@ class AttackIntents:
   def __int__(self) -> int:
     return self.__value
   def has_intent(self, intent: int) -> bool:
-    if not intent in self.ALL_INTENTS:
-      return False
     return (self.__value & intent) != 0
   def is_empty(self) -> bool:
     return self.__value == 0
@@ -47,22 +44,22 @@ class AttackIntents:
     self.__value |= intent
   @property
   def unavoidable(self) -> bool:
-    return (self.__value & self.UNAVOIDABLE) != 0
+    return self.has_intent(self.UNAVOIDABLE)
   @property
   def indefensible(self) -> bool:
-    return (self.__value & self.INDEFENSIBLE) != 0
+    return self.has_intent(self.INDEFENSIBLE)
   @property
   def area(self) -> bool:
-    return (self.__value & self.AREA) != 0
+    return self.has_intent(self.AREA)
   @property
   def not_counter_attackable(self) -> bool:
-    return (self.__value & self.NOT_COUNTER_ATTACKABLE) != 0
+    return self.has_intent(self.NOT_COUNTER_ATTACKABLE)
   @property
   def counter_attackable(self) -> bool:
-    return (self.__value & self.COUNTER_ATTACKABLE) != 0
+    return self.has_intent(self.COUNTER_ATTACKABLE)
   @property
   def defensive(self) -> bool:
-    return (self.__value & self.DEFENSIVE) != 0
+    return self.has_intent(self.DEFENSIVE)
 class Attack:
   def __init__(self, state: MorkatoConnectionState, guild: Guild, art: Art, payload: AttackPayload) -> None:
     self.state = state
