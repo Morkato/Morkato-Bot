@@ -13,3 +13,8 @@ ptBR:
   simFamilyRollTitle: "Simulação de rolls para: Família"
   simFamilyRollLineStyle: "{}° - Família ({}%): **{}** caiu {} vezes."
   onFamilyRegistry: "Parece que acabou seus rolls, e você ainda não escolheu nenhuma família. Deseja escolher?"
+  onPlayerGetProdigy: "Parabéns! Você obteve prodígio."
+  onPlayerGetUpProdigy: "Infelizmente... Você não obteve prodígio."
+  onPlayerAlreadyIsProdigy: "Espera... Você já possui prodígio."
+  onPlayerEmptyProdigyRoll: "Hmm... Você não possui mais rolls para rodar seu prodígio."
+  
