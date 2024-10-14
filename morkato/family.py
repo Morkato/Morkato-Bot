@@ -4,6 +4,7 @@ from typing_extensions import Self
 from .npc import Npc
 from typing import (
   TYPE_CHECKING,
+  SupportsInt,
   Optional,
   Dict
 )
@@ -48,6 +49,7 @@ class Family:
     return self._abilities.get(id)
   async def create_npc(
     self, name: str, surname: str, type: NpcType, *,
+    flags: Optional[SupportsInt] = None,
     icon: Optional[str] = None
   ) -> Npc:
     payload = await self.http.create_npc(
@@ -55,6 +57,7 @@ class Family:
       name=name,
       surname=surname,
       type=type,
+      flags = flags,
       icon=icon
     )
     npc = Npc(self.state, self.guild, self, payload)

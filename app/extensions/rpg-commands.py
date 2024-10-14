@@ -171,3 +171,15 @@ class RPGCommands(BaseExtension):
       await player.sync_ability(ability)
     builder = app.embeds.AbilityRegistryPlayer(ability, is_valid, ctx.bot.user.display_avatar.url)
     await ctx.send_embed(builder, resolve_all=True)
+  @command(name="prodigy")
+  async def prodigy(self, ctx: MorkatoContext) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    if player.is_prodigy:
+      raise app.errors.AppError("onPlayerAlreadyIsProdigy")
+    generated = randint(0, 10)
+    if generated != 1:
+      raise app.errors.AppError("onPlayerGetUpProdigy")
+    await player.update(is_prodigy=True)
+    content = self.get_content(self.LANGUAGE, "onPlayerGetProdigy")
+    await ctx.send(content)

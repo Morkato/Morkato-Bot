@@ -58,8 +58,7 @@ class Npc(TypedDict):
   type: NpcType
   family_id: Optional[str]
   energy: int
-  is_prodigy: bool
-  has_mark: bool
+  flags: int
   max_life: int
   max_breath: int
   max_blood: int
@@ -93,7 +92,9 @@ class Player(TypedDict):
   npc: Optional[Npc]
   ability_roll: int
   family_roll: int
-  is_prodigy: bool
-  has_mark: bool
+  prodigy_roll: int
+  mark_roll: int
+  berserk_roll: int
+  flags: int
   family_id: Optional[str]
   expected_npc_type: NpcType
