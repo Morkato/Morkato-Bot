@@ -175,11 +175,17 @@ class RPGCommands(BaseExtension):
   async def prodigy(self, ctx: MorkatoContext) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
     player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    if player.is_prodigy:
+    flags = player.flags
+    if player.prodigy_roll == 0:
+      raise app.errors.AppError("onPlayerEmptyProdigyRoll")
+    if flags.prodigy:
       raise app.errors.AppError("onPlayerAlreadyIsProdigy")
-    generated = randint(0, 10)
+    generated = randint(0, 5)
     if generated != 1:
+      await player.update(prodigy_roll=player.prodigy_roll - 1)
       raise app.errors.AppError("onPlayerGetUpProdigy")
-    await player.update(is_prodigy=True)
+    new_flags = flags.copy()
+    new_flags.set(flags.PRODIGY)
+    await player.update(prodigy_roll=player.prodigy_roll - 1, flags=new_flags)
     content = self.get_content(self.LANGUAGE, "onPlayerGetProdigy")
     await ctx.send(content)
