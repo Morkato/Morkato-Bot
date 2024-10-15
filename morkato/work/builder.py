@@ -24,15 +24,21 @@ class MessageBuilder:
   def __init__(self, base: Optional[str] = None) -> None:
     self.messages: Dict[str, Dict[str, str]] = {}
     self.base = base or '.'
-  def get_content(self, language: str, key: str, /, *args, **parameters) -> str:
+  def get_content_unknown_formatting(self, language: str, key: str) -> str:
     try:
       builder = self.messages[language]
       content = builder[key]
-      return (content % args).format(**parameters)
+      return content
     except KeyError:
       raise UnknownMessageContent(language, key)
-    except TypeError:
-      return content
+  def get_content(self, language: str, key: str, /, *args, **parameters) -> str:
+    content = self.get_content_unknown_formatting(language, key)
+    return (content % args).format(**parameters)
+  def safe_get_content_unknown_formatting(self, language: str, key: str) -> str:
+    try:
+      return self.get_content_unknown_formatting(language, key)
+    except UnknownMessageContent as exc:
+      return exc.args[0]
   def safe_get_content(self, language: str, key: str, /, *args, **parameters) -> str:
     try:
       return self.get_content(language, key, *args, **parameters)

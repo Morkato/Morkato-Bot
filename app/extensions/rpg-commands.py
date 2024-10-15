@@ -32,9 +32,9 @@ class RPGCommands(BaseExtension):
     family = await ctx.send_select_menu(
       models=families,
       title=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuTitle"),
-      description=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuDescription", ctx.author.name),
-      selected_line_style=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
-      line_style=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuLineStyle"),
+      description=self.builder.get_content(self.LANGUAGE, "familySelectMenuDescription", user=ctx.author),
+      selected_line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
+      line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuNotSelectedLineStyle"),
       key=lambda family: app.embeds.FamilyBuilder(family)
     )
     await player.update(family=family)

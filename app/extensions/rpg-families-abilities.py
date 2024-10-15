@@ -1,5 +1,5 @@
-from morkato.work.extension import extension
 from morkato.ability import AbilityIntents
+from morkato.work.project import registry
 from morkato.utils import NoNullDict
 from morkato.types import (
   AbilityType,
@@ -23,7 +23,7 @@ import app.checks
 import app.errors
 
 has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
-@extension
+@registry
 class RPGFamiliesAbilities(BaseExtension):
   LANGUAGE: str
   ACTIVATE_ROLL_CHOICES: ClassVar[List[apc.Choice[int]]] = [

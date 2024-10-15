@@ -1,0 +1,45 @@
+ptBR:
+  defaultEmbedDescription: "Não há uma descrição"
+  rollNotValid: "Este roll não foi contabilizado, pois você não possui mais rolls."
+  # app.embeds.art:
+  artRespirationTitle: "Respiração: {art.name}"
+  artKekkijutsuTitle: "Kekkijutsu: {art.name}"
+  artFightingStyleTitle: "Estilo de Luta: {art.name}"
+  attackLineStyle: "**{index}° - {prefix}:** {attack.name}"
+  respirationCreated: "Uma nova respiração chamada: {art.name} foi criada!"
+  kekkijutsuCreated: "Um novo kekkijutsu chamado: {art.name} foi criado!"
+  fightingStyleCreated: "Um novo estilo de luta chamado: {art.name} foi criado!"
+  # app.embeds.attack:
+  attackTitle: "{prefix}: {attack.name}"
+  # app.embeds.roll:
+  rolledObjectDescription: "Simulação de rolls: **`{quantity}`**"
+  rolledFamiliesTitle: "Simulação de rolls para: Família"
+  rolledFamiliesLineStyle: "{}° - Família ({}%): **{}** caiu {} vezes."
+  rolledAbilitiesTitle: "Simulação de rolls para: Habilidade"
+  rolledAbilitiesLineStyle: "{}° - Habilidade ({}%): **{}** caiu {} vezes."
+  # app.embeds.player:
+  playerChoiceTypeTitle: "Escolha de Raça"
+  playerChoiceTypeDescription: "Você precisa registrar sua raça primeiro. Está escolha é imutável.\n\nClique em: **`👨`** para tornar-se um Humano\nClique em: **`👹`** para tornar-se um Oni"
+  # app.embeds.ability:
+  abilityTitle: "Habilidade: {ability.name}"
+  # app.embeds.npc:
+  npcHumanPresent: "{npc.name} [♥️ {life}][💨 {breath}]"
+  npcOniPresent: "{npc.name} [♥️ {life}][🩸 {blood}]"
+  npcHybridPresent: "{npc.name} [♥️ {life}][💨 {breath}][🩸 {blood}]"
+  npcFamilyLineStyle: "> **୨ `👪`﹒**Família: {npc.family.name}"
+  npcEnergyLineStyle: "> **୨ `🔋`﹒**Energia: {npc.energy}%"
+  npcProdigyIsValidLineStyle: "> **୨ `🥇`﹒**Prodígio: Sim"
+  npcProdigyIsNotValidLineStyle: "> **୨ `🥇`﹒**Prodígio: Não"
+  npcMarkIsValidLineStyle: "> **୨ `💢`﹒**Marca: Sim"
+  npcMarkIsNotValidLineStyle: "> **୨ `💢`﹒**Marca: Não"
+  npcBerserkIsValidLineStyle: "> **୨ `💢`﹒**Berserk: Sim"
+  npcBerserkIsNotValidLineStyle: "> **୨ `💢`﹒**Berserk: Não"
+  npcAbilitiesPresent: "> **୨ `🌹`﹒**Habilidades:"
+  npcAbilitiesLineStyle: "> **{idx} - **Habilidade: **{ability.name}**"
+  # app.embeds.family:
+  familyTitle: "Família: {family.name}"
+  familyAbilityLineStyle: "**{idx}** - Habilidade: **{ability.name}**"
+  familySelectMenuTitle: "Seleção de Família"
+  familySelectMenuDescription: "Seleção de UMA família para: **`@{user.name}`**. A escolhida será aquela no qual está em negrito."
+  familySelectMenuNotSelectedLineStyle: "**{idx}** - Família: {model.name}"
+  familySelectMenuSelectedLineStyle: "> **{idx} - Família: {model.name}**"

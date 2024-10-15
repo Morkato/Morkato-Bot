@@ -12,11 +12,11 @@ class RPGPlayer(BaseExtension):
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
   @apc.command(
-    name="pregister",
+    name="pregistry",
     description="[RPG Utilitários] Registra um jogador"
   )
   @apc.guild_only()
-  async def player_register(
+  async def player_registry(
     self, interaction: Interaction, *,
     user: User,
     name: str,
