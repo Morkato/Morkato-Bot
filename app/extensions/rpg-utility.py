@@ -38,23 +38,6 @@ class RPGUtility(BaseExtension):
     AttackIntents.DEFENSIVE: "As intenções de ataque foram alteradas. Agora esse ataque pode ser usado para defesa (Attack Intents: **`{intents}`**)"
   }
   @apc.command(
-    name="art-create",
-    description="[RPG Utilitários] Cria uma nova arte."
-  )
-  @apc.guild_only()
-  @apc.check(has_guild_perms)
-  async def art_create(self, interaction: Interaction, name: str, type: ArtType, description: Optional[str], banner: Optional[str]) -> None:
-    await interaction.response.defer()
-    guild = await self.get_morkato_guild(interaction.guild)
-    art = await guild.create_art(
-      name=name,
-      type=type,
-      description=description,
-      banner=banner
-    )
-    content = self.builder.get_content(self.LANGUAGE, "onArtCreate", art.name)
-    await interaction.edit_original_response(content=content)
-  @apc.command(
     name="art-update",
     description="[RPG Utilitários] atualiza uma arte existente."
   )

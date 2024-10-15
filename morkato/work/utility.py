@@ -54,7 +54,7 @@ class SelectMenuEmbed(EmbedBuilder, Generic[SelectMenuObjectT]):
       style = self.line_style
       if idx == self.selected:
         style = self.selected_line_style
-      description += style % (idx + 1, model.name)
+      description += style.format(idx=idx + 1, model=model)
       description += '\n'
     embed.description = description
     return embed

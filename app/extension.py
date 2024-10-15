@@ -1,25 +1,40 @@
-from discord.ext import commands
 from morkato.work.converters import (ConverterManager, Converter)
+from morkato.work.context import EmbedBuilderView
 from morkato.work.builder import MessageBuilder
 from morkato.work.context import MorkatoContext
+from morkato.work.embeds import EmbedBuilder
 from morkato.work.extension import Extension
 from morkato.guild import (Guild, LazyGuildObjectListProtocol)
 from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
 from morkato.player import Player
 from morkato.abc import Snowflake
-from typing import (TypeVar, Union, Type, Any)
+from typing import (
+  TypeVar,
+  Union,
+  Type,
+  Dict,
+  Any
+)
 import discord
 
 T = TypeVar('T')
 P = TypeVar('P')
 
 class BaseExtension(Extension):
-  def __init__(self, connection: MorkatoConnectionState, http: HTTPClient, builder: MessageBuilder, converters: ConverterManager) -> None:
+  def __init__(
+    self, *, 
+    connection: MorkatoConnectionState, 
+    http: HTTPClient, 
+    builder: MessageBuilder, 
+    converters: ConverterManager, 
+    user: discord.ClientUser
+  ) -> None:
     self.connection = connection
     self.http = http
     self.builder = builder
     self.converters = converters
+    self.user = user
   async def get_morkato_guild(self, guild: Snowflake) -> Guild:
     morkato = self.connection.get_cached_guild(guild.id)
     if morkato is None:
@@ -32,6 +47,34 @@ class BaseExtension(Extension):
     else:
       await interaction.response.send_message(view=view, **options)
     return await view.get_value()
+  async def send_embed(self, interaction: discord.Interaction, builder: EmbedBuilder, *, resolve_all: bool = False, wait: bool = True) -> None:
+    cache: Dict[int, discord.Embed] = {}
+    length = builder.length()
+    if length == 0:
+      raise NotImplementedError
+    embed = await builder.build(0)
+    if interaction.is_expired():
+      return
+    if interaction.response.is_done():
+      await interaction.edit_original_response(embed=embed)
+    else:
+      await interaction.response.send_message(embed=embed)
+    if length == 1:
+      return
+    cache[0] = embed
+    if resolve_all and length != -1:
+      cache |= {
+        idx: await builder.build(idx)
+        for idx in range(1, length)
+      }
+    view = EmbedBuilderView(
+      builder=builder,
+      length=length,
+      cache=cache
+    )
+    await interaction.edit_original_response(view=view)
+    if wait:
+      await view.wait()
   async def convert(self, cls: Type[Converter[P, T]], ctx: Union[discord.Interaction, MorkatoContext], arg: str, /, **kwargs) -> T:
     return await self.converters.convert(cls, ctx, arg, **kwargs)
   async def resolve(self, models: LazyGuildObjectListProtocol[Any], /) -> None:

@@ -1,14 +1,8 @@
 from discord.interactions import Interaction
-from .embeds import FamilySelectForPlayer
-from morkato.family import Family
 from morkato.player import Player
 from morkato.guild import Guild
 from typing import Optional
-from discord.user import User
 from discord import ui
-from typing import (
-  List
-)
 import asyncio
 
 class RegistryPlayerUi(ui.View):
@@ -44,31 +38,3 @@ class RegistryPlayerUi(ui.View):
     self.future.set_result(player)
     self.clear_items()
     self.stop()
-class FamilySelectForPlayerUi(ui.View):
-  def __init__(self, usr: User, families: List[Family]) -> None:
-    super().__init__()
-    self.families = families
-    self.length = len(families)
-    self.usr = usr
-    self.selected = 0
-  @ui.button(emoji='✅', custom_id="check")
-  async def check(self, interaction: Interaction, btn: ui.Button) -> None:
-    pass
-  @ui.button(emoji='⬇️', custom_id="arrowdown")
-  async def arrowdown(self, interaction: Interaction, btn: ui.Button) -> None:
-    await interaction.response.defer()
-    if self.selected >= self.length - 1:
-      self.selected = 0
-    else:
-      self.selected += 1
-    embed = await FamilySelectForPlayer(self.usr, self.families, self.selected).build(0)
-    await interaction.edit_original_response(embed=embed)
-  @ui.button(emoji='⬆️', custom_id="arrowup")
-  async def arrowup(self, interaction: Interaction, btn: ui.Button) -> None:
-    await interaction.response.defer()
-    if self.selected == 0:
-      self.selected = self.length - 1
-    else:
-      self.selected -= 1
-    embed = await FamilySelectForPlayer(self.usr, self.families, self.selected).build(0)
-    await interaction.edit_original_response(embed=embed)
