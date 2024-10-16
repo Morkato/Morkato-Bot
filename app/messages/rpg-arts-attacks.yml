@@ -1,0 +1,6 @@
+ptBR:
+  commandKwargsIsEmpty: "Ok. O que você quer atualizar?... Nada?"
+  attackAlreadyHasIntent: "Este ataque já possui tal intenção."
+  attackIntentsIsEmpty: "Este ataque não possui intenções. O que você quer restaurar?"
+enUS:
+  commandKwargsIsEmpty: "Ok. What do you want to update?... Nothing?"

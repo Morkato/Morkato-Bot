@@ -1,16 +1,21 @@
 from morkato.work.project import registry
+from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
 from discord import app_commands as apc
 from discord import (Interaction, User)
 from typing import Optional
 import app.errors
 import app.embeds
+import app.checks
 
 @registry
 class RPGPlayer(BaseExtension):
   LANGUAGE: str
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
+    self.has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
+    self.player_registry.add_check(self.has_guild_perms)
+    self.player_reset.add_check(self.has_guild_perms)
   @apc.command(
     name="pregistry",
     description="[RPG Utilitários] Registra um jogador"
@@ -33,3 +38,18 @@ class RPGPlayer(BaseExtension):
     npc = await player.registry(name, surname, icon=icon)
     embed = await app.embeds.NpcCardBuilder(npc).build(0)
     await interaction.edit_original_response(embed=embed)
+  @apc.command(
+    name="preset",
+    description="[RPG Utilitários] Excluí o contexto para um jogador"
+  )
+  @apc.guild_only()
+  async def player_reset(self, interaction: Interaction, user: User) -> None:
+    await interaction.response.defer()
+    guild = await self.get_morkato_guild(interaction.guild)
+    try:
+      player = await self.get_cached_or_fetch_player(guild, user.id)
+      await player.delete()
+      content = self.get_content(self.LANGUAGE, "playerReset", user=user)
+      await interaction.edit_original_response(content=content)
+    except PlayerNotFoundError:
+      raise app.errors.AppError("invalidPlayerContext")

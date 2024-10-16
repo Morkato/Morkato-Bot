@@ -2,6 +2,7 @@ from morkato.work.builder import (
   UnknownMessageContent,
   MessageBuilder
 )
+from morkato.attack import Attack
 from morkato.family import Family
 from morkato.player import Player
 
@@ -21,6 +22,10 @@ class ArtNotFoundError(AppError):
 class AttackNotFoundError(AppError):
   def __init__(self, attack_query: str) -> None:
     super().__init__(f"error{type(self).__name__}", attack_query)
+class ManyAttackError(AppError):
+  def __init__(self, attack: Attack) -> None:
+    super().__init__(f"error{type(self).__name__}", attack.name)
+    self.attack = attack
 class AbilityNotFoundError(AppError):
   def __init__(self, ability_query: str) -> None:
     super().__init__(f"error{type(self).__name__}", ability_query)

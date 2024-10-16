@@ -57,7 +57,24 @@ class ArtCreatedBuilder(ArtBuilder):
       self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "kekkijutsuCreated")
     elif self.art.type == self.art.FIGHTING_STYLE:
       self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "fightingStyleCreated")
-  async def build_base_embed(self):
+  async def build_base_embed(self) -> Embed:
+    embed = await super().build_base_embed()
+    embed.set_footer(
+      icon_url = self.DEFAULT_ICON,
+      text = self.footer_text.format(art=self.art)
+    )
+    return embed
+class ArtUpdatedBuilder(ArtBuilder):
+  def __init__(self, art: Art) -> None:
+    super().__init__(art)
+    self.footer_text: str
+    if self.art.type == self.art.RESPIRATION:
+      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "respirationUpdated")
+    elif self.art.type == self.art.KEKKIJUTSU:
+      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "kekkijutsuUpdated")
+    elif self.art.type == self.art.FIGHTING_STYLE:
+      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "fightingStyleUpdated")
+  async def build_base_embed(self) -> Embed:
     embed = await super().build_base_embed()
     embed.set_footer(
       icon_url = self.DEFAULT_ICON,

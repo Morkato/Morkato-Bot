@@ -172,6 +172,10 @@ class HTTPClient:
     self, guild_id: int, id: int, *,
     name: Optional[str] = None,
     type: Optional[ArtType] = None,
+    energy: Optional[int] = None,
+    life: Optional[int] = None,
+    breath: Optional[int] = None,
+    blood: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Union[ArtPayload, ArtWithAttacks]:
@@ -179,6 +183,10 @@ class HTTPClient:
     payload = NoNullDict(
       name = name,
       type = type,
+      energy = energy,
+      life = life,
+      breath = breath,
+      blood = blood,
       description = description,
       banner = banner
     )
