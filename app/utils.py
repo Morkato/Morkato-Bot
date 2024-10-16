@@ -75,7 +75,7 @@ class AttackConverter(IDConverter[Attack]):
     primary = matcher.group(1)
     second = matcher.group(2)
     if not isinstance(primary, str):
-      raise NotADirectoryError
+      raise NotImplementedError
     if not isinstance(second, str):
       return (primary, None)
     return (second, primary)

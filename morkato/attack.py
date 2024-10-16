@@ -36,6 +36,8 @@ class AttackIntents:
     return repr(self.__value)
   def __int__(self) -> int:
     return self.__value
+  def copy(self) -> AttackIntents:
+    return AttackIntents(int(self.__value))
   def has_intent(self, intent: int) -> bool:
     return (self.__value & intent) != 0
   def is_empty(self) -> bool:
@@ -85,7 +87,7 @@ class Attack:
     if self._updated_at is not None:
       return datetime.fromtimestamp(self._updated_at / 1000.0)
     return None
-  async def edit(
+  async def update(
     self, *,
     name: Optional[str] = None,
     name_prefix_art: Optional[str] = None,

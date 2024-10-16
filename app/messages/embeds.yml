@@ -9,8 +9,13 @@ ptBR:
   respirationCreated: "Uma nova respiração chamada: {art.name} foi criada!"
   kekkijutsuCreated: "Um novo kekkijutsu chamado: {art.name} foi criado!"
   fightingStyleCreated: "Um novo estilo de luta chamado: {art.name} foi criado!"
+  respirationUpdated: "Uma nova respiração chamada: {art.name} foi atualizada!"
+  kekkijutsuUpdated: "Um novo kekkijutsu chamado: {art.name} foi atualizado!"
+  fightingStyleUpdated: "Um novo estilo de luta chamado: {art.name} foi atualizado!"
   # app.embeds.attack:
   attackTitle: "{prefix}: {attack.name}"
+  attackCreated: "O ataque chamado: {attack.name} foi criado!"
+  attackUpdated: "O ataque chamado: {attack.name} foi atualizado!"
   # app.embeds.roll:
   rolledObjectDescription: "Simulação de rolls: **`{quantity}`**"
   rolledFamiliesTitle: "Simulação de rolls para: Família"

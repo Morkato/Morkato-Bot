@@ -5,6 +5,7 @@ from .family import Family
 from .abc import Snowflake
 from .player import Player
 from .npc import Npc
+from .attack import Attack
 from .art import Art
 from .types import (
   Guild as GuildPayload,
@@ -25,7 +26,6 @@ from typing import (
 )
 if TYPE_CHECKING:
   from .state import MorkatoConnectionState
-  from .attack import Attack
 
 T = TypeVar('T', bound='Snowflake')
 class Guild:

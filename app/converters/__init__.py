@@ -1,18 +1,23 @@
 from morkato.work.context import MorkatoContext
-from morkato.work.converters import Converter
+from morkato.work.converters import (ConverterManager, Converter)
 from morkato.work.project import registry
 from morkato.state import MorkatoConnectionState
 from morkato.ability import Ability
 from morkato.family import Family
+from morkato.attack import Attack
+from morkato.art import Art
 from morkato.http import HTTPClient
-from morkato.abc import Snowflake
-from morkato.guild import Guild
+from morkato.guild import LazyGuildObjectListProtocol
 from unidecode import unidecode
 from discord import Interaction
 from typing import (
   Optional,
+  Iterator,
   TypeVar,
-  Union
+  Tuple,
+  Union,
+  Dict,
+  Any
 )
 import app.errors
 import re
@@ -50,14 +55,13 @@ def strip_text_all(text: str, *, empty: Optional[str] = None) -> str:
   )
 
 class BaseConverter(Converter[P, T]):
-  def __init__(self, connection: MorkatoConnectionState, http: HTTPClient) -> None:
+  def __init__(self, connection: MorkatoConnectionState, http: HTTPClient, converters: ConverterManager) -> None:
     self.connection = connection
+    self.converters = converters
     self.http = http
-  async def get_morkato_guild(self, guild: Snowflake) -> Guild:
-    morkato = self.connection.get_cached_guild(guild.id)
-    if morkato is None:
-      morkato = await self.connection.fetch_guild(guild.id)
-    return morkato
+  async def resolve(self, models: LazyGuildObjectListProtocol[Any], /) -> None:
+    if not models.already_loaded():
+      await models.resolve()
 _ID_REGEX = re.compile(r'([0-9]{15,20})$')
 class IDConverter(BaseConverter[Union[str, int], T]):
   async def validate(self, arg: str) -> Union[str, int]:
@@ -67,10 +71,8 @@ class IDConverter(BaseConverter[Union[str, int], T]):
     return arg
 @registry
 class AbilityConverter(IDConverter[Ability]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, guild: Guild) -> Ability:
-    abilities = guild.abilities
-    if not abilities.already_loaded():
-      await abilities.resolve()
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, abilities: LazyGuildObjectListProtocol[Ability]) -> Ability:
+    await self.resolve(abilities)
     if isinstance(arg, int):
       ability = abilities.get(arg)
       if ability is None:
@@ -84,10 +86,8 @@ class AbilityConverter(IDConverter[Ability]):
     return ability
 @registry
 class FamilyConverter(IDConverter[Family]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, guild: Guild) -> Family:
-    families = guild.families
-    if not families.already_loaded():
-      await families.resolve()
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, families: LazyGuildObjectListProtocol[Family]) -> Family:
+    await self.resolve(families)
     if isinstance(arg, int):
       family = families.get(arg)
       if family is None:
@@ -99,3 +99,52 @@ class FamilyConverter(IDConverter[Family]):
     if family is None:
       raise app.errors.FamilyNotFoundError(arg)
     return family
+@registry
+class ArtConverter(IDConverter[Art]):
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, arts: LazyGuildObjectListProtocol[Art]) -> Art:
+    await self.resolve(arts)
+    if isinstance(arg, int):
+      art = arts.get(arg)
+      if art is None:
+        raise app.errors.ArtNotFoundError(arg)
+      return art
+    name = strip_text_all(arg)
+    generated = (art for art in arts if strip_text_all(art.name) == name)
+    art = next(generated, None)
+    if art is None:
+      raise app.errors.ArtNotFoundError(arg)
+    return art
+@registry
+class AttackConverter(IDConverter[Attack]):
+  @classmethod
+  def _extract_artname_attackname(cls, arg: str) -> Tuple[str, Optional[str]]:
+    matcher = re.match(r'([^:\n]{2,32})(?:\s*:\s*([^:\n]{2,32}))?', arg.strip())
+    if matcher is None:
+      raise NotImplementedError
+    primary = matcher.group(1)
+    second = matcher.group(2)
+    if not isinstance(primary, str):
+      raise NotImplementedError
+    if not isinstance(second, str):
+      return (primary, None)
+    return (second, primary)
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, attacks: Dict[str, Attack], arts: LazyGuildObjectListProtocol[Art]) -> Attack:
+    await self.resolve(arts)
+    if isinstance(arg, int):
+      attack = attacks.get(arg)
+      if attack is None:
+        raise app.errors.AttackNotFoundError(arg)
+      return attack
+    (attackname, artquery) = self._extract_artname_attackname(arg)
+    art: Optional[Art] = None
+    if artquery is not None:
+      art = await self.converters.convert(ArtConverter, ctx, artquery, arts=arts)
+    name = strip_text_all(attackname)
+    all_attacks: Iterator[Attack] = iter(art._attacks.values() if art is not None else attacks.values())
+    all_attacks = (attack for attack in all_attacks if strip_text_all(attack.name) == name)
+    attack = next(all_attacks, None)
+    if attack is None:
+      raise app.errors.AttackNotFoundError(attackname)
+    if art is None and next(all_attacks, None) is not None:
+      raise app.errors.ManyAttackError(attack)
+    return attack

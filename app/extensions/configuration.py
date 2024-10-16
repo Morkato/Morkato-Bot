@@ -11,5 +11,6 @@ class MorkatoConfiguration(BaseExtension):
     self.from_archive("rpg-commands.yml")
     self.from_archive("rpg-utility.yml")
     self.from_archive("rpg-families-abilities.yml")
+    self.from_archive("rpg-arts-attacks.yml")
     self.from_archive("embeds.yml")
     self.from_archive("utility.yml")
