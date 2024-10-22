@@ -43,6 +43,7 @@ class NpcCardBuilder(BaseEmbedBuilder):
       icon_url = self.npc.icon
     )
     abilities = chain(self.npc.family._abilities.values(), self.npc._abilities.values())
+    description = self.description
     description += '\n'.join(self.abilities_line_style.format(idx=idx, ability=ability) for (idx, ability) in enumerate(abilities, start=1))
     embed.description = description
     return embed

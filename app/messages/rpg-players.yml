@@ -1,0 +1,4 @@
+ptBR:
+  playerAlreadyRegistered: "Este jogador já está registrado."
+  playerReset: "O contexto do jogador: **`@{user.name}`** foi excluído."
+  invalidPlayerContext: "O jogador não possui nenhum contexto para apagar."

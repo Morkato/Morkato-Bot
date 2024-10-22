@@ -4,7 +4,7 @@ from .base import BaseEmbedBuilder
 
 class AbilityBuilder(BaseEmbedBuilder):
   def __init__(self, ability: Ability) -> None:
-    self.title = self.builder.get_content("abilityTitle", ability=ability)
+    self.title = self.builder.get_content(self.LANGUAGE, "abilityTitle", ability=ability)
     self.ability = ability
   async def build(self, page: int) -> Embed:
     description = self.ability.description

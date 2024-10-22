@@ -1,7 +1,6 @@
 from morkato.work.project import registry
 from app.embeds.base import BaseEmbedBuilder
 from app.extension import BaseExtension
-from contextvars import ContextVar
 
 @registry
 class MorkatoConfiguration(BaseExtension):
@@ -12,5 +11,6 @@ class MorkatoConfiguration(BaseExtension):
     self.from_archive("rpg-utility.yml")
     self.from_archive("rpg-families-abilities.yml")
     self.from_archive("rpg-arts-attacks.yml")
+    self.from_archive("rpg-players.yml")
     self.from_archive("embeds.yml")
     self.from_archive("utility.yml")

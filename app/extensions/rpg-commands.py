@@ -102,12 +102,10 @@ class RPGCommands(BaseExtension):
       rolled = 1 if rolled is None else rolled + 1
       rolled_abilities[ability.id] = rolled
     abilities = sorted(guild.abilities, key=lambda ability: len(ability.name))
-    result = app.embeds.EmbedBuilderRolledObject(
+    result = app.embeds.AbilityRolledBuilder(
       models = abilities,
       rolled = rolled_abilities,
-      quantity = quantity,
-      style = self.get_content(self.LANGUAGE, "simAbilityRollLineStyle"),
-      title = self.get_content(self.LANGUAGE, "simAbilityRollTitle")
+      quantity = quantity
     )
     await ctx.send_embed(result, resolve_all=True)
   @command(
@@ -128,12 +126,10 @@ class RPGCommands(BaseExtension):
       rolled = 1 if rolled is None else rolled + 1
       rolled_families[family.id] = rolled
     families = sorted(guild.families, key=lambda family: len(family.name))
-    result = app.embeds.EmbedBuilderRolledObject(
+    result = app.embeds.FamilyRolledBuilder(
       models = families,
       rolled = rolled_families,
-      quantity = quantity,
-      style = self.get_content(self.LANGUAGE, "simFamilyRollLineStyle"),
-      title = self.get_content(self.LANGUAGE, "simFamilyRollTitle")
+      quantity = quantity
     )
     await ctx.send_embed(result, resolve_all=True)
   @command(name="family")
@@ -147,13 +143,13 @@ class RPGCommands(BaseExtension):
     is_valid = player.family_roll != 0
     if is_valid:
       await player.sync_family(family)
-    builder = app.embeds.FamilyRegistryPlayer(family, is_valid, ctx.bot.user)
+    builder = app.embeds.FamilyRegistryPlayer(family, is_valid)
     await ctx.send_embed(builder, resolve_all=True)
   @command(name="ability")
   async def ability(self, ctx: MorkatoContext, *, ability_query: Optional[str]) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
     if ability_query is not None:
-      ability = await self.convert(app.converters.AbilityConverter, ctx, ability_query, guild = guild)
+      ability = await self.convert(app.converters.AbilityConverter, ctx, ability_query, abilities=guild.abilities)
       builder = app.embeds.AbilityBuilder(ability)
       await ctx.send_embed(builder)
       return
@@ -169,7 +165,7 @@ class RPGCommands(BaseExtension):
     is_valid = player.ability_roll != 0
     if is_valid:
       await player.sync_ability(ability)
-    builder = app.embeds.AbilityRegistryPlayer(ability, is_valid, ctx.bot.user.display_avatar.url)
+    builder = app.embeds.AbilityRegistryPlayer(ability, is_valid)
     await ctx.send_embed(builder, resolve_all=True)
   @command(name="prodigy")
   async def prodigy(self, ctx: MorkatoContext) -> None:
@@ -225,3 +221,9 @@ class RPGCommands(BaseExtension):
     await player.update(berserk_roll=player.berserk_roll - 1, flags=new_flags)
     content = self.get_content(self.LANGUAGE, "onPlayerGetBerserk")
     await ctx.send(content)
+  @command(name="attack", aliases=["a"])
+  async def attack(self, ctx: MorkatoContext, *, attack_query: str) -> None:
+    guild = await self.get_morkato_guild(ctx.guild)
+    attack = await self.convert(app.converters.AttackConverter, ctx, attack_query, arts=guild.arts, attacks=guild._attacks)
+    builder = app.embeds.AttackBuilder(attack)
+    await ctx.send_embed(builder, resolve_all=True)

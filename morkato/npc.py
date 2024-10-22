@@ -1,6 +1,7 @@
 from __future__ import annotations
-from .utils import (NoNullDict, extract_datetime_from_snowflake)
 from datetime import datetime
+from .utils import (NoNullDict, extract_datetime_from_snowflake)
+from .flags import Flags
 from .types import (
   Npc as NpcPayload,
   HumanType,
@@ -22,33 +23,13 @@ if TYPE_CHECKING:
   from .family import Family
   from .guild import Guild
 
-class NpcFlags:
-  PRODIGY = (1 << 1)
-  MARK = (1 << 2)
-  BERSERK = (1 << 3)
-  def __init__(self, initial: SupportsInt = 0) -> None:
-    self.__value = int(initial)
-  def __repr__(self) -> str:
-    return repr(self.__value)
-  def __int__(self) -> int:
-    return self.__value
-  def copy(self) -> NpcFlags:
-    return NpcFlags(int(self.__value))
-  def has_intent(self, intent: int) -> bool:
-    return (self.__value & intent) != 0
-  def is_empty(self) -> bool:
-    return self.__value == 0
-  def set(self, intent: int) -> None:
-    self.__value |= intent
-  @property
-  def prodigy(self) -> bool:
-    return self.has_intent(self.PRODIGY)
-  @property
-  def mark(self) -> bool:
-    return self.has_intent(self.MARK)
-  @property
-  def berserk(self) -> bool:
-    return self.has_intent(self.BERSERK)
+class NpcFlags(Flags):
+  PRODIGY: int
+  MARK: int
+  BERSERK: int
+  def prodigy(self) -> bool: ...
+  def mark(self) -> bool: ...
+  def berserk(self) -> bool: ...
 class Npc:
   HUMAN: ClassVar[HumanType] = "HUMAN"
   ONI: ClassVar[OniType] = "ONI"
@@ -66,6 +47,7 @@ class Npc:
     self.surname = payload["surname"]
     self.type = payload["type"]
     self.icon = payload["icon"]
+    self.max_energy = payload["max_energy"]
     self.energy = payload["energy"]
     self.flags = NpcFlags(payload["flags"])
     self.max_life = payload["max_life"]
@@ -74,11 +56,15 @@ class Npc:
     self.current_life = payload["current_life"]
     self.current_breath = payload["current_breath"]
     self.current_blood = payload["current_blood"]
+    self.last_action = datetime.fromtimestamp(payload["last_action"] / 1000.0)
   def clear(self) -> None:
     self._abilities: Dict[int, Ability] = {}
   @property
   def created_at(self) -> datetime:
     return extract_datetime_from_snowflake(self)
+  @property
+  def max_energy(self) -> int:
+    return 100 + sum(ability.energy for ability in self._abilities.values())
   async def update(
     self, *,
     name: Optional[str] = None,

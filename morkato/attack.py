@@ -1,67 +1,31 @@
 from __future__ import annotations
 from .utils import NoNullDict, extract_datetime_from_snowflake
+from .flags import Flags
 from typing_extensions import Self
 from datetime import datetime
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
-  Optional,
-  Tuple
+  Optional
 )
 if TYPE_CHECKING:
   from .types import Attack as AttackPayload
   from .state import MorkatoConnectionState
   from .guild import Guild
   from .art import Art
-class AttackIntents:
-  UNAVOIDABLE = (1 << 2)
-  INDEFENSIBLE = (1 << 3)
-  AREA = (1 << 4)
-  NOT_COUNTER_ATTACKABLE = (1 << 5)
-  COUNTER_ATTACKABLE = (1 << 6)
-  DEFENSIVE = (1 << 7)
-  @classmethod
-  def all(cls) -> AttackIntents:
-    intents = cls()
-    intents.set(cls.UNAVOIDABLE)
-    intents.set(cls.INDEFENSIBLE)
-    intents.set(cls.AREA)
-    intents.set(cls.NOT_COUNTER_ATTACKABLE)
-    intents.set(cls.COUNTER_ATTACKABLE)
-    intents.set(cls.DEFENSIVE)
-    return intents
-  def __init__(self, initial: SupportsInt = 0) -> None:
-    self.__value = int(initial)
-  def __repr__(self) -> str:
-    return repr(self.__value)
-  def __int__(self) -> int:
-    return self.__value
-  def copy(self) -> AttackIntents:
-    return AttackIntents(int(self.__value))
-  def has_intent(self, intent: int) -> bool:
-    return (self.__value & intent) != 0
-  def is_empty(self) -> bool:
-    return self.__value == 0
-  def set(self, intent: int) -> None:
-    self.__value |= intent
-  @property
-  def unavoidable(self) -> bool:
-    return self.has_intent(self.UNAVOIDABLE)
-  @property
-  def indefensible(self) -> bool:
-    return self.has_intent(self.INDEFENSIBLE)
-  @property
-  def area(self) -> bool:
-    return self.has_intent(self.AREA)
-  @property
-  def not_counter_attackable(self) -> bool:
-    return self.has_intent(self.NOT_COUNTER_ATTACKABLE)
-  @property
-  def counter_attackable(self) -> bool:
-    return self.has_intent(self.COUNTER_ATTACKABLE)
-  @property
-  def defensive(self) -> bool:
-    return self.has_intent(self.DEFENSIVE)
+class AttackFlags(Flags):
+  UNAVOIDABLE: int
+  INDEFENSIBLE: int
+  AREA: int
+  NOT_COUNTER_ATTACKABLE: int
+  COUNTER_ATTACKABLE: int
+  DEFENSIVE: int
+  def unavoidable(self) -> bool: ...
+  def indefensible(self) -> bool: ...
+  def area(self) -> bool: ...
+  def not_counter_attackable(self) -> bool: ...
+  def counter_attackable(self) -> bool: ...
+  def defensive(self) -> bool: ...
 class Attack:
   def __init__(self, state: MorkatoConnectionState, guild: Guild, art: Art, payload: AttackPayload) -> None:
     self.state = state
@@ -78,7 +42,7 @@ class Attack:
     self.damage = payload["damage"]
     self.breath = payload["breath"]
     self.blood = payload["blood"]
-    self.intents = AttackIntents(payload["intents"])
+    self.flags = AttackFlags(payload["flags"])
   @property
   def created_at(self) -> datetime:
     return extract_datetime_from_snowflake(self)
@@ -97,7 +61,7 @@ class Attack:
     damage: Optional[int] = None,
     breath: Optional[int] = None,
     blood: Optional[int] = None,
-    intents: Optional[AttackIntents] = None
+    flags: Optional[SupportsInt] = None
   ) -> Self:
     kwargs = NoNullDict(
       name=name,
@@ -108,7 +72,7 @@ class Attack:
       damage=damage,
       breath=breath,
       blood=blood,
-      intents=intents
+      flags=flags
     )
     if kwargs:
       payload = await self.http.update_attack(self.guild.id, self.id, **kwargs)

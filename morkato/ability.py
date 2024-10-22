@@ -52,6 +52,7 @@ class Ability:
   def from_payload(self, payload: AbilityPayload) -> None:
     self.name = payload["name"]
     self.type = payload["type"]
+    self.energy = payload["energy"]
     self.percent = payload["percent"]
     self.npc_kind = AbilityIntents(payload["npc_kind"])
     self.immutable = payload["immutable"]
@@ -61,6 +62,7 @@ class Ability:
     self, *,
     name: Optional[str] = None,
     type: Optional[AbilityType] = None,
+    energy: Optional[int] = None,
     npc_kind: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -68,6 +70,7 @@ class Ability:
     payload = NoNullDict(
       name=name,
       type=type,
+      energy = energy,
       npc_kind=npc_kind,
       description=description,
       banner=banner

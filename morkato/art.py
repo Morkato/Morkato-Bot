@@ -34,6 +34,10 @@ class Art:
   def from_payload(self, payload: ArtPayload) -> None:
     self.name = payload["name"]
     self.type = payload["type"]
+    self.life = payload["life"]
+    self.breath = payload["breath"]
+    self.blood = payload["blood"]
+    self.energy = payload["energy"]
     self.description = payload["description"]
     self.banner = payload["banner"]
   def clear(self) -> None:
@@ -69,14 +73,14 @@ class Art:
     banner: Optional[str] = None
   ) -> Self:
     kwargs = NoNullDict(
-      name=name,
-      type=type,
+      name = name,
+      type = type,
       energy = energy,
       life = life,
       breath = breath,
       blood = blood,
-      description=description,
-      banner=banner
+      description = description,
+      banner = banner
     )
     if kwargs:
       payload = await self.http.update_art(self.guild.id, self.id, **kwargs)
