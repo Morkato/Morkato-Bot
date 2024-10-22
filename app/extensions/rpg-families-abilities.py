@@ -159,12 +159,18 @@ class RPGFamiliesAbilities(BaseExtension):
   )
   @apc.guild_only()
   @apc.check(has_guild_perms)
-  async def ability_create(self, interaction: Interaction, name: str, type: AbilityType, percent: int, *, description: Optional[str], banner: Optional[str]) -> None:
+  async def ability_create(
+    self, interaction: Interaction, name: str, type: AbilityType, percent: int, *,
+    energy: Optional[int],
+    description: Optional[str],
+    banner: Optional[str]
+  ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     ability = await guild.create_ability(
       name = name,
       type = type,
+      energy = energy,
       percent = percent,
       npc_kind = 0,
       description = description,
@@ -188,6 +194,7 @@ class RPGFamiliesAbilities(BaseExtension):
     self, interaction: Interaction, *,
     ability_query: str,
     name: Optional[str],
+    energy: Optional[int],
     percent: Optional[int],
     description: Optional[str],
     banner: Optional[str]
@@ -197,6 +204,7 @@ class RPGFamiliesAbilities(BaseExtension):
     ability = await AbilityConverter()._get_by_guild(guild, ability_query)
     kwargs = NoNullDict(
       name = name,
+      energy = energy,
       percent = percent,
       description = description,
       banner = banner

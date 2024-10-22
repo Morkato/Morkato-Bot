@@ -1,5 +1,6 @@
 from __future__ import annotations
-from .utils import CircularDict
+from datetime import datetime
+from .utils import (CircularDict, NoNullDict, DATE_FORMAT)
 from .ability import Ability
 from .family import Family
 from .abc import Snowflake
@@ -13,6 +14,7 @@ from .types import (
   NpcType,
   ArtType
 )
+from typing_extensions import Self
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
@@ -41,6 +43,8 @@ class Guild:
     self.hybrid_initial_life = payload["hybrid_initial_life"]
     self.breath_initial = payload["breath_initial"]
     self.blood_initial = payload["blood_initial"]
+    self.start_rpg_calendar = datetime.strptime(payload["start_rpg_calendar"], DATE_FORMAT)
+    self.start_rpg_date = datetime.strptime(payload["start_rpg_date"], DATE_FORMAT)
     self.roll_category_id = int(payload["roll_category_id"]) if payload["roll_category_id"] is not None else None
     self.off_category_id = int(payload["off_category_id"]) if payload["off_category_id"] is not None else None
   def clear(self) -> None:
@@ -53,6 +57,36 @@ class Guild:
     self.arts: LazyGuildObjectListProtocol[Art] = LazyArtList(self.state, self)
     self.abilities: LazyGuildObjectListProtocol[Ability] = LazyAbilityList(self.state, self)
     self.families: LazyGuildObjectListProtocol[Family] = LazyFamilyList(self.state, self)
+  def now(self) -> datetime:
+    addition = datetime.now() - self.start_rpg_date
+    return self.start_rpg_calendar + addition
+  async def update(
+    self, *,
+    human_initial_life: Optional[int] = None,
+    oni_initial_life: Optional[int] = None,
+    hybrid_initial_life: Optional[int] = None,
+    breath_initial: Optional[int] = None,
+    blood_initial: Optional[int] = None,
+    family_roll: Optional[int] = None,
+    ability_roll: Optional[int] = None,
+    roll_category_id: Optional[str] = None,
+    off_category_id: Optional[str] = None
+  ) -> Self:
+    kwargs = NoNullDict(
+      human_initial_life = human_initial_life,
+      oni_initial_life = oni_initial_life,
+      hybrid_initial_life = hybrid_initial_life,
+      breath_initial = breath_initial,
+      blood_initial = blood_initial,
+      family_roll = family_roll,
+      ability_roll = ability_roll,
+      roll_category_id = roll_category_id,
+      off_category_id = off_category_id
+    )
+    if kwargs:
+      payload = await self.http.update_guild(self.id, **kwargs)
+      self.from_payload(payload)
+    return self
   def _add_npc(self, npc: Npc) -> None:
     self._npcs[npc.id] = npc
   def _add_player(self, player: Player) -> None:
@@ -138,6 +172,7 @@ class Guild:
     return player
   async def create_ability(
     self, name: str, type: AbilityType, percent: int, npc_kind: SupportsInt, *,
+    energy: Optional[int] = None,
     immutable: Optional[bool] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -146,6 +181,7 @@ class Guild:
       self.id,
       name = name,
       type = type,
+      energy = energy,
       percent = percent,
       npc_kind = npc_kind,
       immutable = immutable,

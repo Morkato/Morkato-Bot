@@ -23,3 +23,34 @@ class MorkatoConnectionState:
     guild = Guild(self, id, payload)
     self._add_guild(guild)
     return guild
+  async def create_guild(
+    self, id: int, *,
+    start_rpg_calendar: str,
+    start_rpg_date: Optional[str] = None,
+    human_initial_life: Optional[int] = None,
+    oni_initial_life: Optional[int] = None,
+    hybrid_initial_life: Optional[int] = None,
+    breath_initial: Optional[int] = None,
+    blood_initial: Optional[int] = None,
+    family_roll: Optional[int] = None,
+    ability_roll: Optional[int] = None,
+    roll_category_id: Optional[str] = None,
+    off_category_id: Optional[str] = None
+  ) -> Guild:
+    payload = await self.http.create_guild(
+      id = id,
+      start_rpg_calendar = start_rpg_calendar,
+      start_rpg_date = start_rpg_date,
+      human_initial_life = human_initial_life,
+      oni_initial_life = oni_initial_life,
+      hybrid_initial_life = hybrid_initial_life,
+      breath_initial = breath_initial,
+      blood_initial = blood_initial,
+      family_roll = family_roll,
+      ability_roll = ability_roll,
+      roll_category_id = roll_category_id,
+      off_category_id = off_category_id
+    )
+    guild = Guild(self, id, payload)
+    self._add_guild(guild)
+    return guild

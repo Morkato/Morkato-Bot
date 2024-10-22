@@ -1,17 +1,61 @@
-from morkato.attack import Attack
+from numerize.numerize import numerize
+from morkato.attack import (
+  AttackIntents,
+  Attack
+)
 from discord.embeds import Embed
+from typing import (
+  ClassVar,
+  Dict
+)
 from .base import BaseEmbedBuilder
 
 class AttackBuilder(BaseEmbedBuilder):
+  INTENTS_MAP_LINE_STYLE: ClassVar[Dict[int, str]] = {
+    AttackIntents.DEFENSIVE: "attackDefensiveLineStyle",
+    AttackIntents.NOT_COUNTER_ATTACKABLE: "attackNotCounterAttackableLineStyle",
+    AttackIntents.INDEFENSIBLE: "attackIndefensibleLineStyle",
+    AttackIntents.UNAVOIDABLE: "attackUnavoidableLineStyle",
+    AttackIntents.COUNTER_ATTACKABLE: "attackCounterAttackableLineStyle",
+    AttackIntents.AREA: "attackAreaLineStyle"
+  }
   def __init__(self, attack: Attack) -> None:
     self.attack = attack
     self.art = attack.art
     prefix = attack.name_prefix_art or self.art.name
     self.title = self.builder.get_content(self.LANGUAGE, "attackTitle", prefix=prefix, attack=attack)
+  def get_headers(self) -> str:
+    headers = (
+      self.builder.get_content_unknown_formatting(self.LANGUAGE, "attackDamageEmptyLineStyle")
+      if self.attack.damage == 0
+      else self.builder.get_content(self.LANGUAGE, "attackDamageLineStyle", damage=numerize(self.attack.damage))
+    ) + '\n'
+    if self.art.type in (self.art.RESPIRATION, self.art.FIGHTING_STYLE):
+      headers += (
+        self.builder.get_content_unknown_formatting(self.LANGUAGE, "attackBreathEmptyLineStyle")
+        if self.attack.breath == 0
+        else self.builder.get_content(self.LANGUAGE, "attackBreathLineStyle", breath=numerize(self.attack.breath))
+      ) + '\n'
+    if self.art.type in (self.art.KEKKIJUTSU, self.art.FIGHTING_STYLE):
+      headers += (
+        self.builder.get_content_unknown_formatting(self.LANGUAGE, "attackBloodEmptyLineStyle")
+        if self.attack.blood == 0
+        else self.builder.get_content(self.LANGUAGE, "attackBloodLineStyle", blood=numerize(self.attack.blood))
+      ) + '\n'
+    headers += '\n'
+    intents = (
+      self.builder.get_content_unknown_formatting(self.LANGUAGE, name)
+      for (key, name) in self.INTENTS_MAP_LINE_STYLE.items()
+      if self.attack.intents.has_intent(key)
+    )
+    headers += '\n'.join(intents)
+    return headers.strip('\n')
   async def build(self, page: int) -> Embed:
     description = self.attack.description
     if description is None:
       description = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "defaultEmbedDescription")
+    description += "\n\n"
+    description += self.get_headers()
     embed = Embed(
       title=self.title,
       description=description

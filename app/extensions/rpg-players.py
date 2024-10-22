@@ -33,7 +33,7 @@ class RPGPlayer(BaseExtension):
     guild = await self.get_morkato_guild(interaction.guild)
     player = await self.get_cached_or_fetch_player(guild, user.id)
     if player.already_registered():
-      raise app.errors.AppError("onPlayerAlreadyRegistered")
+      raise app.errors.AppError("playerAlreadyRegistered")
     await interaction.response.defer()
     npc = await player.registry(name, surname, icon=icon)
     embed = await app.embeds.NpcCardBuilder(npc).build(0)

@@ -1,7 +1,10 @@
 from .base import BaseEmbedBuilder
 from .player import PlayerChoiceTypeBuilder
 from .npc import NpcCardBuilder
-from .family import FamilyBuilder
+from .family import (
+  FamilyRegistryPlayer,
+  FamilyBuilder
+)
 from .attack import (
   AttackCreatedBuilder,
   AttackUpdatedBuilder,

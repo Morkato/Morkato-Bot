@@ -24,6 +24,8 @@ class Guild(TypedDict):
   blood_initial: int
   family_roll: int
   ability_roll: int
+  start_rpg_date: str
+  start_rpg_calendar: str
   roll_category_id: Optional[str]
   off_category_id: Optional[str]
 class Art(TypedDict):
@@ -31,9 +33,12 @@ class Art(TypedDict):
   guild_id: str
   id: str
   type: ArtType
+  life: int
+  breath: int
+  blood: int
+  energy: int
   description: Optional[str]
   banner: Optional[str]
-  updated_at: Optional[int]
 class ArtWithAttacks(TypedDict):
   attacks: List[Attack]
 class Attack(TypedDict):
@@ -48,8 +53,7 @@ class Attack(TypedDict):
   damage: int
   breath: int
   blood: int
-  intents: int
-  updated_at: Optional[int]
+  flags: int
 class Npc(TypedDict):
   guild_id: str
   id: str
@@ -57,6 +61,7 @@ class Npc(TypedDict):
   surname: str
   type: NpcType
   family_id: Optional[str]
+  max_energy: int
   energy: int
   flags: int
   max_life: int
@@ -67,11 +72,13 @@ class Npc(TypedDict):
   current_blood: int
   icon: Optional[str]
   abilities: List[str]
+  last_action: Optional[int]
 class Ability(TypedDict):
   guild_id: str
   id: str
   name: str
   type: AbilityType
+  energy: int
   percent: int
   npc_kind: int
   immutable: bool
@@ -82,13 +89,15 @@ class Family(TypedDict):
   id: str
   name: str
   percent: int
-  npc_kind: NpcType
+  npc_type: int
   description: Optional[str]
   banner: Optional[str]
   abilities: List[str]
 class Player(TypedDict):
   guild_id: str
   id: str
+  family_id: Optional[str]
+  npc_type: NpcType
   npc: Optional[Npc]
   ability_roll: int
   family_roll: int
@@ -96,5 +105,3 @@ class Player(TypedDict):
   mark_roll: int
   berserk_roll: int
   flags: int
-  family_id: Optional[str]
-  expected_npc_type: NpcType
