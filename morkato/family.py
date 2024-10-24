@@ -39,7 +39,7 @@ class Family:
   def from_payload(self, payload: FamilyPayload) -> None:
     self.name = payload["name"]
     self.percent = payload["percent"]
-    self.npc_kind = payload["npc_kind"]
+    self.npc_type = payload["npc_type"]
     self.description = payload["description"]
     self.banner = payload["banner"]
   def clear(self) -> None:

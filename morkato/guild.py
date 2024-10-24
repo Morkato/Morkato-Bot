@@ -190,7 +190,7 @@ class Guild:
     return ability
   async def create_family(
     self, name: str, *,
-    npc_kind: NpcType,
+    npc_type: int,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -199,7 +199,7 @@ class Guild:
       self.id,
       name = name,
       percent = percent,
-      npc_kind = npc_kind,
+      npc_type = npc_type,
       description = description,
       banner = banner
     )

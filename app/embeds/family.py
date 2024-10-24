@@ -36,3 +36,27 @@ class FamilyRegistryPlayer(FamilyBuilder):
         icon_url = self.DEFAULT_ICON
       )
     return embed
+class FamilyCreated(FamilyBuilder):
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    embed.set_footer(
+      text = self.builder.safe_get_content(self.LANGUAGE, "familyCreated", family=self.family),
+      icon_url = self.DEFAULT_ICON
+    )
+    return embed
+class FamilyUpdated(FamilyBuilder):
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    embed.set_footer(
+      text = self.builder.safe_get_content(self.LANGUAGE, "familyUpdated", family=self.family),
+      icon_url = self.DEFAULT_ICON
+    )
+    return embed
+class FamilyDeleted(FamilyBuilder):
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    embed.set_footer(
+      text = self.builder.safe_get_content(self.LANGUAGE, "familyDeleted", family=self.family),
+      icon_url = self.DEFAULT_ICON
+    )
+    return embed
