@@ -355,22 +355,18 @@ class HTTPClient:
   async def create_ability(
     self, guild_id: int, *,
     name: str,
-    type: AbilityType,
     percent: int,
     npc_kind: SupportsInt,
     energy: Optional[int] = None,
-    immutable: Optional[bool] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> AbilityPayload:
     route = Route("POST", "/abilities/{guild_id}", guild_id=guild_id)
     payload = NoNullDict(
       name = name,
-      type = type,
       energy = energy,
       percent = percent,
       npc_kind = int(npc_kind),
-      immutable = immutable,
       description = description,
       banner = banner
     )

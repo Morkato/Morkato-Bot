@@ -29,8 +29,6 @@ class NotFoundError(HTTPException):
   def __init__(self, response: ClientResponse, model: ModelType, extra: Dict[str, Any]) -> None:
     super().__init__(response, extra)
     self.model = model
-    self.guild_id = int(extra["guild_id"])
-    self.id = int(extra["id"])
 class PlayerNotFoundError(NotFoundError):
   def __init__(self, response: ClientResponse, extra: Dict[str, Any]) -> None:
     super().__init__(response, ModelType.PLAYER, extra)

@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing_extensions import Self
 from .utils import NoNullDict
+from .flags import Flags
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
-  Optional,
-  Tuple
+  Optional
 )
 if TYPE_CHECKING:
   from .types import (
@@ -14,34 +14,13 @@ if TYPE_CHECKING:
   )
   from .state import MorkatoConnectionState
   from .guild import Guild
-class AbilityIntents:
+class AbilityFlags(Flags):
   HUMAN = (1 << 1)
   ONI = (1 << 2)
   HYBRID = (1 << 3)
-  ALL_INTENTS: Tuple[int] = (HUMAN, ONI, HYBRID)
-  def __init__(self, initial: SupportsInt = 0) -> None:
-    self.__value = int(initial)
-  def __repr__(self) -> str:
-    return repr(self.__value)
-  def __int__(self) -> int:
-    return self.__value
-  def has_intent(self, intent: int) -> bool:
-    if not intent in self.ALL_INTENTS:
-      return False
-    return (self.__value & intent) != 0
-  def is_empty(self) -> bool:
-    return self.__value == 0
-  def set(self, intent: int) -> None:
-    self.__value |= intent
-  @property
-  def human(self) -> bool:
-    return (self.__value & self.HUMAN) != 0
-  @property
-  def oni(self) -> bool:
-    return (self.__value & self.ONI) != 0
-  @property
-  def hybrid(self) -> bool:
-    return (self.__value & self.HYBRID) != 0
+  def human(self) -> bool: ...
+  def oni(self) -> bool: ...
+  def hybrid(self) -> bool: ...
 class Ability:
   def __init__(self, state: MorkatoConnectionState, guild: Guild, payload: AbilityPayload) -> None:
     self.state = state
@@ -51,11 +30,9 @@ class Ability:
     self.from_payload(payload)
   def from_payload(self, payload: AbilityPayload) -> None:
     self.name = payload["name"]
-    self.type = payload["type"]
     self.energy = payload["energy"]
     self.percent = payload["percent"]
-    self.npc_kind = AbilityIntents(payload["npc_kind"])
-    self.immutable = payload["immutable"]
+    self.npc_type = AbilityFlags(payload["npc_type"])
     self.description = payload["description"]
     self.banner = payload["banner"]
   async def update(

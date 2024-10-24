@@ -1,0 +1,3 @@
+ptBR:
+  dateInvalid: "A data está em um formato invalido, formato aceitado: **`YYYY-MM-DDTHH:MM:SSZ`**. (Um exemplo: **`%s`**)"
+  onGuildRegistry: "Seu servidor foi registrado em meu banco."

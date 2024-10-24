@@ -1,4 +1,4 @@
-from numerize.numerize import numerize
+from humanize.number import intword
 from discord.colour import Colour
 from discord.embeds import Embed
 from morkato.npc import Npc

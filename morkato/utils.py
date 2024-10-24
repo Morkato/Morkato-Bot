@@ -6,7 +6,7 @@ from .abc import Snowflake
 import inspect
 
 MORKATO_EPOCH = 1716973200000
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S+00"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 T = TypeVar('T')
 K = TypeVar('K')
 V = TypeVar('V')
