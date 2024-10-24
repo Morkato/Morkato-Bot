@@ -10,9 +10,7 @@ from discord.interactions import Interaction
 from discord import app_commands as apc
 from enum import Enum
 from typing import (
-  Optional,
-  ClassVar,
-  List
+  Optional
 )
 import app.converters
 import app.embeds
@@ -37,27 +35,22 @@ class RPGFamiliesAbilities(BaseExtension):
   async def family_create(
     self, interaction: Interaction, *,
     name: str,
-    npc: NpcType,
     percent: int,
     description: Optional[str],
     banner: Optional[str]
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    if not guild.families.already_loaded():
-      await guild.families.resolve()
+    await self.resolve(guild.families)
     family = await guild.create_family(
       name=name,
-      npc_kind=npc,
+      npc_type=0,
       percent=percent,
       description=description,
       banner=banner
     )
-    builder = FamilyBuilder(family)
-    embed = await builder.build(0)
-    text = self.builder.get_content(self.LANGUAGE, "onFamilyCreate", family.name)
-    embed.set_footer(text=text, icon_url=interaction.client.user.display_avatar.url)
-    await interaction.edit_original_response(embed=embed)
+    builder = app.embeds.FamilyCreated(family)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="family-update",
     description="[RPG Utilitários] Atualiza uma família"
@@ -80,16 +73,11 @@ class RPGFamiliesAbilities(BaseExtension):
       banner=banner
     )
     if not kwargs:
-      text = self.builder.get_content(self.LANGUAGE, "onEmptyKwargsWhenUpdateFamily")
-      await interaction.edit_original_response(content=text)
-      return
+      raise app.errors.AppError("onEmptyKwargsWhenUpdateFamily")
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await FamilyConverter()._get_by_guild(guild, family_query)
-    builder = FamilyBuilder(family)
-    embed = await builder.build(0)
-    text = self.builder.get_content(self.LANGUAGE, "onUpdateFamily", family.name)
-    embed.set_footer(text=text, icon_url=interaction.client.user.display_avatar.url)
-    await interaction.edit_original_response(embed=embed)
+    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    builder = app.embeds.FamilyUpdated(family)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="family-delete",
     description="[RPG Utilitários] Deleta uma família"
@@ -102,12 +90,9 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await FamilyConverter()._get_by_guild(guild, family_query)
-    builder = FamilyBuilder(family)
-    embed = await builder.build(0)
-    text = self.builder.get_content(self.LANGUAGE, "onFamilyDelete", family.name)
-    embed.set_footer(text=text, icon_url=interaction.client.user.display_avatar.url)
-    await interaction.edit_original_response(embed=embed)
+    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    builder = app.embeds.FamilyDeleted(family)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="ability-create",
     description="[RPG Utilitários] Cria uma nova habilidade."
@@ -131,13 +116,8 @@ class RPGFamiliesAbilities(BaseExtension):
       description = description,
       banner = banner
     )
-    content = self.builder.safe_get_content(self.LANGUAGE, "onAbilityCreate", ability.name)
-    embed = await app.embeds.AbilityBuilder(ability).build(0)
-    embed.set_footer(
-      text=content,
-      icon_url=interaction.client.user.display_avatar.url
-    )
-    await interaction.edit_original_response(embed=embed)
+    builder = app.embeds.AbilityBuilder(ability)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="ability-update",
     description="[RPG Utilitários] Atualiza a habilidade requerida."
@@ -168,7 +148,6 @@ class RPGFamiliesAbilities(BaseExtension):
       await interaction.edit_original_response(content=content)
       return
     await ability.update(**kwargs)
-    content = self.builder.safe_get_content(self.LANGUAGE, "onAbilityUpdate", ability.name)
     builder = app.embeds.AbilityUpdated(ability)
     await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(

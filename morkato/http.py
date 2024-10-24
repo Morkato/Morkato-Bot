@@ -399,7 +399,7 @@ class HTTPClient:
   async def create_family(
     self, guild_id: int, *,
     name: str,
-    npc_kind: NpcType,
+    npc_type: int,
     percent: int,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -407,7 +407,7 @@ class HTTPClient:
     route = Route("POST", "/families/{guild_id}", guild_id=guild_id)
     payload = NoNullDict(
       name = name,
-      npc_kind = npc_kind,
+      npc_type = npc_type,
       percent = percent,
       description = description,
       banner = banner
