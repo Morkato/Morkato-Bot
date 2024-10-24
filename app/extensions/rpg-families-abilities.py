@@ -1,53 +1,39 @@
-from morkato.ability import AbilityIntents
+from morkato.ability import AbilityFlags
 from morkato.work.project import registry
 from morkato.utils import NoNullDict
 from morkato.types import (
   AbilityType,
   NpcType
 )
-from app.utils import (
-  FamilyConverter,
-  AbilityConverter
-)
+from app.extension import BaseExtension
 from discord.interactions import Interaction
 from discord import app_commands as apc
-from app.extension import BaseExtension
-from app.embeds import FamilyBuilder
+from enum import Enum
 from typing import (
   Optional,
   ClassVar,
   List
 )
+import app.converters
 import app.embeds
 import app.checks
 import app.errors
 
-has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
+class AbilityFlagsChoice(Enum):
+  HUMAN = AbilityFlags.HUMAN
+  ONI = AbilityFlags.ONI
+  HYBRID = AbilityFlags.HYBRID
 @registry
 class RPGFamiliesAbilities(BaseExtension):
   LANGUAGE: str
-  ACTIVATE_ROLL_CHOICES: ClassVar[List[apc.Choice[int]]] = [
-    apc.Choice(
-      name = "Humano",
-      value = AbilityIntents.HUMAN,
-    ),
-    apc.Choice(
-      name = "Oni",
-      value = AbilityIntents.ONI
-    ),
-    apc.Choice(
-      name = "Híbrido",
-      value = AbilityIntents.HYBRID
-    )
-  ]
   async def setup(self) -> None:
+    self.has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
     self.LANGUAGE = self.builder.PT_BR
   @apc.command(
     name="family-create",
     description="[RPG Utilitários] Cria uma família"
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   async def family_create(
     self, interaction: Interaction, *,
     name: str,
@@ -77,7 +63,6 @@ class RPGFamiliesAbilities(BaseExtension):
     description="[RPG Utilitários] Atualiza uma família"
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   @apc.rename(family_query="family")
   async def family_update(
     self, interaction: Interaction, *,
@@ -110,7 +95,6 @@ class RPGFamiliesAbilities(BaseExtension):
     description="[RPG Utilitários] Deleta uma família"
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   @apc.rename(family_query="family")
   async def family_delete(
     self, interaction: Interaction, *,
@@ -125,42 +109,14 @@ class RPGFamiliesAbilities(BaseExtension):
     embed.set_footer(text=text, icon_url=interaction.client.user.display_avatar.url)
     await interaction.edit_original_response(embed=embed)
   @apc.command(
-    name="set-family",
-    description="[RPG Utilitários] Define sua família"
-  )
-  @apc.guild_only()
-  @apc.rename(family_query="family")
-  async def set_family(
-    self, interaction: Interaction, *,
-    family_query: str
-  ) -> None:
-    await interaction.response.pong()
-    guild = await self.get_morkato_guild(interaction.guild)
-    player = guild.get_cached_player(interaction.user.id)
-    if player is None:
-      player = await guild.fetch_player(interaction.user.id)
-    if player.family_id is not None:
-      raise app.errors.PlayerAlreadyRegisteredFamily(player)
-    if player.family_roll != 0:
-      raise app.errors.PlayerHasFamilyRolls(player)
-    family = await FamilyConverter()._get_by_guild(guild, family_query)
-    if not player.has_family(family):
-      raise app.errors.DoNotPlayerHasFamily(player, family)
-    await player.update(family=family)
-    content = self.builder.get_content(self.LANGUAGE, "onSyncFamilyWithPlayer", family.name, interaction.user.name)
-    if interaction.response.is_done():
-      await interaction.followup.send(content)
-      return
-    await interaction.response.send_message(content)
-
-  @apc.command(
     name="ability-create",
     description="[RPG Utilitários] Cria uma nova habilidade."
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   async def ability_create(
-    self, interaction: Interaction, name: str, type: AbilityType, percent: int, *,
+    self, interaction: Interaction, *,
+    name: str,
+    percent: int,
     energy: Optional[int],
     description: Optional[str],
     banner: Optional[str]
@@ -169,7 +125,6 @@ class RPGFamiliesAbilities(BaseExtension):
     guild = await self.get_morkato_guild(interaction.guild)
     ability = await guild.create_ability(
       name = name,
-      type = type,
       energy = energy,
       percent = percent,
       npc_kind = 0,
@@ -188,7 +143,6 @@ class RPGFamiliesAbilities(BaseExtension):
     description="[RPG Utilitários] Atualiza a habilidade requerida."
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   @apc.rename(ability_query="ability")
   async def ability_update(
     self, interaction: Interaction, *,
@@ -201,7 +155,7 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await AbilityConverter()._get_by_guild(guild, ability_query)
+    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
     kwargs = NoNullDict(
       name = name,
       energy = energy,
@@ -215,18 +169,13 @@ class RPGFamiliesAbilities(BaseExtension):
       return
     await ability.update(**kwargs)
     content = self.builder.safe_get_content(self.LANGUAGE, "onAbilityUpdate", ability.name)
-    embed = await app.embeds.AbilityBuilder(ability).build(0)
-    embed.set_footer(
-      text=content,
-      icon_url=interaction.client.user.display_avatar.url
-    )
-    await interaction.edit_original_response(embed=embed)
+    builder = app.embeds.AbilityUpdated(ability)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="ability-delete",
     description="[RPG Utilitários] Deleta a habilidade escolhida."
   )
   @apc.guild_only()
-  @apc.check(has_guild_perms)
   @apc.rename(ability_query="ability")
   async def ability_delete(
     self, interaction: Interaction, *,
@@ -234,17 +183,12 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await AbilityConverter()._get_by_guild(guild, ability_query)
+    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
     await ability.delete()
-    content = self.builder.safe_get_content(self.LANGUAGE, "onAbilityDelete", ability.name)
-    embed = await app.embeds.AbilityBuilder(ability).build(0)
-    embed.set_footer(
-      text=content,
-      icon_url=interaction.client.user.display_avatar.url
-    )
-    await interaction.edit_original_response(embed=embed)
+    builder = app.embeds.AbilityDeleted(ability)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
-    name="ability-sync",
+    name="sync-ability",
     description="[RPG Utilitários] Sincroniza uma habilidade com uma família"
   )
   @apc.guild_only()
@@ -256,30 +200,28 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.pong()
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await FamilyConverter()._get_by_guild(guild, family_query)
-    ability = await AbilityConverter()._get_by_guild(guild, ability_query)
+    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
     await family.sync_ability(ability)
-    await interaction.response.send_message("A habilidade chamada: **%s** foi sincronizada com a família: **%s**." % (ability.name, family.name))
+    content = await self.get_content(self.LANGUAGE, "syncAbilityWithFamily", ability=ability, family=family)
+    await interaction.response.send_message(content)
   @apc.command(
     name = "active-ability-roll",
     description = "[RPG Utilitários] Ativa a habilidade em um roll"
   )
-  @apc.choices(npc=ACTIVATE_ROLL_CHOICES)
   @apc.rename(ability_query="ability")
   async def activate_ability_roll(
     self, interaction: Interaction, *,
     ability_query: str,
-    npc: apc.Choice[int]
+    npc: AbilityFlagsChoice
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await AbilityConverter()._get_by_guild(guild, ability_query)
-    intents = ability.npc_kind
-    if intents.has_intent(npc.value):
-      content = self.builder.get_content(self.LANGUAGE, "onAbilityHasIntent")
-      await interaction.edit_original_response(content=content)
-      return
-    intents.set(npc.value)
-    await ability.update(npc_kind=intents)
-    content = self.builder.get_content(self.LANGUAGE, "onAbilitySetIntent")
+    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
+    flags = ability.npc_type
+    if flags.hasflag(npc.value):
+      raise app.errors.AppError("onAbilityHasFlag")
+    flags.set(npc.value)
+    await ability.update(npc_kind=flags)
+    content = self.builder.get_content(self.LANGUAGE, "onAbilitySetFlag")
     await interaction.edit_original_response(content=content)

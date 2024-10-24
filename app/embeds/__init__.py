@@ -12,6 +12,8 @@ from .attack import (
 )
 from .ability import (
   AbilityRegistryPlayer,
+  AbilityUpdated,
+  AbilityDeleted,
   AbilityBuilder
 )
 from .roll import (

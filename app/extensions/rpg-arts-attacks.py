@@ -1,6 +1,6 @@
 from morkato.work.extension import command
 from morkato.work.project import registry
-from morkato.attack import AttackIntents
+from morkato.attack import AttackFlags
 from morkato.utils import NoNullDict
 from morkato.types import ArtType
 from discord.interactions import Interaction
@@ -192,6 +192,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
     if attack.intents.is_empty():
       raise app.errors.AppError("attackIntentsIsEmpty")
-    await attack.update(intents=AttackIntents())
+    await attack.update(intents=AttackFlags())
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)

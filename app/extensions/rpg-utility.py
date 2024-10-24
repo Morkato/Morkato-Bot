@@ -2,7 +2,6 @@ from morkato.work.builder import MessageBuilder
 from morkato.work.project import registry
 from morkato.types import (AbilityType, NpcType, ArtType)
 from morkato.errors import PlayerNotFoundError
-from morkato.attack import AttackIntents
 from discord.interactions import Interaction
 from discord import app_commands as apc
 from discord.user import User

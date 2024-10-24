@@ -171,20 +171,17 @@ class Guild:
     self._add_player(player)
     return player
   async def create_ability(
-    self, name: str, type: AbilityType, percent: int, npc_kind: SupportsInt, *,
+    self, name: str, percent: int, npc_kind: SupportsInt, *,
     energy: Optional[int] = None,
-    immutable: Optional[bool] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Ability:
     payload = await self.http.create_ability(
       self.id,
       name = name,
-      type = type,
       energy = energy,
       percent = percent,
       npc_kind = npc_kind,
-      immutable = immutable,
       description = description,
       banner = banner
     )

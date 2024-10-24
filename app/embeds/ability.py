@@ -29,3 +29,19 @@ class AbilityRegistryPlayer(AbilityBuilder):
         icon_url = self.DEFAULT_ICON
       )
     return embed
+class AbilityUpdated(AbilityBuilder):
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    embed.set_footer(
+      content = self.builder.safe_get_content(self.LANGUAGE, "abilityUpdated", ability=self.ability),
+      icon_url = self.DEFAULT_ICON
+    )
+    return embed
+class AbilityDeleted(AbilityBuilder):
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    embed.set_footer(
+      content = self.builder.safe_get_content(self.LANGUAGE, "abilityDeleted", ability=self.ability),
+      icon_url = self.DEFAULT_ICON
+    )
+    return embed

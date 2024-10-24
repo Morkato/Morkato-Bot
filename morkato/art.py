@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .utils import NoNullDict, extract_datetime_from_snowflake
-from .attack import AttackIntents, Attack
+from .attack import AttackFlags, Attack
 from typing_extensions import Self
 from datetime import datetime
 from .types import (
@@ -45,11 +45,6 @@ class Art:
   @property
   def created_at(self) -> datetime:
     return extract_datetime_from_snowflake(self)
-  @property
-  def updated_at(self) -> Optional[datetime]:
-    if self._updated_at is not None:
-      return datetime.fromtimestamp(self._updated_at / 1000.0)
-    return None
   @property
   def attacks(self) -> List[Attack]:
     return sorted(self._attacks.values(), key=lambda attack: attack.id)
@@ -99,7 +94,7 @@ class Art:
     damage: Optional[int] = None,
     breath: Optional[int] = None,
     blood: Optional[int] = None,
-    intents: Optional[AttackIntents] = None
+    flags: Optional[AttackFlags] = None
   ) -> Attack:
     payload = await self.http.create_attack(
       self.guild.id,
@@ -111,7 +106,7 @@ class Art:
       damage=damage,
       breath=breath,
       blood=blood,
-      intents=intents
+      flags=flags
     )
     attack = Attack(self.state, self.guild, self, payload)
     self._add_attack(attack)

@@ -2,16 +2,19 @@ from morkato.work.context import MorkatoContext
 from morkato.work.converters import (ConverterManager, Converter)
 from morkato.work.project import registry
 from morkato.state import MorkatoConnectionState
+from morkato.utils import DATE_FORMAT
 from morkato.ability import Ability
 from morkato.family import Family
 from morkato.attack import Attack
 from morkato.art import Art
 from morkato.http import HTTPClient
 from morkato.guild import LazyGuildObjectListProtocol
+from datetime import datetime
 from unidecode import unidecode
 from discord import Interaction
 from typing import (
   Optional,
+  ClassVar,
   Iterator,
   TypeVar,
   Tuple,
@@ -148,3 +151,7 @@ class AttackConverter(IDConverter[Attack]):
     if art is None and next(all_attacks, None) is not None:
       raise app.errors.ManyAttackError(attack)
     return attack
+@registry
+class DatetimeAPIFormat(Converter[str, datetime]):
+  async def convert(self, ctx: Union[MorkatoContext, Interaction], arg: str) -> datetime:
+    return datetime.strptime(arg, DATE_FORMAT)

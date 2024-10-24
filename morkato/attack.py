@@ -46,11 +46,6 @@ class Attack:
   @property
   def created_at(self) -> datetime:
     return extract_datetime_from_snowflake(self)
-  @property
-  def updated_at(self) -> Optional[datetime]:
-    if self._updated_at is not None:
-      return datetime.fromtimestamp(self._updated_at / 1000.0)
-    return None
   async def update(
     self, *,
     name: Optional[str] = None,

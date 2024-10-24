@@ -17,6 +17,8 @@ AlwaysActivateType = Literal["ALWAYS_ACTIVATE"]
 RequiredActivateType = Literal["REQUIRED_ACTIVATE"]
 AbilityType = Literal[AlwaysActivateType, RequiredActivateType]
 class Guild(TypedDict):
+  start_rpg_date: str
+  start_rpg_calendar: str
   human_initial_life: int
   oni_initial_life: int
   hybrid_initial_life: int
@@ -24,8 +26,6 @@ class Guild(TypedDict):
   blood_initial: int
   family_roll: int
   ability_roll: int
-  start_rpg_date: str
-  start_rpg_calendar: str
   roll_category_id: Optional[str]
   off_category_id: Optional[str]
 class Art(TypedDict):
@@ -48,7 +48,6 @@ class Attack(TypedDict):
   art_id: str
   name_prefix_art: Optional[str]
   description: Optional[str]
-  resume_description: Optional[str]
   banner: Optional[str]
   damage: int
   breath: int
@@ -77,11 +76,9 @@ class Ability(TypedDict):
   guild_id: str
   id: str
   name: str
-  type: AbilityType
   energy: int
   percent: int
-  npc_kind: int
-  immutable: bool
+  npc_type: int
   description: Optional[str]
   banner: Optional[str]
 class Family(TypedDict):

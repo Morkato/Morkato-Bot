@@ -1,6 +1,6 @@
-from numerize.numerize import numerize
+from humanize.number import intword
 from morkato.attack import (
-  AttackIntents,
+  AttackFlags,
   Attack
 )
 from discord.embeds import Embed
@@ -12,12 +12,12 @@ from .base import BaseEmbedBuilder
 
 class AttackBuilder(BaseEmbedBuilder):
   INTENTS_MAP_LINE_STYLE: ClassVar[Dict[int, str]] = {
-    AttackIntents.DEFENSIVE: "attackDefensiveLineStyle",
-    AttackIntents.NOT_COUNTER_ATTACKABLE: "attackNotCounterAttackableLineStyle",
-    AttackIntents.INDEFENSIBLE: "attackIndefensibleLineStyle",
-    AttackIntents.UNAVOIDABLE: "attackUnavoidableLineStyle",
-    AttackIntents.COUNTER_ATTACKABLE: "attackCounterAttackableLineStyle",
-    AttackIntents.AREA: "attackAreaLineStyle"
+    AttackFlags.DEFENSIVE: "attackDefensiveLineStyle",
+    AttackFlags.NOT_COUNTER_ATTACKABLE: "attackNotCounterAttackableLineStyle",
+    AttackFlags.INDEFENSIBLE: "attackIndefensibleLineStyle",
+    AttackFlags.UNAVOIDABLE: "attackUnavoidableLineStyle",
+    AttackFlags.COUNTER_ATTACKABLE: "attackCounterAttackableLineStyle",
+    AttackFlags.AREA: "attackAreaLineStyle"
   }
   def __init__(self, attack: Attack) -> None:
     self.attack = attack
