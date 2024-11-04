@@ -27,7 +27,7 @@ class Player:
     self.id = int(payload["id"])
     self.family: Optional[Family] = None
     self.npc: Optional[Npc] = None
-    self.expected_npc_kind = payload["expected_npc_type"]
+    self.npc_type = payload["npc_type"]
     self.from_payload(payload)
     self.clear()
   def from_payload(self, payload: PlayerPayload) -> None:
@@ -53,12 +53,6 @@ class Player:
     return family.id in self._families.keys()
   def has_ability(self, ability: Snowflake, /) -> bool:
     return ability.id in self._abilities.keys()
-  def is_valid_ability(self, ability: Ability, /) -> bool:
-    if self.expected_npc_kind == "HUMAN":
-      return ability.npc_kind.human
-    elif self.expected_npc_kind == "ONI":
-      return ability.npc_kind.oni
-    return ability.npc_kind.hybrid
   async def sync_family(self, family: Family) -> None:
     await self.http.sync_player_family(self.guild.id, self.id, family.id)
     self._families[family.id] = family

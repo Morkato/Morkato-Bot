@@ -26,7 +26,9 @@ from .roll import (
   FamilyRolledBuilder
 )
 from .art import (
+  PlayerArtTrainBuilder,
   ArtCreatedBuilder,
   ArtUpdatedBuilder,
+  ArtTrainBuilder,
   ArtBuilder
 )

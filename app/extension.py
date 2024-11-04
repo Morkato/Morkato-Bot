@@ -4,7 +4,7 @@ from morkato.work.builder import MessageBuilder
 from morkato.work.context import MorkatoContext
 from morkato.work.embeds import EmbedBuilder
 from morkato.work.extension import Extension
-from morkato.guild import (Guild, LazyGuildObjectListProtocol)
+from morkato.guild import Guild
 from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
 from morkato.player import Player
@@ -77,9 +77,6 @@ class BaseExtension(Extension):
       await view.wait()
   async def convert(self, cls: Type[Converter[P, T]], ctx: Union[discord.Interaction, MorkatoContext], arg: str, /, **kwargs) -> T:
     return await self.converters.convert(cls, ctx, arg, **kwargs)
-  async def resolve(self, models: LazyGuildObjectListProtocol[Any], /) -> None:
-    if not models.already_loaded():
-      await models.resolve()
   async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
     player = guild.get_cached_player(id)
     if player is None:

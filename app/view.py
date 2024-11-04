@@ -17,13 +17,13 @@ class RegistryPlayerUi(ui.View):
       self.future.set_result(None)
     except asyncio.InvalidStateError:
       pass
-    return super().on_timeout()
+    return await super().on_timeout()
   async def on_error(self, interaction: Interaction, error: Exception, item: ui.Item):
     try:
       self.future.set_result(None)
     except asyncio.InvalidStateError:
       pass
-    return super().on_error(interaction, error, item)
+    return await super().on_error(interaction, error, item)
   @ui.button(emoji='👨', custom_id="HUMAN")
   async def human_choice(self, interaction: Interaction, btn: ui.Button) -> None:
     await interaction.response.defer()

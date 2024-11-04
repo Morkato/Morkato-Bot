@@ -258,6 +258,13 @@ class HTTPClient:
     name_prefix_art: Optional[str] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None,
+    poison_turn: Optional[int] = None,
+    burn_turn: Optional[int] = None,
+    bleed_turn: Optional[int] = None,
+    poison: Optional[int] = None,
+    burn: Optional[int] = None,
+    bleed: Optional[int] = None,
+    stun: Optional[int] = None,
     damage: Optional[int] = None,
     breath: Optional[int] = None,
     blood: Optional[int] = None,
@@ -269,6 +276,13 @@ class HTTPClient:
       name_prefix_art = name_prefix_art,
       description = description,
       banner = banner,
+      poison_turn = poison_turn,
+      burn_turn = burn_turn,
+      bleed_turn = bleed_turn,
+      poison = poison,
+      burn = burn,
+      bleed = bleed,
+      stun = stun,
       damage = damage,
       breath = breath,
       blood = blood
@@ -282,6 +296,13 @@ class HTTPClient:
     name_prefix_art: Optional[str] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None,
+    poison_turn: Optional[int] = None,
+    burn_turn: Optional[int] = None,
+    bleed_turn: Optional[int] = None,
+    poison: Optional[int] = None,
+    burn: Optional[int] = None,
+    bleed: Optional[int] = None,
+    stun: Optional[int] = None,
     damage: Optional[int] = None,
     breath: Optional[int] = None,
     blood: Optional[int] = None,
@@ -293,6 +314,13 @@ class HTTPClient:
       name_prefix_art = name_prefix_art,
       description = description,
       banner = banner,
+      poison_turn = poison_turn,
+      burn_turn = burn_turn,
+      bleed_turn = bleed_turn,
+      poison = poison,
+      burn = burn,
+      bleed = bleed,
+      stun = stun,
       damage = damage,
       breath = breath,
       blood = blood
@@ -327,6 +355,7 @@ class HTTPClient:
     surname: Optional[str] = None,
     flags: Optional[SupportsInt] = None,
     type: Optional[NpcType] = None,
+    energy: Optional[int] = None,
     max_life: Optional[int] = None,
     max_breath: Optional[int] = None,
     max_blood: Optional[int] = None,
@@ -342,6 +371,7 @@ class HTTPClient:
       surname = surname,
       flags = flags,
       type = type,
+      energy = energy,
       max_life = max_life,
       max_breath = max_breath,
       max_blood = max_blood,
@@ -356,8 +386,8 @@ class HTTPClient:
     self, guild_id: int, *,
     name: str,
     percent: int,
-    npc_kind: SupportsInt,
-    energy: Optional[int] = None,
+    npc_type: SupportsInt,
+    energy: int,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> AbilityPayload:
@@ -366,7 +396,7 @@ class HTTPClient:
       name = name,
       energy = energy,
       percent = percent,
-      npc_kind = int(npc_kind),
+      npc_type = int(npc_type),
       description = description,
       banner = banner
     )
@@ -374,24 +404,22 @@ class HTTPClient:
   async def update_ability(
     self, guild_id: int, id: int, *,
     name: Optional[str] = None,
-    type: Optional[AbilityType] = None,
     energy: Optional[int] = None,
     percent: Optional[int] = None,
-    npc_kind: Optional[SupportsInt] = None,
+    npc_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> AbilityPayload:
     route = Route("PUT", "/abilities/{guild_id}/{id}", guild_id=guild_id, id=id)
     payload = NoNullDict(
       name = name,
-      type = type,
       energy = energy,
       percent = percent,
       description = description,
       banner = banner
     )
-    if npc_kind is not None:
-      payload.update(npc_kind=int(npc_kind))
+    if npc_type is not None:
+      payload.update(npc_type=int(npc_type))
     return await self.request(route, json=payload)
   async def delete_ability(self, guild_id: int, id: int) -> AbilityPayload:
     route = Route("DELETE", "/abilities/{guild_id}/{id}", guild_id=guild_id, id=id)
@@ -399,23 +427,25 @@ class HTTPClient:
   async def create_family(
     self, guild_id: int, *,
     name: str,
-    npc_type: int,
     percent: int,
+    npc_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> FamilyPayload:
     route = Route("POST", "/families/{guild_id}", guild_id=guild_id)
     payload = NoNullDict(
       name = name,
-      npc_type = npc_type,
       percent = percent,
       description = description,
       banner = banner
     )
+    if npc_type is not None:
+      payload.update(npc_type=int(npc_type))
     return await self.request(route, json=payload)
   async def update_family(
     self, guild_id: int, id: int, *,
     name: Optional[str] = None,
+    npc_type: Optional[SupportsInt] = None,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -427,13 +457,15 @@ class HTTPClient:
       description = description,
       banner = banner
     )
+    if npc_type is not None:
+      payload.update(npc_type=int(npc_type))
     return await self.request(route, json=payload)
   async def delete_family(self, guild_id: int, id: int) -> FamilyPayload:
     route = Route("DELETE", "/families/{guild_id}/{id}", guild_id=guild_id, id=id)
     return await self.request(route)
   async def create_player(
     self, guild_id: int, id: int, *,
-    npc_kind: NpcType,
+    npc_type: NpcType,
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
     prodigy_roll: Optional[int] = None,
@@ -443,7 +475,7 @@ class HTTPClient:
   ) -> PlayerPayload:
     route = Route("POST", "/players/{guild_id}/{id}", guild_id=guild_id, id=id)
     payload = NoNullDict(
-      expected_npc_kind = npc_kind,
+      npc_type = npc_type,
       ability_roll = ability_roll,
       family_roll = family_roll,
       prodigy_roll = prodigy_roll,

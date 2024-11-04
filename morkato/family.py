@@ -1,7 +1,7 @@
 from __future__ import annotations
 from .utils import (CircularDict, NoNullDict)
 from typing_extensions import Self
-from .npc import Npc
+from .npc import (Npc, NpcTypeFlags)
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
@@ -39,7 +39,7 @@ class Family:
   def from_payload(self, payload: FamilyPayload) -> None:
     self.name = payload["name"]
     self.percent = payload["percent"]
-    self.npc_type = payload["npc_type"]
+    self.npc_type = NpcTypeFlags(payload["npc_type"])
     self.description = payload["description"]
     self.banner = payload["banner"]
   def clear(self) -> None:
@@ -69,11 +69,13 @@ class Family:
   async def update(
     self, *,
     name: Optional[str] = None,
+    npc_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Self:
     payload = NoNullDict(
       name=name,
+      npc_type=npc_type,
       description=description,
       banner=banner
     )

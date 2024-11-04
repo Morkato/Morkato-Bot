@@ -1,229 +1,151 @@
 from morkato.work.context import MorkatoContext
 from morkato.work.extension import command
 from morkato.work.project import registry
-from morkato.guild import LazyGuildObjectListProtocol
-from morkato.errors import PlayerNotFoundError
-from morkato.ability import Ability
-from morkato.family import Family
-from morkato.player import Player
+from morkato.abc import UnresolvedSnowflakeList
 from morkato.guild import Guild
-from app.types import ObjectWithPercentT
+from morkato.art import (ArtType, Art)
+from morkato.npc import Npc
 from app.extension import BaseExtension
-from app.view import RegistryPlayerUi
-from random import randint
-from typing import (
-  Optional,
-  Callable,
-  Dict
-)
+from datetime import (datetime, timedelta)
+from typing import (Callable, ClassVar, Optional, Dict, List)
+from enum import Enum
 import app.converters
 import app.embeds
 import app.errors
 
+class ArtOption(Enum):
+  GET = "get"
+  LIST = "list"
+class TrainOption(Enum):
+  TRAIN = "train"
+  NOTRAIN = "notrain"
 @registry
 class RPGCommands(BaseExtension):
+  RESPIRATION_KEYS: ClassVar[List[str]] = ["resp", "respiration"]
+  KEKKIJUTSU_KEYS: ClassVar[List[str]] = ["kekki", "kekkijutsu"]
+  FIGHTING_STYLE_KEYS: ClassVar[List[str]] = ["fight", "fighting-style", "fight-style"]
+  ENERGY_PEER: ClassVar[int] = 72
+  TRAIN_OPTIONS_HANDLERS: Dict[TrainOption, Callable[..., None]]
+  ART_OPTIONS_HANDLERS: Dict[ArtOption, Callable[..., None]]
   LANGUAGE: str
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
-  async def registry_family(self, ctx: MorkatoContext, player: Player) -> Family:
-    families = sorted(player._families.values(), key=lambda family: len(family.name), reverse=True)
-    if len(families) == 0:
-      raise NotImplementedError
-    family = await ctx.send_select_menu(
-      models=families,
-      title=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuTitle"),
-      description=self.builder.get_content(self.LANGUAGE, "familySelectMenuDescription", user=ctx.author),
-      selected_line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
-      line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuNotSelectedLineStyle"),
-      key=lambda family: app.embeds.FamilyBuilder(family)
+    self.TRAIN_OPTIONS_HANDLERS = {
+      TrainOption.TRAIN: self.on_train_train,
+      TrainOption.NOTRAIN: self.on_train_notrain
+    }
+    self.ART_OPTIONS_HANDLERS = {
+      ArtOption.GET: self.on_art_get,
+      ArtOption.LIST: self.on_art_list
+    }
+  def release(self, current_time: datetime, npc: Npc) -> int:
+    last_action = npc.last_action
+    if last_action is None:
+      if npc.max_energy == npc.energy:
+        raise app.errors.NoActionError
+      return npc.max_energy
+    if npc.energy >= npc.max_energy:
+      raise app.errors.NoActionError
+    difference = int(timedelta.total_seconds(current_time - last_action))
+    total_points = difference // self.ENERGY_PEER
+    total_energy = npc.energy + total_points
+    if total_energy > npc.max_energy:
+      return npc.max_energy
+    return total_energy
+  def extract_art_type(self, query: str) -> ArtType:
+    (opt, *args) = query.split(' ')
+    if args:
+      raise app.errors.NoActionError
+    opt = app.converters.strip_text_all(opt)
+    if opt in self.RESPIRATION_KEYS:
+      return Art.RESPIRATION
+    if opt in self.KEKKIJUTSU_KEYS:
+      return Art.KEKKIJUTSU
+    if opt in self.FIGHTING_STYLE_KEYS:
+      return Art.FIGHTING_STYLE
+    raise app.errors.NoActionError
+  async def on_train_train(self, ctx: MorkatoContext, query: str, *, guild: Guild, arts: UnresolvedSnowflakeList[Art]) -> None:
+    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+    npc = player.npc
+    if npc is None:
+      raise app.errors.NoActionError
+    art = await self.convert(app.converters.ArtConverter, ctx, query, arts=guild.arts)
+    current_energy = npc.energy
+    current_time = datetime.now()
+    if art.energy > current_energy:
+      current_energy = self.release(current_time, npc)
+      if art.energy > current_energy:
+        raise app.errors.AppError("energyIs")
+    last_action = int(current_time.timestamp() * 1000)
+    energy = current_energy - art.energy
+    life = art.life + npc.max_life
+    breath = art.breath + npc.max_breath
+    blood = art.blood + npc.max_blood
+    await npc.update(
+      max_life = life,
+      max_breath = breath,
+      max_blood = blood,
+      energy = energy,
+      last_action = last_action
     )
-    await player.update(family=family)
-    content = self.get_content(self.LANGUAGE, "onRegistryPlayerFamily", ctx.author.name, family.name)
-    await ctx.send(content)
-    return family
-  async def registry_player(self, ctx: MorkatoContext, guild: Guild) -> Optional[Player]:
-    embed = await app.embeds.PlayerChoiceTypeBuilder().build(0)
-    view = RegistryPlayerUi(guild, ctx.bot.loop)
-    message = await ctx.send(embed=embed, view=view)
-    player = await view.get()
-    await message.delete()
-    return player
-  async def get_or_registry_player(self, ctx: MorkatoContext, guild: Guild) -> Player:
-    try:
-      return await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    except PlayerNotFoundError:
-      return await self.registry_player(ctx, guild)
-  async def roll(
-    self, models: LazyGuildObjectListProtocol[ObjectWithPercentT], *,
-    filter: Optional[Callable[[ObjectWithPercentT], bool]] = None
-  ) -> ObjectWithPercentT:
-    if not models.already_loaded():
-      await models.resolve()
-    if len(models) == 0:
-      raise NotImplementedError
-    objs = [elem for elem in models if filter(elem)] if filter is not None else models
-    if len(objs) == 0:
-      raise NotImplementedError
-    total = sum(obj.percent for obj in objs)
-    generated = randint(0, total)
-    current = 0
-    for obj in objs:
-      current += obj.percent
-      is_valid = 0 >= generated - current
-      if is_valid:
-        break
-    return obj
-  def filter_family(self, player: Player, family: Family) -> bool:
-    return (
-      family.npc_kind == player.expected_npc_kind
-        and not player.has_family(family)
-    )
-  def filter_ability(self, player: Player, ability: Ability) -> bool:
-    return (
-      player.family.get_ability(ability.id) is None
-        and not player.has_ability(ability)
-        and player.is_valid_ability(ability)
-    )
-  @command(
-    name = "sim-ability-roll",
-    description = "[RPG] Simula os rolls de habilidade."
-  )
-  async def sim_ability_roll(self, ctx: MorkatoContext, /, quantity: int) -> None:
-    if not quantity in range(1, 1000000):
-      content = self.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
-      await ctx.send(content)
-      return
-    guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.abilities)
-    rolled_abilities: Dict[int, int] = {}
-    for i in range(quantity):
-      ability = await self.roll(guild.abilities)
-      rolled: Optional[int] = rolled_abilities.get(ability.id)
-      rolled = 1 if rolled is None else rolled + 1
-      rolled_abilities[ability.id] = rolled
-    abilities = sorted(guild.abilities, key=lambda ability: len(ability.name))
-    result = app.embeds.AbilityRolledBuilder(
-      models = abilities,
-      rolled = rolled_abilities,
-      quantity = quantity
-    )
-    await ctx.send_embed(result, resolve_all=True)
-  @command(
-    name = "sim-family-roll",
-    description = "[RPG] Simula os rolls de famílias."
-  )
-  async def sim_family_roll(self, ctx: MorkatoContext, /, quantity: int) -> None:
-    if not quantity in range(1, 1000000):
-      content = self.builder.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
-      await ctx.send(content)
-      return
-    guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.families)
-    rolled_families: Dict[int, int] = {}
-    for i in range(quantity):
-      family = await self.roll(guild.families)
-      rolled: Optional[int] = rolled_families.get(family.id)
-      rolled = 1 if rolled is None else rolled + 1
-      rolled_families[family.id] = rolled
-    families = sorted(guild.families, key=lambda family: len(family.name))
-    result = app.embeds.FamilyRolledBuilder(
-      models = families,
-      rolled = rolled_families,
-      quantity = quantity
-    )
-    await ctx.send_embed(result, resolve_all=True)
-  @command(name="family")
-  async def family(self, ctx: MorkatoContext) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.families)
-    if len(guild.families) == 0:
-      raise app.errors.AppError("onFamilyEmpty")
-    player = await self.get_or_registry_player(ctx, guild)
-    family = await self.roll(guild.families, filter=lambda family: self.filter_family(player, family))
-    is_valid = player.family_roll != 0
-    if is_valid:
-      await player.sync_family(family)
-    builder = app.embeds.FamilyRegistryPlayer(family, is_valid)
+    builder = app.embeds.PlayerArtTrainBuilder(player, npc, art)
     await ctx.send_embed(builder, resolve_all=True)
-  @command(name="ability")
-  async def ability(self, ctx: MorkatoContext, *, ability_query: Optional[str]) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    if ability_query is not None:
-      ability = await self.convert(app.converters.AbilityConverter, ctx, ability_query, abilities=guild.abilities)
-      builder = app.embeds.AbilityBuilder(ability)
-      await ctx.send_embed(builder)
-      return
-    await self.resolve(guild.abilities)
-    if len(guild.abilities) == 0:
-      raise app.errors.AppError("onAbilityEmpty")
-    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    if player.family is None:
-      if player.family_roll != 0:
-        raise app.errors.AppError("onUnChoiceFamilyPlayerForRollAbilityHasRolls", player.family_roll)
-      await self.registry_family(ctx, player)
-    ability = await self.roll(guild.abilities, filter=lambda ability: self.filter_ability(player, ability))
-    is_valid = player.ability_roll != 0
-    if is_valid:
-      await player.sync_ability(ability)
-    builder = app.embeds.AbilityRegistryPlayer(ability, is_valid)
+  async def on_train_notrain(self, ctx: MorkatoContext, query: str, *, guild: Guild, arts: UnresolvedSnowflakeList[Art]) -> None:
+    art = await self.convert(app.converters.ArtConverter, ctx, query, arts=arts)
+    builder = app.embeds.ArtTrainBuilder(art)
     await ctx.send_embed(builder, resolve_all=True)
-  @command(name="prodigy")
-  async def prodigy(self, ctx: MorkatoContext) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    flags = player.flags
-    if player.prodigy_roll == 0:
-      raise app.errors.AppError("onPlayerEmptyProdigyRoll")
-    if flags.prodigy:
-      raise app.errors.AppError("onPlayerAlreadyIsProdigy")
-    generated = randint(0, 5)
-    if generated != 1:
-      await player.update(prodigy_roll=player.prodigy_roll - 1)
-      raise app.errors.AppError("onPlayerGetUpProdigy")
-    new_flags = flags.copy()
-    new_flags.set(flags.PRODIGY)
-    await player.update(prodigy_roll=player.prodigy_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetProdigy")
-    await ctx.send(content)
-  @command(name="mark")
-  async def mark(self, ctx: MorkatoContext) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    flags = player.flags
-    if player.mark_roll == 0:
-      raise app.errors.AppError("onPlayerEmptyMarkRoll")
-    if flags.mark:
-      raise app.errors.AppError("onPlayerAlreadyIsMark")
-    generated = randint(0, 20)
-    if generated != 1:
-      await player.update(mark_roll=player.mark_roll - 1)
-      raise app.errors.AppError("onPlayerGetUpMark")
-    new_flags = flags.copy()
-    new_flags.set(flags.MARK)
-    await player.update(mark_roll=player.mark_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetMark")
-    await ctx.send(content)
-  @command(name="berserk")
-  async def berserk(self, ctx: MorkatoContext) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
-    flags = player.flags
-    if player.berserk_roll == 0:
-      raise app.errors.AppError("onPlayerEmptyBerserkRoll")
-    if flags.berserk:
-      raise app.errors.AppError("onPlayerAlreadyIsBerserk")
-    generated = randint(0, 20)
-    if generated != 1:
-      await player.update(berserk_roll=player.berserk_roll - 1)
-      raise app.errors.AppError("onPlayerGetUpBerserk")
-    new_flags = flags.copy()
-    new_flags.set(flags.BERSERK)
-    await player.update(berserk_roll=player.berserk_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetBerserk")
-    await ctx.send(content)
-  @command(name="attack", aliases=["a"])
-  async def attack(self, ctx: MorkatoContext, *, attack_query: str) -> None:
-    guild = await self.get_morkato_guild(ctx.guild)
-    attack = await self.convert(app.converters.AttackConverter, ctx, attack_query, arts=guild.arts, attacks=guild._attacks)
-    builder = app.embeds.AttackBuilder(attack)
+  async def on_art_get(self, ctx: MorkatoContext, query: str, *, arts: UnresolvedSnowflakeList[Art]) -> None:
+    art = await self.convert(app.converters.ArtConverter, ctx, query, arts=arts)
+    builder = app.embeds.ArtBuilder(art)
     await ctx.send_embed(builder, resolve_all=True)
+  async def on_art_list(self, ctx: MorkatoContext, query: str, *, arts: UnresolvedSnowflakeList[Art]) -> None:
+    by_type = self.extract_art_type(query)
+    by_type_arts = (art for art in arts if art.type == by_type)
+    await ctx.send_select_menu(
+      models = sorted(by_type_arts, key=lambda art: len(art.name)),
+      title = self.builder.get_content_unknown_formatting(self.LANGUAGE, "selectMenuArtTitle"),
+      description = self.builder.get_content_unknown_formatting(self.LANGUAGE, "selectMenuArtDescription"),
+      selected_line_style = self.builder.get_content_unknown_formatting(self.LANGUAGE, "selectMenuArtSelectedLineStyle"),
+      line_style = self.builder.get_content_unknown_formatting(self.LANGUAGE, "selectMenuArtLineStyle"),
+      key = lambda art: app.embeds.ArtBuilder(art)
+    )
+  @command(name="train")
+  async def train(self, ctx: MorkatoContext, opt: Optional[TrainOption], *, art_query: str) -> None:
+    if opt is None:
+      opt = TrainOption.TRAIN
+    guild = await self.get_morkato_guild(ctx.guild)
+    handler = self.TRAIN_OPTIONS_HANDLERS[opt]
+    await guild.arts.resolve()
+    await handler(ctx, art_query, guild=guild, arts=guild.arts)
+  @command(name="art")
+  async def art(self, ctx: MorkatoContext, opt: Optional[ArtOption], *, art_query: str) -> None:
+    if opt is None:
+      opt = ArtOption.GET
+    guild = await self.get_morkato_guild(ctx.guild)
+    handler = self.ART_OPTIONS_HANDLERS[opt]
+    await guild.arts.resolve()
+    await handler(ctx, art_query, arts=guild.arts)
+  # @command(name="release")
+  # async def release1(self, ctx: MorkatoContext) -> None:
+  #   guild = await self.get_morkato_guild(ctx.guild)
+  #   player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
+  #   last_action = player.npc.last_action
+  #   if last_action is None:
+  #     if player.npc.energy == player.npc.max_energy:
+  #       raise app.errors.NoActionError
+  #     await player.npc.update(energy=player.npc.max_energy)
+  #     raise app.errors.NoActionError
+  #   if player.npc.energy >= player.npc.max_energy:
+  #     raise app.errors.NoActionError
+  #   now = datetime.now()
+  #   last_action = now - last_action
+  #   total = int(last_action.total_seconds())
+  #   points = total // self.ENERGY_PEER
+  #   if points == 0:
+  #     raise app.errors.AppError("energyPointsEmptyPeer")
+  #   receive = player.npc.energy + points
+  #   if receive > player.npc.max_energy:
+  #     receive = player.npc.max_energy
+  #   await player.npc.update(energy=receive, last_action=int(now.timestamp() * 1000.0))
+  #   content = self.get_content(self.LANGUAGE, "receiveEnergyPoints", points=points, energy=receive, max_energy=player.npc.max_energy)
+  #   await ctx.send(content)

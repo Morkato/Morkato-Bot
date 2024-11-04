@@ -5,12 +5,22 @@ from morkato.work.builder import (
 from morkato.attack import Attack
 from morkato.family import Family
 from morkato.player import Player
+from typing_extensions import Self
 
+class NoActionError(Exception): ...
 class AppError(Exception):
   def __init__(self, key: str, /, *args, **parameters) -> None:
     self.key = key
     self.args = args
     self.parameters = parameters
+    self.reply_message = False
+    self.is_unknown_params = False
+  def reply(self) -> Self:
+    self.reply_message = True
+    return self
+  def unkown_params(self) -> Self:
+    self.is_unknown_params = True
+    return self
   def build(self, builder: MessageBuilder, lang: str, /) -> str:
     try:
       return builder.get_content(lang, self.key, *self.args, **self.parameters)

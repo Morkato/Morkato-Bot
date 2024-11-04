@@ -12,7 +12,5 @@ def has_guild_permissions(**perms):
     user = ctx.author if isinstance(ctx, commands.Context) else ctx.user
     permissions = user.guild_permissions # type: ignore
     missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
-    if not missing:
-      return True
-    raise commands.MissingPermissions(missing)
+    return not missing
   return predicate

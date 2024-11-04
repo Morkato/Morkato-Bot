@@ -14,25 +14,19 @@ else:
   MorkatoBot = Any
 
 class MorkatoCommandTree(apc.CommandTree[MorkatoBot]):
+  async def handle_error(self, ctx: MorkatoContext, exception: Exception) -> None:
+    cls = type(exception)
+    handler = self.client.project.get_error_handler(cls)
+    await handler.invoke(ctx, exception)
   async def on_error(self, interaction: Interaction, exception: apc.AppCommandError) -> None:
     context = await MorkatoContext.from_interaction(interaction)
-    project = self.client.project
-    base_exception: Optional[Exception] = None
-    if isinstance(exception, (apc.CommandInvokeError)):
-      base_exception = exception.original
-    exc_cls = type(exception)
-    callback = project.catching.get(exc_cls)
-    if callback is not None:
-      await callback.invoke(context, exception)
-      return
-    if base_exception is None:
-      return await super().on_error(interaction, exception)
-    base_exc_cls = type(base_exception)
-    callback = project.catching.get(base_exc_cls)
-    if callback is None:
-      try:
-        catching = (callback for (cls, callback) in project.catching.items() if issubclass(base_exc_cls, cls))
-        callback = next(catching)
-      except StopIteration:
-        return await super().on_error(interaction, exception)
-    await callback.invoke(context, base_exception)
+    try:      
+      if isinstance(exception, (apc.CommandInvokeError)):
+        try:
+          await self.handle_error(context, exception.original)
+          return
+        except KeyError:
+          pass
+      await self.handle_error(context, exception)
+    except KeyError:
+      super().on_error(interaction, exception)

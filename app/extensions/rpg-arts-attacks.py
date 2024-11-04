@@ -14,12 +14,12 @@ import app.embeds
 import app.checks
 
 class AttackChoiceIntent(Enum):
-  UNAVOIDABLE = (1 << 2)
-  INDEFENSIBLE = (1 << 3)
-  AREA = (1 << 4)
-  NOT_COUNTER_ATTACKABLE = (1 << 5)
-  COUNTER_ATTACKABLE = (1 << 6)
-  DEFENSIVE = (1 << 7)
+  UNAVOIDABLE = AttackFlags.UNAVOIDABLE
+  INDEFENSIBLE = AttackFlags.INDEFENSIBLE
+  AREA = AttackFlags.AREA
+  NOT_COUNTER_ATTACKABLE = AttackFlags.NOT_COUNTER_ATTACKABLE
+  COUNTER_ATTACKABLE = AttackFlags.COUNTER_ATTACKABLE
+  DEFENSIVE = AttackFlags.DEFENSIVE
 @registry
 class RPGArtsAttacksExtension(BaseExtension):
   LANGUAGE: str
@@ -111,6 +111,13 @@ class RPGArtsAttacksExtension(BaseExtension):
     prefix: Optional[str],
     description: Optional[str],
     banner: Optional[str],
+    poison_turn: Optional[int],
+    burn_turn: Optional[int],
+    bleed_turn: Optional[int],
+    poison: Optional[int],
+    burn: Optional[int],
+    bleed: Optional[int],
+    stun: Optional[int],
     damage: Optional[int],
     breath: Optional[int],
     blood: Optional[int]
@@ -123,6 +130,13 @@ class RPGArtsAttacksExtension(BaseExtension):
       name_prefix_art = prefix,
       description = description,
       banner = banner,
+      poison_turn = poison_turn,
+      burn_turn = burn_turn,
+      bleed_turn = bleed_turn,
+      poison = poison,
+      burn = burn,
+      bleed = bleed,
+      stun = stun,
       damage = damage,
       breath = breath,
       blood = blood
@@ -142,6 +156,13 @@ class RPGArtsAttacksExtension(BaseExtension):
     prefix: Optional[str],
     description: Optional[str],
     banner: Optional[str],
+    poison_turn: Optional[int],
+    burn_turn: Optional[int],
+    bleed_turn: Optional[int],
+    poison: Optional[int],
+    burn: Optional[int],
+    bleed: Optional[int],
+    stun: Optional[int],
     damage: Optional[int],
     breath: Optional[int],
     blood: Optional[int]
@@ -151,6 +172,13 @@ class RPGArtsAttacksExtension(BaseExtension):
       name = name,
       name_prefix_art = prefix,
       description = description,
+      poison_turn = poison_turn,
+      burn_turn = burn_turn,
+      bleed_turn = bleed_turn,
+      poison = poison,
+      burn = burn,
+      bleed = bleed,
+      stun = stun,
       banner = banner,
       damage = damage,
       breath = breath,
@@ -173,11 +201,11 @@ class RPGArtsAttacksExtension(BaseExtension):
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
-    if attack.intents.has_intent(intent.value):
+    if attack.flags.hasflag(intent.value):
       raise app.errors.AppError("attackAlreadyHasIntent")
-    new_intents = attack.intents.copy()
-    new_intents.set(intent.value)
-    await attack.update(intents=new_intents)
+    new_flags = attack.flags.copy()
+    new_flags.set(intent.value)
+    await attack.update(flags=new_flags)
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
@@ -190,8 +218,8 @@ class RPGArtsAttacksExtension(BaseExtension):
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
-    if attack.intents.is_empty():
+    if attack.flags.isempty():
       raise app.errors.AppError("attackIntentsIsEmpty")
-    await attack.update(intents=AttackFlags())
+    await attack.update(flags=AttackFlags(0))
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
