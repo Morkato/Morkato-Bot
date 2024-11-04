@@ -2,19 +2,18 @@ from morkato.work.context import MorkatoContext
 from morkato.work.converters import (ConverterManager, Converter)
 from morkato.work.project import registry
 from morkato.state import MorkatoConnectionState
+from morkato.abc import UnresolvedSnowflakeList
 from morkato.utils import DATE_FORMAT
+from morkato.http import HTTPClient
 from morkato.ability import Ability
 from morkato.family import Family
 from morkato.attack import Attack
 from morkato.art import Art
-from morkato.http import HTTPClient
-from morkato.guild import LazyGuildObjectListProtocol
 from datetime import datetime
 from unidecode import unidecode
 from discord import Interaction
 from typing import (
   Optional,
-  ClassVar,
   Iterator,
   TypeVar,
   Tuple,
@@ -62,7 +61,7 @@ class BaseConverter(Converter[P, T]):
     self.connection = connection
     self.converters = converters
     self.http = http
-  async def resolve(self, models: LazyGuildObjectListProtocol[Any], /) -> None:
+  async def resolve(self, models: UnresolvedSnowflakeList[Any], /) -> None:
     if not models.already_loaded():
       await models.resolve()
 _ID_REGEX = re.compile(r'([0-9]{15,20})$')
@@ -74,7 +73,7 @@ class IDConverter(BaseConverter[Union[str, int], T]):
     return arg
 @registry
 class AbilityConverter(IDConverter[Ability]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, abilities: LazyGuildObjectListProtocol[Ability]) -> Ability:
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, abilities: UnresolvedSnowflakeList[Ability]) -> Ability:
     await self.resolve(abilities)
     if isinstance(arg, int):
       ability = abilities.get(arg)
@@ -89,7 +88,7 @@ class AbilityConverter(IDConverter[Ability]):
     return ability
 @registry
 class FamilyConverter(IDConverter[Family]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, families: LazyGuildObjectListProtocol[Family]) -> Family:
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, families: UnresolvedSnowflakeList[Family]) -> Family:
     await self.resolve(families)
     if isinstance(arg, int):
       family = families.get(arg)
@@ -104,7 +103,7 @@ class FamilyConverter(IDConverter[Family]):
     return family
 @registry
 class ArtConverter(IDConverter[Art]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, arts: LazyGuildObjectListProtocol[Art]) -> Art:
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, arts: UnresolvedSnowflakeList[Art]) -> Art:
     await self.resolve(arts)
     if isinstance(arg, int):
       art = arts.get(arg)
@@ -131,7 +130,7 @@ class AttackConverter(IDConverter[Attack]):
     if not isinstance(second, str):
       return (primary, None)
     return (second, primary)
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, attacks: Dict[str, Attack], arts: LazyGuildObjectListProtocol[Art]) -> Attack:
+  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, attacks: Dict[str, Attack], arts: UnresolvedSnowflakeList[Art]) -> Attack:
     await self.resolve(arts)
     if isinstance(arg, int):
       attack = attacks.get(arg)

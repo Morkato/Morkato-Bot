@@ -1,19 +1,13 @@
 from __future__ import annotations
 from typing import (
-  Optional,
-  Callable,
-  Generic,
-  TypeVar,
   Dict
 )
-from .types import (SelectMenuObject, ArrayType)
 from discord import (
   Interaction,
   Button,
   Embed,
   ui
 )
-import asyncio
 
 class EmbedBuilder:
   async def build(self, page: int) -> Embed:

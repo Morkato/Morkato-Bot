@@ -30,6 +30,13 @@ class NpcFlags(Flags):
   def prodigy(self) -> bool: ...
   def mark(self) -> bool: ...
   def berserk(self) -> bool: ...
+class NpcTypeFlags(Flags):
+  HUMAN: int
+  ONI: int
+  HYBRID: int
+  def human(self) -> bool: ... # type: ignore
+  def oni(self) -> bool: ... # type: ignore
+  def hybrid(self) -> bool: ... # type: ignore
 class Npc:
   HUMAN: ClassVar[HumanType] = "HUMAN"
   ONI: ClassVar[OniType] = "ONI"
@@ -56,27 +63,26 @@ class Npc:
     self.current_life = payload["current_life"]
     self.current_breath = payload["current_breath"]
     self.current_blood = payload["current_blood"]
-    self.last_action = datetime.fromtimestamp(payload["last_action"] / 1000.0)
+    self.last_action = datetime.fromtimestamp(payload["last_action"] / 1000.0) if payload["last_action"] is not None else None
   def clear(self) -> None:
     self._abilities: Dict[int, Ability] = {}
   @property
   def created_at(self) -> datetime:
     return extract_datetime_from_snowflake(self)
-  @property
-  def max_energy(self) -> int:
-    return 100 + sum(ability.energy for ability in self._abilities.values())
   async def update(
     self, *,
     name: Optional[str] = None,
     surname: Optional[str] = None,
     flags: Optional[SupportsInt] = None,
     type: Optional[NpcType] = None,
+    energy: Optional[int] = None,
     max_life: Optional[int] = None,
     max_breath: Optional[int] = None,
     max_blood: Optional[int] = None,
     current_life: Optional[int] = None,
     current_breath: Optional[int] = None,
     current_blood: Optional[int] = None,
+    last_action: Optional[int] = None,
     icon: Optional[str] = None
   ) -> Self:
     kwargs = NoNullDict(
@@ -84,12 +90,14 @@ class Npc:
       surname = surname,
       flags = flags,
       type = type,
+      energy = energy,
       max_life = max_life,
       max_breath = max_breath,
       max_blood = max_blood,
       current_life = current_life,
       current_breath = current_breath,
       current_blood = current_blood,
+      last_action = last_action,
       icon = icon
     )
     if kwargs:

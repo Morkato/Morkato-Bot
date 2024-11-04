@@ -1,2 +1,4 @@
 ptBR:
   onPing: "Pong! Minha latência é **`%sms`**."
+  cacheCleanContentMessage: "O meu cache foi limpo com sucesso."
+  cacheCleanConfirmation: "Tem certeza que deseja limpar meu cache?"

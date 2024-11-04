@@ -61,6 +61,18 @@ class ProjectManager:
     return self.loaded_extensions.values()
   def add_extension(self, extension: ExtensionT) -> None:
     self.loaded_extensions[extension.__extension_name__] = extension
+  def get_error_handler(self, cls: Type[Exception]) -> ErrorCallback:
+    handler  = self.catching.get(cls)
+    if handler is None:
+      genn = (
+        handler
+        for (current_cls, handler) in self.catching.items()
+        if issubclass(cls, current_cls)
+      )
+      handler = next(genn, None)
+      if handler is None:
+        raise KeyError("Handler for :class %s: is not found." % cls)
+    return handler
   async def load_extension(self, extension: Type[ExtensionT], /) -> None:
     parameters = inspect.signature(MethodType(extension.__init__, object())).parameters
     (args, kwargs) = parse_arguments(parameters, key=self._get_value)

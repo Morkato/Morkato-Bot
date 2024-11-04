@@ -36,8 +36,8 @@ class RPGPlayer(BaseExtension):
       raise app.errors.AppError("playerAlreadyRegistered")
     await interaction.response.defer()
     npc = await player.registry(name, surname, icon=icon)
-    embed = await app.embeds.NpcCardBuilder(npc).build(0)
-    await interaction.edit_original_response(embed=embed)
+    builder = app.embeds.NpcCardBuilder(npc)
+    await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
     name="preset",
     description="[RPG Utilitários] Excluí o contexto para um jogador"

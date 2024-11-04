@@ -6,8 +6,10 @@ from .context import MorkatoContext
 from typing_extensions import Self
 from typing import (
   Coroutine,
+  Generic,
   Optional,
   Callable,
+  TypeVar,
   Type,
   List,
   Dict,
@@ -15,6 +17,7 @@ from typing import (
 )
 
 __all_extensions__: Dict[str, "Extension"] = {}
+ExceptionT = TypeVar('ExteptionT', bound=Exception)
 def get_extensions() -> Dict[str, "Extension"]:
   return  __all_extensions__
 def extension(cls):
@@ -34,22 +37,22 @@ def command(name: str, **attrs):
     return MorkatoCommand(func, name=name, **attrs)
   return decorator
 def exception(cls: Type[Exception]):
-  def decorator(func: Callable[[Extension, MorkatoContext, Exception], Coro[None]]) -> ErrorCallback:
+  def decorator(func: Callable[[Extension, MorkatoContext, ExceptionT], Coro[None]]) -> ErrorCallback[ExceptionT]:
     return ErrorCallback(func, cls)
   return decorator
-class ErrorCallback:
-  def __init__(self, callback: Callable[["Extension", MorkatoContext, Exception], Coro[None]], error_cls: Any) -> None:
+class ErrorCallback(Generic[ExceptionT]):
+  def __init__(self, callback: Callable[["Extension", MorkatoContext, ExceptionT], Coro[None]], error_cls: Any) -> None:
     self._extension: Optional[Extension] = None
     self.callback = callback
     self.err_cls = error_cls
-  def __call__(self, ctx: MorkatoContext, error: Exception) -> Coro[None]:
+  def __call__(self, ctx: MorkatoContext, error: ExceptionT) -> Coro[None]:
     return self.invoke(ctx, error)
   @property
   def extension_name(self) -> str:
     if self._extension is None:
       raise RuntimeError
     return self._extension.__extension_name__
-  async def invoke(self, ctx: MorkatoContext, error: Exception) -> None:
+  async def invoke(self, ctx: MorkatoContext, error: ExceptionT) -> None:
     if self._extension is None:
       raise RuntimeError
     await self.callback(self._extension, ctx, error)

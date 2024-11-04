@@ -5,6 +5,7 @@ from app.extension import BaseExtension
 from discord.interactions import Interaction
 from discord.channel import TextChannel
 from discord import app_commands as apc
+import app.errors
 
 guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
 
@@ -43,3 +44,15 @@ class Utility(BaseExtension):
       await category.create_text_channel(**kwargs)
       await channel.delete()
     await interaction.edit_original_response(content="Tudo certo! Os canais foram recriados.")
+  @apc.command(
+    name = "cache-clean",
+    description = "[Utilitário] Limpa o meu cache."
+  )
+  async def cache_clean(self, interaction: Interaction) -> None:
+    content = self.builder.get_content(self.LANGUAGE, "cacheCleanConfirmation")
+    conf = await self.send_confirmation(interaction, content = content)
+    if not conf:
+      raise app.errors.NoActionError
+    self.connection.clear()
+    content = self.builder.get_content(self.LANGUAGE, "cacheCleanContentMessage")
+    await interaction.edit_original_response(content=content, view=None)

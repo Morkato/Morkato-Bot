@@ -1,5 +1,8 @@
+from numerize.numerize import numerize
 from .base import BaseEmbedBuilder
 from discord.embeds import Embed
+from morkato.player import Player
+from morkato.npc import Npc
 from morkato.art import Art
 
 class ArtBuilder(BaseEmbedBuilder):
@@ -81,3 +84,50 @@ class ArtUpdatedBuilder(ArtBuilder):
       text = self.footer_text.format(art=self.art)
     )
     return embed
+class ArtTrainBuilder(BaseEmbedBuilder):
+  def __init__(self, art: Art) -> None:
+    self.art = art
+  async def build(self, page: int) -> Embed:
+    art = self.art
+    key: str
+    if art.type == art.RESPIRATION:
+      key = "artRespirationTitle"
+    elif art.type == art.KEKKIJUTSU:
+      key = "artKekkijutsuTitle"
+    elif art.type == art.FIGHTING_STYLE:
+      key = "artFightingStyleTitle"
+    title = self.builder.get_content(self.LANGUAGE, key, art=art)
+    description = "No description\n\n" if art.description is None else "%s\n\n" % art.description
+    description += self.builder.get_content(self.LANGUAGE, "trainLifeUpLineStyle", life=numerize(art.life)) + '\n'
+    if art.type in (art.RESPIRATION, art.FIGHTING_STYLE):
+      description += self.builder.get_content(self.LANGUAGE, "trainBreathUpLineStyle", breath=numerize(art.breath)) + '\n'
+    if art.type in (art.KEKKIJUTSU, art.FIGHTING_STYLE):
+      description += self.builder.get_content(self.LANGUAGE, "trainBloodUpLineStyle", breath=numerize(art.blood)) + '\n'
+    description += self.builder.get_content(self.LANGUAGE, "trainEnergyDownLineStyle", energy=art.energy) + '\n'
+    embed = Embed(
+      title = title,
+      description = description
+    )
+    if art.banner is not None:
+      embed.set_image(url=art.banner)
+    return embed
+class PlayerArtTrainBuilder(ArtTrainBuilder):
+  def __init__(self, npc: Npc, art: Art) -> None:
+    super().__init__(art)
+    self.npc = npc
+  async def build(self, page: int) -> Embed:
+    embed = await super().build(page)
+    art = self.art
+    npc = self.npc
+    author_name: str
+    if npc.type == npc.HUMAN:
+      author_name = self.builder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath))
+    elif npc.type == npc.ONI:
+      author_name = self.builder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life + art.life), blood=numerize(npc.max_blood + art.blood))
+    elif npc.type == npc.HYBRID:
+      author_name = self.builder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath), blood=numerize(npc.max_blood + art.blood))
+    embed.set_author(
+      name = author_name,
+      icon_url = npc.icon
+    )
+    return

@@ -1,4 +1,4 @@
-from humanize.number import intword
+from numerize.numerize import numerize
 from morkato.attack import (
   AttackFlags,
   Attack
@@ -42,13 +42,41 @@ class AttackBuilder(BaseEmbedBuilder):
         if self.attack.blood == 0
         else self.builder.get_content(self.LANGUAGE, "attackBloodLineStyle", blood=numerize(self.attack.blood))
       ) + '\n'
+    if self.attack.stun != 0:
+      headers += self.builder.get_content(self.LANGUAGE, "attackStunLineStyle", stun=numerize(self.attack.stun)) + '\n'
+    if self.attack.bleed != 0:
+      headers += self.builder.get_content(self.LANGUAGE, "attackBleedingLineStyle", bleed=numerize(self.attack.bleed)) + '\n'
+    if self.attack.burn != 0:
+      headers += self.builder.get_content(self.LANGUAGE, "attackBurningLineStyle", burn=numerize(self.attack.burn)) + '\n'
+    if self.attack.poison != 0:
+      headers += self.builder.get_content(self.LANGUAGE, "attackPoisonLineStyle", poison=numerize(self.attack.poison)) + '\n'
     headers += '\n'
-    intents = (
+    if self.attack.bleed_turn != 0:
+      headers += (
+        self.builder.get_content(self.LANGUAGE, "attackBleedingTurnLineStyle", turn=self.attack.bleed_turn)
+        if self.attack.bleed_turn == 1
+        else self.builder.get_content(self.LANGUAGE, "attackBleedingTurnPluralLineStyle", turn=self.attack.bleed_turn)
+      ) + '\n'
+    if self.attack.burn_turn != 0:
+      headers += (
+        self.builder.get_content(self.LANGUAGE, "attackBurningTurnLineStyle", turn=self.attack.burn_turn)
+        if self.attack.burn_turn == 1
+        else self.builder.get_content(self.LANGUAGE, "attackBurningTurnPluralLineStyle", turn=self.attack.burn_turn)
+      ) + '\n'
+    if self.attack.poison_turn != 0:
+      headers += (
+        self.builder.get_content(self.LANGUAGE, "attackPoisonTurnLineStyle", turn=self.attack.poison_turn)
+        if self.attack.poison_turn == 1
+        else self.builder.get_content(self.LANGUAGE, "attackPoisonTurnPluralLineStyle", turn=self.attack.poison_turn)
+      ) + '\n'
+    headers = headers.strip('\n')
+    headers += '\n\n'
+    flags = (
       self.builder.get_content_unknown_formatting(self.LANGUAGE, name)
       for (key, name) in self.INTENTS_MAP_LINE_STYLE.items()
-      if self.attack.intents.has_intent(key)
+      if self.attack.flags.hasflag(key)
     )
-    headers += '\n'.join(intents)
+    headers += '\n'.join(flags)
     return headers.strip('\n')
   async def build(self, page: int) -> Embed:
     description = self.attack.description

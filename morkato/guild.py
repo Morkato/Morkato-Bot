@@ -1,9 +1,9 @@
 from __future__ import annotations
 from datetime import datetime
-from .utils import (CircularDict, NoNullDict, DATE_FORMAT)
+from .utils import (UnresolvedSnowflakeListImpl, CircularDict, NoNullDict, DATE_FORMAT)
 from .ability import Ability
 from .family import Family
-from .abc import Snowflake
+from .abc import (UnresolvedSnowflakeList, Snowflake)
 from .player import Player
 from .npc import Npc
 from .attack import Attack
@@ -18,13 +18,10 @@ from typing_extensions import Self
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
-  Iterator,
   Optional,
-  Protocol,
   TypeVar,
   Union,
-  Dict,
-  List
+  Dict
 )
 if TYPE_CHECKING:
   from .state import MorkatoConnectionState
@@ -54,9 +51,9 @@ class Guild:
     self._players: CircularDict[int, Player] = CircularDict(128)
     self._attacks: Dict[int, Attack] = {}
 
-    self.arts: LazyGuildObjectListProtocol[Art] = LazyArtList(self.state, self)
-    self.abilities: LazyGuildObjectListProtocol[Ability] = LazyAbilityList(self.state, self)
-    self.families: LazyGuildObjectListProtocol[Family] = LazyFamilyList(self.state, self)
+    self.arts: UnresolvedSnowflakeList[Art] = UnresolvedArtList(self.state, self)
+    self.abilities: UnresolvedSnowflakeList[Ability] = UnresolvedAbilityList(self.state, self)
+    self.families: UnresolvedSnowflakeList[Family] = UnresolvedFamilyList(self.state, self)
   def now(self) -> datetime:
     addition = datetime.now() - self.start_rpg_date
     return self.start_rpg_calendar + addition
@@ -149,7 +146,7 @@ class Guild:
     self.arts.add(art)
     return art
   async def create_player(
-    self, user: Snowflake, npc_kind: NpcType, *,
+    self, user: Snowflake, npc_type: NpcType, *,
     ability_roll: Optional[int] = None,
     family_roll: Optional[int] = None,
     prodigy_roll: Optional[int] = None,
@@ -159,7 +156,7 @@ class Guild:
   ) -> Player:
     payload = await self.http.create_player(
       self.id, user.id,
-      npc_kind = npc_kind,
+      npc_type = npc_type,
       ability_roll = ability_roll,
       family_roll = family_roll,
       prodigy_roll = prodigy_roll,
@@ -171,8 +168,8 @@ class Guild:
     self._add_player(player)
     return player
   async def create_ability(
-    self, name: str, percent: int, npc_kind: SupportsInt, *,
-    energy: Optional[int] = None,
+    self, name: str, percent: int, npc_type: SupportsInt, *,
+    energy: int,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Ability:
@@ -181,7 +178,7 @@ class Guild:
       name = name,
       energy = energy,
       percent = percent,
-      npc_kind = npc_kind,
+      npc_type = npc_type,
       description = description,
       banner = banner
     )
@@ -190,7 +187,7 @@ class Guild:
     return ability
   async def create_family(
     self, name: str, *,
-    npc_type: int,
+    npc_type: SupportsInt,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -206,76 +203,53 @@ class Guild:
     family = Family(self.state, self, payload)
     self.families.add(family)
     return family
-class LazyGuildObjectListProtocol(Protocol[T]):
-  def __iter__(self) -> Iterator[T]: ...
-  def __len__(self) -> int: ...
-  def order(self) -> List[T]: ...
-  def already_loaded() -> bool: ...
-  async def resolve() -> None: ...
-  def add(self, object: T, /) -> None: ...
-  def remove(self, object: Snowflake, /) -> Optional[T]: ...
-  def get(self, id: int) -> Optional[T]: ...
-class LazyGuildObjectList(LazyGuildObjectListProtocol[T]):
+class UnresolvedObjectListImpl(UnresolvedSnowflakeListImpl[T]):
   def __init__(self, state: MorkatoConnectionState, guild: Guild) -> None:
+    super().__init__()
     self.state = state
+    self.http = state.http
     self.guild = guild
-    self.items: Dict[int, T] = {}
-    self._already_loaded = False
-  def __iter__(self) -> Iterator[T]:
-    return iter(self.items.values())
-  def __len__(self) -> int:
-    return len(self.items)
-  def order(self) -> List[T]:
-    return sorted(self, key=lambda item: item.id)
-  def already_loaded(self) -> bool:
-    return self._already_loaded
-  async def resolve(self) -> None:
-    raise NotImplementedError
-  def add(self, object: T, /) -> None:
-    self.items[object.id] = object
-  def remove(self, object: Snowflake, /) -> Optional[T]:
-    return self.items.pop(object.id, None)
-  def get(self, id: int, /) -> T:
-    return self.items.get(id)
-class LazyArtList(LazyGuildObjectList[Art]):
-  async def resolve(self) -> None:
-    http = self.state.http
-    payload = await http.fetch_arts(self.guild.id)
+class UnresolvedArtList(UnresolvedObjectListImpl[Art]):
+  async def resolve_impl(self) -> None:
+    guild = self.guild
+    http = self.http
+    state = self.state
+    payload = await http.fetch_arts(guild.id)
     for art_data in payload:
-      art = Art(self.state, self.guild, art_data)
+      art = Art(state, guild, art_data)
       attack_datas = art_data["attacks"]
       for attack_data in attack_datas:
-        attack = Attack(self.state, self.guild, art, attack_data)
+        attack = Attack(state, guild, art, attack_data)
         art._add_attack(attack)
       self.add(art)
-    self._already_loaded = True
-class LazyAbilityList(LazyGuildObjectList[Ability]):
-  async def resolve(self) -> None:
+class UnresolvedAbilityList(UnresolvedObjectListImpl[Ability]):
+  async def resolve_impl(self) -> None:
     guild = self.guild
     state = self.state
-    http = state.http
+    http = self.http
     payload = await http.fetch_abilities(guild.id)
     for ability_data in payload:
       ability = Ability(state, guild, ability_data)
       self.add(ability)
-    self._already_loaded = True
   def add(self, object: Ability, /) -> None:
-    super().add(object)
-    self.guild.abilities_percent += object.percent
+    if self.already_loaded():
+      super().add(object)
+      self.guild.abilities_percent += object.percent
   def remove(self, object: Snowflake, /) -> Optional[Ability]:
+    if not self.already_loaded():
+      return None
     ability = super().remove(object)
     if ability is not None:
       self.guild.abilities_percent -= ability.percent
     return ability
-class LazyFamilyList(LazyGuildObjectList[Family]):
-  async def resolve(self) -> None:
+class UnresolvedFamilyList(UnresolvedObjectListImpl[Family]):
+  async def resolve_impl(self) -> None:
     guild = self.guild
     state = self.state
-    http = state.http
+    http = self.http
     abilities = guild.abilities
-    if not abilities.already_loaded():
-      await abilities.resolve()
     payload = await http.fetch_families(guild.id)
+    await abilities.resolve()
     for family_data in payload:
       family = Family(state, guild, family_data)
       ability_ids = family_data["abilities"]
@@ -285,11 +259,13 @@ class LazyFamilyList(LazyGuildObjectList[Family]):
           raise RuntimeError("Unknown ability reference: %s for family: %s (Guild ID: %s)" % (ability_id, family.id, guild.id))
         family._add_ability(ability)
       self.add(family)
-    self._already_loaded = True
   def add(self, object: Family, /) -> None:
-    super().add(object)
-    self.guild.families_percent += object.percent
+    if self.already_loaded():
+      super().add(object)
+      self.guild.families_percent += object.percent
   def remove(self, object: Snowflake, /) -> Optional[Family]:
+    if not self.already_loaded():
+      return None
     family = super().remove(object)
     if family is not None:
       self.guild.families_percent -= family.percent

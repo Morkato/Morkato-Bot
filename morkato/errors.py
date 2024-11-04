@@ -15,6 +15,7 @@ class ModelType(Enum):
   FAMILY = "FAMILY"
   PLAYER = "PLAYER"
   ATTACK = "ATTACK"
+  GUILD = "GUILD"
   ART = "ART"
   NPC = "NPC"
   GENERIC = "GENERIC"

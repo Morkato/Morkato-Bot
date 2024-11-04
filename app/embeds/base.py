@@ -11,4 +11,4 @@ class BaseEmbedBuilder(EmbedBuilder):
     cls.LANGUAGE = builder.PT_BR
     cls.DEFAULT_ICON = icon
     cls.builder = builder
-    cls.CHUNK_SIZE = 10
+    cls.CHUNK_SIZE = 15
