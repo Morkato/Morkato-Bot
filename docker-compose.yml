@@ -1,0 +1,34 @@
+services:
+  database:
+    image: postgres:alpine
+    restart: always
+    container_name: morkato-api-database
+    environment:
+      POSTGRES_DB: morkato
+      POSTGRES_USER: morkato
+      POSTGRES_PASSWORD: morkato
+    networks:
+      - "morkato.net"
+    ports:
+      - 8080:5432
+    volumes:
+      - morkato-database:/var/lib/postgresql
+  api:
+    container_name: morkato-api
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5500:5500"
+    networks:
+      - "morkato.net"
+    environment:
+      DATASOURCE_USERNAME: morkato
+      DATASOURCE_PASSWORD: morkato
+      DATABASE_URL: jdbc:postgresql://morkato-api-database:5432/morkato
+volumes:
+  morkato-database:
+networks:
+  morkato.net:
+    external: true
