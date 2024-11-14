@@ -1,4 +1,4 @@
-from app.types import RolledObjectModel
+from app.interfaces import RolledObjectModel
 from discord.embeds import Embed
 from typing import (Dict, List)
 from .base import BaseEmbedBuilder

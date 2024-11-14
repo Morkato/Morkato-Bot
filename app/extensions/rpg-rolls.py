@@ -7,7 +7,7 @@ from morkato.ability import Ability
 from morkato.family import Family
 from morkato.player import Player
 from morkato.guild import Guild
-from app.types import ObjectWithPercentT
+from app.interfaces import ObjectWithPercentT
 from app.extension import BaseExtension
 from app.view import RegistryPlayerUi
 from random import randint

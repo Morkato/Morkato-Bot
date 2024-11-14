@@ -2,3 +2,7 @@ ptBR:
   onPing: "Pong! Minha latência é **`%sms`**."
   cacheCleanContentMessage: "O meu cache foi limpo com sucesso."
   cacheCleanConfirmation: "Tem certeza que deseja limpar meu cache?"
+  itsSelfOnWipeCategory: "Você não pode realizar está operação executando este comando nesta categoria."
+  channelCreatingOnWipeCategory: "Recriando o canal com o nome: **`{channel.name}`** na categoria: **`{category.name}`** mantendo as preferências."
+  channelCreatedMessage: "{author.mention} Este canal sofreu o processo de wipe, todas as mensagens foram excluídas, matendo as preferências."
+  wipeDone: "Tudo certo! Os canais foram recriados."
