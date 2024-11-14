@@ -26,9 +26,12 @@ class Utility(BaseExtension):
   async def wipe_category(self, interaction: Interaction, channel: TextChannel) -> None:
     await interaction.response.defer()
     if channel.category_id == interaction.channel.category_id:
-      await interaction.edit_original_response(content="Você não pode realizar está operação executando este comando nesta categoria.")
+      content = self.get_content(self.LANGUAGE, "itsSelfOnWipeCategory")
+      await interaction.edit_original_response(content=content)
       return
     category = channel.category
+    is_creating_content = self.builder.get_content_unknown_formatting(self.LANGUAGE, "channelCreatingOnWipeCategory")
+    is_created_channel = self.builder.get_content_unknown_formatting(self.LANGUAGE, "channelCreatedMessage")
     for channel in category.channels:
       kwargs = NoNullDict(
         name=channel.name,
@@ -40,10 +43,12 @@ class Utility(BaseExtension):
         default_auto_archive_duration=channel.default_auto_archive_duration,
         default_thread_slowmode_delay=channel.default_thread_slowmode_delay
       )
-      await interaction.channel.send("Recriando o canal com o nome: **`%s`** na categoria: **`%s`** mantendo as preferências." % (channel.name, category.name), reference=interaction.message)
-      await category.create_text_channel(**kwargs)
+      await interaction.edit_original_response(content=is_creating_content.format(channel=channel, category=category))
+      new_channel = await category.create_text_channel(**kwargs)
       await channel.delete()
-    await interaction.edit_original_response(content="Tudo certo! Os canais foram recriados.")
+      await new_channel.send(is_created_channel.format(author=interaction.user))
+    content = self.get_content(self.LANGUAGE, "wipeDone")
+    await interaction.edit_original_response(content=content)
   @apc.command(
     name = "cache-clean",
     description = "[Utilitário] Limpa o meu cache."

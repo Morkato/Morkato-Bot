@@ -2,5 +2,6 @@ ptBR:
   commandKwargsIsEmpty: "Ok. O que você quer atualizar?... Nada?"
   attackAlreadyHasIntent: "Este ataque já possui tal intenção."
   attackIntentsIsEmpty: "Este ataque não possui intenções. O que você quer restaurar?"
+  anhoterAttackAlreadyExists: "Parece que existe um outro ataque com o nome: **{name}** na arte: **{attack.art.name}**. Caso você crie um novo ataque, será necessário especificar a arte no qual deseja, por exemplo: **`{art.name}: {name}`**. Tem certeza que deseja criar dois ataques com o mesmo nome?"
 enUS:
   commandKwargsIsEmpty: "Ok. What do you want to update?... Nothing?"
