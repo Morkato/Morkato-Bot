@@ -2,7 +2,7 @@ services:
   database:
     image: postgres:alpine
     restart: always
-    container_name: morkato-api-database
+    container_name: dmorkato
     environment:
       POSTGRES_DB: morkato
       POSTGRES_USER: morkato
@@ -12,23 +12,48 @@ services:
     ports:
       - 8080:5432
     volumes:
-      - morkato-database:/var/lib/postgresql
+      - dmorkato:/var/lib/postgresql
   api:
     container_name: morkato-api
-    restart: always
+    restart: no
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      context: api
+      dockerfile: ../api.dockerfile
     ports:
       - "5500:5500"
     networks:
       - "morkato.net"
     environment:
-      DATASOURCE_USERNAME: morkato
-      DATASOURCE_PASSWORD: morkato
-      DATABASE_URL: jdbc:postgresql://morkato-api-database:5432/morkato
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-morkato}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-morkato}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://dmorkato:5432/morkato}
+  cdn:
+    container_name: morkato-cdn
+    restart: always
+    build:
+      context: cdn
+      dockerfile: ../cdn.dockerfile
+    ports:
+      - "5501:5500"
+    networks:
+      - "morkato.net"
+    environment:
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-morkato}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-morkato}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://dmorkato:5432/morkato}
+  bot:
+    container_name: morkato-bot
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: bot.dockerfile
+    networks:
+      - "morkato.net"
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:?The "BOT_TOKEN" is required to construct image and run container}
+      URL: ${URL:-http://morkato-api:5500}
 volumes:
-  morkato-database:
+  dmorkato:
+    external: true
 networks:
   morkato.net:
-    external: true
