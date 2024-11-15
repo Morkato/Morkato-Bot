@@ -103,6 +103,10 @@ class FamilyConverter(IDConverter[Family]):
     return family
 @registry
 class ArtConverter(IDConverter[Art]):
+  @classmethod
+  def _validate_art_name(self, name: str) -> None:
+    if re.match(r'^[^:\n]{2,32}$', name) is None:
+      raise app.errors.ValidationError("artNameInvalid", name=name)
   async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, arts: UnresolvedSnowflakeList[Art]) -> Art:
     await self.resolve(arts)
     if isinstance(arg, int):
@@ -119,17 +123,27 @@ class ArtConverter(IDConverter[Art]):
 @registry
 class AttackConverter(IDConverter[Attack]):
   @classmethod
+  def _validate_attack_name(self, name: str) -> None:
+    if re.match(r'^[^:\n]{2,32}$', name) is None:
+      raise app.errors.ValidationError("attackNameInvalid", name=name)
+  @classmethod
   def _extract_artname_attackname(cls, arg: str) -> Tuple[str, Optional[str]]:
-    matcher = re.match(r'([^:\n]{2,32})(?:\s*:\s*([^:\n]{2,32}))?', arg.strip())
-    if matcher is None:
-      raise NotImplementedError
-    primary = matcher.group(1)
-    second = matcher.group(2)
-    if not isinstance(primary, str):
-      raise NotImplementedError
-    if not isinstance(second, str):
-      return (primary, None)
-    return (second, primary)
+    art_name: Optional[str] = None
+    attack_name: str
+    arg = re.sub(r'\s\s+', ' ', arg)
+    arg = arg.strip()
+    if arg.startswith(':'):
+      raise app.errors.NoActionError
+    if ':' in arg:
+      (art_name, attack_name) = arg.split(':', 2)
+      if ':' in attack_name:
+        raise app.errors.NoActionError
+    else:
+      attack_name = arg
+    cls._validate_attack_name(attack_name)
+    if art_name is not None:
+      ArtConverter._validate_art_name(art_name)
+    return (attack_name, art_name)
   async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, attacks: Dict[str, Attack], arts: UnresolvedSnowflakeList[Art]) -> Attack:
     await self.resolve(arts)
     if isinstance(arg, int):

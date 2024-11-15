@@ -192,6 +192,24 @@ class RPGArtsAttacksExtension(BaseExtension):
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
   @apc.command(
+    name="attack-delete",
+    description="[RPG Utilitários] Excluí um ataque."
+  )
+  @apc.rename(attack_query="attack")
+  @apc.guild_only()
+  async def attack_delete(self, interaction: Interaction, attack_query: str) -> None:
+    await interaction.response.defer()
+    guild = await self.get_morkato_guild(interaction.guild)
+    attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
+    confirm = await self.send_confirmation(interaction, content=self.builder.get_content(self.LANGUAGE, "beforeDeleteAttack", attack=attack))
+    if not confirm:
+      return
+    await attack.delete()
+    await interaction.edit_original_response(
+      content=self.builder.get_content(self.LANGUAGE, "attackDelete", attack=attack),
+      view=None
+    )
+  @apc.command(
     name="attack-set-intent",
     description="[RPG Utilitários] Manipula as intenções de um ataque."
   )

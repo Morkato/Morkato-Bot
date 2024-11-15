@@ -26,6 +26,7 @@ class AppError(Exception):
       return builder.get_content(lang, self.key, *self.args, **self.parameters)
     except UnknownMessageContent:
       return "Unknown message content for key: **`%s.%s`**" % (lang, self.key)
+class ValidationError(AppError): ...
 class ArtNotFoundError(AppError):
   def __init__(self, art_query: str) -> None:
     super().__init__(f"error{type(self).__name__}", art_query)
