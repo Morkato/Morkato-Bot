@@ -80,5 +80,8 @@
     "respiracao",
     "unsync",
     "Unsync"
-  ]
+  ],
+  "files.associations": {
+    "iostream": "cpp"
+  }
 }
