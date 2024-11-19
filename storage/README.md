@@ -9,13 +9,13 @@ MorkatoStorage é um **serviço de armazenamento eficiente e de alta performance
       ###### Body (Conteúdo):
       1. **Objeto:** Dados binários armazenados, precedidos pelo tamanho (4 BYTES - UINT).
   2. Gerenciamento de Arquivos
-    - Cada arquivo pode conter até **2³² - 1 objetos**.
-    - Ao exceder o limite, um novo arquivo será criado automaticamente.
-    - O nome do arquivo é gerado dinamicamente e vinculado aos IDs dos objetos.
+    * Cada arquivo pode conter até **2³² - 1 objetos**.
+    * Ao exceder o limite, um novo arquivo será criado automaticamente.
+    * O nome do arquivo é gerado dinamicamente e vinculado aos IDs dos objetos.
   3. UUID de Objetos
     Os IDs dos objetos são gerados como uma concatenação:
-    - Data de criação.
-    - Local da memória no arquivo.
-    - Identificação do arquivo.
+    * Data de criação.
+    * Local da memória no arquivo.
+    * Identificação do arquivo.
     O UUID é criptografado para garantir que apenas o MorkatoStorage saiba interpretá-lo.
 2. Comunicação com o Serviço
