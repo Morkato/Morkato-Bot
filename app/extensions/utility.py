@@ -3,15 +3,46 @@ from morkato.utils import NoNullDict
 from app.checks import has_guild_permissions
 from app.extension import BaseExtension
 from discord.interactions import Interaction
+from discord.message import Attachment
 from discord.channel import TextChannel
 from discord import app_commands as apc
 import app.errors
-
-guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
+import aiohttp
 
 @registry
 class Utility(BaseExtension):
-  LANGUAGE = "ptBR"
+  LANGUAGE: str
+  async def setup(self) -> None:
+    self.has_guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
+    self.LANGUAGE = self.builder.PT_BR
+    self.wipe_category.add_check(self.has_guild_perms)
+  async def image_upload(self, interaction: Interaction, filename: str, image: bytes) -> None:
+    await self.connection.upload_image(
+      author_id=interaction.user.id,
+      name=filename,
+      image=image
+    )
+    content = self.builder.safe_get_content(self.LANGUAGE, "uploadImage", author_id=interaction.user.id, name=filename)
+    await interaction.edit_original_response(content=content)
+  @apc.command(
+    name="image-upload",
+    description="[Utilitários] Upa uma imagem para minha cdn."
+  )
+  async def image_upload_from_attach(self, interaction: Interaction, filename: str, attachment: Attachment) -> None:
+    await interaction.response.defer()
+    attach_data = await attachment.read()
+    await self.image_upload(interaction, filename, attach_data)
+  @apc.command(
+    name="image-upload-url",
+    description="[Utilitários] Upa uma imagem para minha cdn."
+  )
+  async def image_upload_from_url(self, interaction: Interaction, filename: str, url: str) -> None:
+    await interaction.response.defer()
+    image: bytes
+    async with aiohttp.ClientSession() as session:
+      async with session.request("GET", url) as resp:
+        image = await resp.content.read()
+    await self.image_upload(interaction, filename, image)
   @apc.command(
     name="ping",
     description="[Utilitários] Mostra meu ping atual."
@@ -22,7 +53,6 @@ class Utility(BaseExtension):
     await interaction.edit_original_response(content=content)
   @apc.command(name="wipe-category", description="[Utilitários] Wipe category from channel")
   @apc.guild_only()
-  @apc.check(guild_perms)
   async def wipe_category(self, interaction: Interaction, channel: TextChannel) -> None:
     await interaction.response.defer()
     if channel.category_id == interaction.channel.category_id:

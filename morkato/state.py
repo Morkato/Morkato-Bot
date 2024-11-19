@@ -54,3 +54,13 @@ class MorkatoConnectionState:
     guild = Guild(self, id, payload)
     self._add_guild(guild)
     return guild
+  async def upload_image(
+    self, image: bytes, *,
+    author_id: int,
+    name: str
+  ) -> None:
+    await self.http.upload_image(
+      image=image,
+      author_id=author_id,
+      name=name
+    )

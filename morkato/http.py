@@ -530,3 +530,15 @@ class HTTPClient:
     if icon is not None:
       payload["icon"] = icon
     return await self.request(route, json=payload)
+  async def upload_image(
+    self, image: bytes, *,
+    author_id: int,
+    name: str
+  ) -> None:
+    route = Route("POST", "/cdn/upload")
+    headers = bytes()
+    headers += author_id.to_bytes(8, byteorder='big')
+    headers += len(name).to_bytes(4, byteorder='big')
+    headers += name.encode('utf8')
+    content = headers + image
+    await self.request(route, data=content)
