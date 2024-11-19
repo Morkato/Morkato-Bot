@@ -19,6 +19,8 @@ services:
     build:
       context: api
       dockerfile: ../api.dockerfile
+    volumes:
+      - "morkato-data:/usr/morkato"
     ports:
       - "5500:5500"
     networks:
@@ -27,12 +29,15 @@ services:
       DATASOURCE_USERNAME: ${DATASOURCE_USERNAME:-morkato}
       DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD:-morkato}
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://dmorkato:5432/morkato}
+      MORKATO_WORKSPACE_DIRECTORY: "/usr/morkato"
   cdn:
     container_name: morkato-cdn
     restart: always
     build:
       context: cdn
       dockerfile: ../cdn.dockerfile
+    volumes:
+      - "morkato-data:/usr/morkato"
     ports:
       - "5501:5500"
     networks:
@@ -54,6 +59,8 @@ services:
       URL: ${URL:-http://morkato-api:5500}
 volumes:
   dmorkato:
+    external: true
+  morkato-data:
     external: true
 networks:
   morkato.net:
