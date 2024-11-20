@@ -1,0 +1,5 @@
+(signature: MORKATO - 7BYTES)
+(size: 8BYTES)
+(length: 8BYTES)
+(info: OBJECT LENGTH AND LOCATION MEMORY - [8BYTES + 8BYTES] * length)
+(body: OBJECTS - relative to OBJECT LENGTH)
