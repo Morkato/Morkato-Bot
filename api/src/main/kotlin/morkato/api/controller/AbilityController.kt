@@ -19,9 +19,11 @@ import morkato.api.dto.ability.AbilityUpdateData
 import morkato.api.dto.validation.IdSchema
 import morkato.api.exception.model.AbilityNotFoundError
 import morkato.api.exception.model.GuildNotFoundError
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/abilities/{guild_id}")
+@Profile("api")
 class AbilityController {
   @GetMapping
   @Transactional

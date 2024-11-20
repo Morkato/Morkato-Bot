@@ -1,7 +1,7 @@
 services:
   database:
     image: postgres:alpine
-    restart: always
+    restart: no
     container_name: dmorkato
     environment:
       POSTGRES_DB: morkato
@@ -32,7 +32,7 @@ services:
       MORKATO_WORKSPACE_DIRECTORY: "/usr/morkato"
   cdn:
     container_name: morkato-cdn
-    restart: always
+    restart: no
     build:
       context: cdn
       dockerfile: ../cdn.dockerfile

@@ -19,9 +19,11 @@ import morkato.api.dto.family.FamilyCreateData
 import morkato.api.dto.family.FamilyUpdateData
 import morkato.api.dto.validation.IdSchema
 import morkato.api.model.guild.Guild
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/families/{guild_id}")
+@Profile("api")
 class FamilyController {
   @GetMapping
   @Transactional

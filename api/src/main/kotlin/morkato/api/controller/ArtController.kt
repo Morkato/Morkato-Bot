@@ -21,9 +21,11 @@ import morkato.api.infra.repository.GuildRepository
 import morkato.api.model.guild.Guild
 
 import jakarta.validation.Valid
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/arts/{guild_id}")
+@Profile("api")
 class ArtController {
   @GetMapping
   @Transactional

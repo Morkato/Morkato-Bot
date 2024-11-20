@@ -20,9 +20,11 @@ import morkato.api.dto.attack.AttackCreateData
 import morkato.api.dto.attack.AttackUpdateData
 import morkato.api.dto.validation.IdSchema
 import jakarta.validation.Valid
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/attacks/{guild_id}")
+@Profile("api")
 class AttackController {
   @GetMapping
   @Transactional
