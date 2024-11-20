@@ -12,7 +12,7 @@ import jakarta.validation.Payload;
 import jakarta.validation.constraints.Pattern;
 
 @Length(min = 2, max = 32)
-@Pattern(regexp = "^[^:0-9\\s][^:]{1,31}$")
+@Pattern(regexp = "^[^:0-9\\s\\/][^:\\/]{1,31}$")
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME) 
 @Documented
