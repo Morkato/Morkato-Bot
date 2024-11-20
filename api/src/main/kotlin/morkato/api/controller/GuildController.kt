@@ -17,10 +17,12 @@ import morkato.api.model.guild.Guild
 
 import morkato.api.infra.repository.GuildRepository
 import morkato.api.dto.validation.IdSchema
+import org.springframework.context.annotation.Profile
 import org.springframework.web.bind.annotation.PostMapping
 
 @RestController
 @RequestMapping("/guilds/{id}")
+@Profile("api")
 class GuildController {
   @GetMapping
   @Transactional

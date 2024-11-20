@@ -21,10 +21,12 @@ import morkato.api.dto.npc.NpcResponseData
 import morkato.api.dto.npc.NpcCreateData
 import morkato.api.dto.npc.NpcUpdateData
 import morkato.api.model.guild.Guild
+import org.springframework.context.annotation.Profile
 import java.time.Instant
 
 @RestController
 @RequestMapping("/npcs/{guild_id}")
+@Profile("api")
 class NpcController {
   @GetMapping("/{id}")
   @Transactional

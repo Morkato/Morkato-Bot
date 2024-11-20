@@ -24,9 +24,11 @@ import morkato.api.infra.repository.GuildRepository
 import morkato.api.infra.repository.PlayerAbilityRepository
 import morkato.api.infra.repository.PlayerFamilyRepository
 import morkato.api.model.guild.Guild
+import org.springframework.context.annotation.Profile
 
 @RestController
 @RequestMapping("/players/{guild_id}/{id}")
+@Profile("api")
 class PlayerController {
   @GetMapping
   @Transactional
