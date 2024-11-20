@@ -29,6 +29,7 @@ void saveObject(void** obj, size_t& size) {
 }
 char* morkGetObject(char* reps, char chumker, size_t location, size_t* size) {
   size_t chunker_length;
+  
   std::ifstream file("test.bin", std::ios::binary);
   char* signature = (char*)malloc(sizeof(char) * SIGNATURE_LENGTH);
   file.read(signature, sizeof(char) * SIGNATURE_LENGTH);
