@@ -34,18 +34,22 @@ class NpcController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") id: String
   ) : NpcResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val npc = if ("^[0-9]{15,30}$".toRegex().containsMatchIn(id))
-      guild.getNpc(id.toLong())
-    else guild.getNpcBySurname(id)
-    val abilities = npc.getAllAbilities()
-      .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
-      .map(Long::toString)
-      .toList()
-    val arts = npc.getAllArts()
-      .map { it.artId.toString() to it.exp }
-      .toMap()
-    return NpcResponseData(npc, abilities, arts)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val npc = if ("^[0-9]{15,30}$".toRegex().containsMatchIn(id))
+        guild.getNpc(id.toLong())
+      else guild.getNpcBySurname(id)
+      val abilities = npc.getAllAbilities()
+        .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
+        .map(Long::toString)
+        .toList()
+      val arts = npc.getAllArts()
+        .map { it.artId.toString() to it.exp }
+        .toMap()
+      NpcResponseData(npc, abilities, arts)
+    } catch (exc: GuildNotFoundError) {
+      throw NpcNotFoundError(guild_id, id)
+    }
   }
   @PostMapping
   @Transactional
@@ -53,7 +57,7 @@ class NpcController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @RequestBody @Valid data: NpcCreateData
   ) : NpcResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
+    val guild = Guild(GuildRepository.findOrCreate(guild_id))
     val npc = guild.createNpc(
       name = data.name,
       type = data.type,
@@ -71,31 +75,35 @@ class NpcController {
     @PathVariable("id") @IdSchema id: String,
     @RequestBody @Valid data: NpcUpdateData
   ) : NpcResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val before = guild.getNpc(id.toLong())
-    val npc = before.update(
-      name = data.name,
-      type = data.type,
-      surname = data.surname,
-      energy = data.energy,
-      flags = data.flags,
-      maxLife = data.max_life,
-      maxBreath = data.max_breath,
-      maxBlood = data.max_blood,
-      currentLife = data.current_life,
-      currentBreath = data.current_breath,
-      currentBlood = data.current_blood,
-      icon = data.icon,
-      lastAction = if (data.last_action != null) Instant.ofEpochMilli(data.last_action) else null
-    )
-    val abilities = npc.getAllAbilities()
-      .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
-      .map(Long::toString)
-      .toList()
-    val arts = npc.getAllArts()
-      .map { it.artId.toString() to it.exp }
-      .toMap()
-    return NpcResponseData(npc, abilities, arts)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val before = guild.getNpc(id.toLong())
+      val npc = before.update(
+        name = data.name,
+        type = data.type,
+        surname = data.surname,
+        energy = data.energy,
+        flags = data.flags,
+        maxLife = data.max_life,
+        maxBreath = data.max_breath,
+        maxBlood = data.max_blood,
+        currentLife = data.current_life,
+        currentBreath = data.current_breath,
+        currentBlood = data.current_blood,
+        icon = data.icon,
+        lastAction = if (data.last_action != null) Instant.ofEpochMilli(data.last_action) else null
+      )
+      val abilities = npc.getAllAbilities()
+        .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
+        .map(Long::toString)
+        .toList()
+      val arts = npc.getAllArts()
+        .map { it.artId.toString() to it.exp }
+        .toMap()
+      NpcResponseData(npc, abilities, arts)
+    } catch (exc: GuildNotFoundError) {
+      throw NpcNotFoundError(guild_id, id)
+    }
   }
   @DeleteMapping("/{id}")
   @Transactional
@@ -103,17 +111,21 @@ class NpcController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : NpcResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val npc = guild.getNpc(id.toLong())
-    val abilities = npc.getAllAbilities()
-      .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
-      .map(Long::toString)
-      .toList()
-    val arts = npc.getAllArts()
-      .map { it.artId.toString() to it.exp }
-      .toMap()
-    npc.delete()
-    return NpcResponseData(npc, abilities, arts)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val npc = guild.getNpc(id.toLong())
+      val abilities = npc.getAllAbilities()
+        .map(NpcAbilityRepository.NpcAbilityPayload::abilityId)
+        .map(Long::toString)
+        .toList()
+      val arts = npc.getAllArts()
+        .map { it.artId.toString() to it.exp }
+        .toMap()
+      npc.delete()
+      NpcResponseData(npc, abilities, arts)
+    } catch (exc: GuildNotFoundError) {
+      throw NpcNotFoundError(guild_id, id)
+    }
   }
   @PutMapping("/{id}/arts/{art_id}")
   @Transactional
@@ -123,8 +135,12 @@ class NpcController {
     @PathVariable("art_id") @IdSchema artId: String,
     data: NpcArtUpdateData
   ) : Unit {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val npc = guild.getNpc(id.toLong())
-    npc.addArt(artId.toLong(), data.exp)
+    try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val npc = guild.getNpc(id.toLong())
+      npc.addArt(artId.toLong(), data.exp)
+    } catch (exc: GuildNotFoundError) {
+      throw NpcNotFoundError(guild_id, id)
+    }
   }
 }

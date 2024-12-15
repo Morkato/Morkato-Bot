@@ -18,6 +18,8 @@ import morkato.api.dto.family.FamilyResponseData
 import morkato.api.dto.family.FamilyCreateData
 import morkato.api.dto.family.FamilyUpdateData
 import morkato.api.dto.validation.IdSchema
+import morkato.api.exception.model.FamilyNotFoundError
+import morkato.api.exception.model.GuildNotFoundError
 import morkato.api.model.guild.Guild
 import org.springframework.context.annotation.Profile
 
@@ -30,23 +32,27 @@ class FamilyController {
   fun getAllByGuildId(
     @PathVariable("guild_id") @IdSchema guild_id: String
   ) : List<FamilyResponseData> {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val abilities = guild.getAllAbilitiesFamilies()
-      .toMutableList()
-    return guild.getAllFamilies()
-      .map { family ->
-        val (valid, invalid) = abilities.partition { it.familyId == family.id }
-        abilities.clear()
-        abilities.addAll(invalid)
-        FamilyResponseData(
-          family = family,
-          abilities = valid
-            .asSequence()
-            .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
-            .map(Long::toString)
-            .toList()
-        )
-      }.toList()
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val abilities = guild.getAllAbilitiesFamilies()
+        .toMutableList()
+      guild.getAllFamilies()
+        .map { family ->
+          val (valid, invalid) = abilities.partition { it.familyId == family.id }
+          abilities.clear()
+          abilities.addAll(invalid)
+          FamilyResponseData(
+            family = family,
+            abilities = valid
+              .asSequence()
+              .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
+              .map(Long::toString)
+              .toList()
+          )
+        }.toList()
+    } catch (exc: GuildNotFoundError) {
+      listOf()
+    }
   }
   @PostMapping
   @Transactional
@@ -54,7 +60,7 @@ class FamilyController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @RequestBody @Valid data: FamilyCreateData
   ) : FamilyResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
+    val guild = Guild(GuildRepository.findOrCreate(guild_id))
     val family = guild.createFamily(
       name = data.name,
       npcType = data.npc_type,
@@ -85,20 +91,24 @@ class FamilyController {
     @PathVariable("id") @IdSchema id: String,
     @RequestBody @Valid data: FamilyUpdateData
   ) : FamilyResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val before = guild.getFamily(id.toLong())
-    val family = before.update(
-      name = data.name,
-      npcType = data.npc_type,
-      percent = data.percent,
-      description = data.description,
-      banner = data.banner
-    )
-    val abilities = family.getAllAbilities()
-      .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
-      .map(Long::toString)
-      .toList()
-    return FamilyResponseData(family, abilities)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val before = guild.getFamily(id.toLong())
+      val family = before.update(
+        name = data.name,
+        npcType = data.npc_type,
+        percent = data.percent,
+        description = data.description,
+        banner = data.banner
+      )
+      val abilities = family.getAllAbilities()
+        .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
+        .map(Long::toString)
+        .toList()
+      FamilyResponseData(family, abilities)
+    } catch (exc: GuildNotFoundError) {
+      throw FamilyNotFoundError(guild_id, id)
+    }
   }
   @DeleteMapping("/{id}")
   @Transactional
@@ -106,14 +116,18 @@ class FamilyController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : FamilyResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val family = guild.getFamily(id.toLong())
-    val abilities = family.getAllAbilities()
-      .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
-      .map(Long::toString)
-      .toList()
-    family.delete()
-    return FamilyResponseData(family, abilities)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val family = guild.getFamily(id.toLong())
+      val abilities = family.getAllAbilities()
+        .map(AbilityFamilyRepository.AbilityFamilyPayload::abilityId)
+        .map(Long::toString)
+        .toList()
+      family.delete()
+      FamilyResponseData(family, abilities)
+    } catch (exc: GuildNotFoundError) {
+      throw FamilyNotFoundError(guild_id, id)
+    }
   }
   @PostMapping("/{id}/abilities/{ability_id}")
   @Transactional
@@ -122,10 +136,14 @@ class FamilyController {
     @PathVariable("id") @IdSchema id: String,
     @PathVariable("ability_id") @IdSchema ability_id: String
   ) : FamilyAbilityResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val family = guild.getFamily(id.toLong())
-    val result = family.addAbility(ability_id.toLong())
-    return FamilyAbilityResponseData(result)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val family = guild.getFamily(id.toLong())
+      val result = family.addAbility(ability_id.toLong())
+      FamilyAbilityResponseData(result)
+    } catch (exc: GuildNotFoundError) {
+      throw FamilyNotFoundError(guild_id, id)
+    }
   }
   @DeleteMapping("/{id}/abilities/{ability_id}")
   @Transactional
@@ -134,9 +152,13 @@ class FamilyController {
     @PathVariable("id") @IdSchema id: String,
     @PathVariable("ability_id") @IdSchema ability_id: String
   ) : FamilyAbilityResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val family = guild.getFamily(id.toLong())
-    val result = family.dropAbility(ability_id.toLong())
-    return FamilyAbilityResponseData(result)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val family = guild.getFamily(id.toLong())
+      val result = family.dropAbility(ability_id.toLong())
+      FamilyAbilityResponseData(result)
+    } catch (exc: GuildNotFoundError) {
+      throw FamilyNotFoundError(guild_id, id)
+    }
   }
 }

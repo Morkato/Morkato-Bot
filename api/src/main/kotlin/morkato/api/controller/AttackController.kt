@@ -31,10 +31,14 @@ class AttackController {
   fun getAllByGuildId(
     @PathVariable("guild_id") @IdSchema guild_id: String
   ) : List<AttackResponseData> {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    return guild.getAllAttacks()
-      .map(::AttackResponseData)
-      .toList()
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      guild.getAllAttacks()
+        .map(::AttackResponseData)
+        .toList()
+    } catch (exc: GuildNotFoundError) {
+      listOf()
+    }
   }
   @GetMapping("/{id}")
   @Transactional
@@ -42,9 +46,13 @@ class AttackController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : AttackResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val attack = guild.getAttack(id.toLong())
-    return AttackResponseData(attack)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val attack = guild.getAttack(id.toLong())
+      AttackResponseData(attack)
+    } catch (exc: GuildNotFoundError) {
+      throw AttackNotFoundError(guild_id, id)
+    }
   }
   @PostMapping("/{art_id}")
   @Transactional
@@ -53,26 +61,30 @@ class AttackController {
     @PathVariable("art_id") @IdSchema art_id: String,
     @RequestBody @Valid data: AttackCreateData
   ) : AttackResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val art = guild.getArt(art_id.toLong())
-    val attack = art.createAttack(
-      name = data.name,
-      namePrefixArt = data.name_prefix_art,
-      description = data.description,
-      banner = data.banner,
-      poisonTurn = data.poison_turn,
-      burnTurn = data.burn_turn,
-      bleedTurn = data.bleed_turn,
-      poison = data.poison,
-      burn = data.burn,
-      bleed = data.bleed,
-      stun = data.stun,
-      damage = data.damage,
-      breath = data.breath,
-      blood = data.blood,
-      flags = data.flags
-    )
-    return AttackResponseData(attack)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val art = guild.getArt(art_id.toLong())
+      val attack = art.createAttack(
+        name = data.name,
+        namePrefixArt = data.name_prefix_art,
+        description = data.description,
+        banner = data.banner,
+        poisonTurn = data.poison_turn,
+        burnTurn = data.burn_turn,
+        bleedTurn = data.bleed_turn,
+        poison = data.poison,
+        burn = data.burn,
+        bleed = data.bleed,
+        stun = data.stun,
+        damage = data.damage,
+        breath = data.breath,
+        blood = data.blood,
+        flags = data.flags
+      )
+      AttackResponseData(attack)
+    } catch (exc: GuildNotFoundError) {
+      throw ArtNotFoundError(guild_id, art_id)
+    }
   }
   @PutMapping("/{id}")
   @Transactional
@@ -81,26 +93,30 @@ class AttackController {
     @PathVariable("id") @IdSchema id: String,
     @RequestBody @Valid data: AttackUpdateData
   ) : AttackResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val before = guild.getAttack(id.toLong())
-    val attack = before.update(
-      name = data.name,
-      namePrefixArt = data.name_prefix_art,
-      description = data.description,
-      banner = data.banner,
-      poisonTurn = data.poison_turn,
-      burnTurn = data.burn_turn,
-      bleedTurn = data.bleed_turn,
-      poison = data.poison,
-      burn = data.burn,
-      bleed = data.bleed,
-      stun = data.stun,
-      damage = data.damage,
-      breath = data.breath,
-      blood = data.blood,
-      flags = data.flags
-    )
-    return AttackResponseData(attack)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val before = guild.getAttack(id.toLong())
+      val attack = before.update(
+        name = data.name,
+        namePrefixArt = data.name_prefix_art,
+        description = data.description,
+        banner = data.banner,
+        poisonTurn = data.poison_turn,
+        burnTurn = data.burn_turn,
+        bleedTurn = data.bleed_turn,
+        poison = data.poison,
+        burn = data.burn,
+        bleed = data.bleed,
+        stun = data.stun,
+        damage = data.damage,
+        breath = data.breath,
+        blood = data.blood,
+        flags = data.flags
+      )
+      AttackResponseData(attack)
+    } catch (exc: GuildNotFoundError) {
+      throw AttackNotFoundError(guild_id, id)
+    }
   }
   @DeleteMapping("/{id}")
   @Transactional
@@ -108,9 +124,13 @@ class AttackController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : AttackResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val attack = guild.getAttack(id.toLong())
-    attack.delete()
-    return AttackResponseData(attack)
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val attack = guild.getAttack(id.toLong())
+      attack.delete()
+      AttackResponseData(attack)
+    } catch (exc: GuildNotFoundError) {
+      throw AttackNotFoundError(guild_id, id)
+    }
   }
 }

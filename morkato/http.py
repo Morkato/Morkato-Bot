@@ -1,4 +1,4 @@
-from .errors import (HTTPException, PlayerNotFoundError, NotFoundError, MorkatoServerError, MorkatoHTTPType, ModelType)
+from .errors import (HTTPException, PlayerNotFoundError, NotFoundError, MorkatoServerError, ModelType)
 from urllib.parse import quote
 from .utils import NoNullDict
 from typing_extensions import Self
@@ -30,6 +30,7 @@ import asyncio
 import aiohttp
 import orjson
 import sys
+import re
 import os
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any]
   return text
 class Route:
   BASE: ClassVar[str] = os.getenv("URL", "http://localhost:5500")
+  CDN_URL: ClassVar[str] = os.getenv("CDN_URL", "http://localhost:5050")
   def __init__(self, method: str, path: str, **parameters):
     self.path: str = path
     self.method: str = method
@@ -52,6 +54,12 @@ class Route:
     if parameters:
       url = url.format_map({k: quote(v) if isinstance(v, str) else v for k, v in parameters.items()})
     self.url: str = url
+  @classmethod
+  def from_cdn(cls, query: str, /) -> str:
+    matcher = re.match(r'^cdn://([0,9]{15,30})/([^:0-9\s\/]{0,32})$', query, re.IGNORECASE)
+    author_id = matcher.group(1)
+    name = matcher.group(2)
+    return cls.CDN_URL + "/%s/%s" % (author_id, name)
 class HTTPClient:
   def __init__(
     self,

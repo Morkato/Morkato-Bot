@@ -1,7 +1,6 @@
+
 CREATE TABLE "guilds" (
   "id" discord_id_type NOT NULL,
-  "start_rpg_calendar" TIMESTAMP NOT NULL,
-  "start_rpg_date" TIMESTAMP NOT NULL DEFAULT NOW(),
   "human_initial_life" attr_type NOT NULL DEFAULT 1000,
   "oni_initial_life" attr_type NOT NULL DEFAULT 500,
   "hybrid_initial_life" attr_type NOT NULL DEFAULT 1500,

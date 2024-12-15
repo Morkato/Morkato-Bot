@@ -20,9 +20,16 @@ CREATE TABLE "attacks" (
   "description" description_type DEFAULT NULL,
   "banner" banner_type DEFAULT NULL,
   "required_exp" attr_type NOT NULL DEFAULT 0,
+  "poison_turn" attr_type NOT NULL DEFAULT 0,
+  "burn_turn" attr_type NOT NULL DEFAULT 0,
+  "bleed_turn" attr_type NOT NULL DEFAULT 0,
   "damage" attr_type NOT NULL DEFAULT 0,
   "breath" attr_type NOT NULL DEFAULT 0,
   "blood" attr_type NOT NULL DEFAULT 0,
+  "poison" attr_type NOT NULL DEFAULT 0,
+  "burn" attr_type NOT NULL DEFAULT 0,
+  "bleed" attr_type NOT NULL DEFAULT 0,
+  "stun" attr_type NOT NULL DEFAULT 0,
   "flags" INTEGER NOT NULL DEFAULT 0
 );
 ALTER TABLE "attacks"

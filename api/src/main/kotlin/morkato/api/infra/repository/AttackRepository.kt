@@ -91,10 +91,7 @@ object AttackRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id.toString()
-      throw AttackNotFoundError(extra)
+      throw AttackNotFoundError(guildId, id.toString())
     }
   }
   fun createAttack(

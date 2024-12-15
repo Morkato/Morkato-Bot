@@ -1,10 +1,11 @@
 package morkato.api.exception.model
 
-import morkato.api.exception.NotFoundError
+import morkato.api.exception.GuildObjectNotFound
 import morkato.api.exception.ModelType
 
 class NpcNotFoundError(
-  extra: Map<String, Any?>
-) : NotFoundError(ModelType.NPC, extra) {
+  guildId: String,
+  id: String
+) : GuildObjectNotFound(ModelType.NPC, guildId, id) {
 
 }

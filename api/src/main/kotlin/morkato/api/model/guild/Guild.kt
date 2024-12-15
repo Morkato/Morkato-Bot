@@ -18,8 +18,6 @@ import java.time.Instant
 
 class Guild(
   val id: String,
-  val startRpgCalendar: Instant,
-  val startRpgDate: Instant,
   val humanInitialLife: BigDecimal,
   val oniInitialLife: BigDecimal,
   val hybridInitialLife: BigDecimal,
@@ -36,8 +34,6 @@ class Guild(
   public constructor(row: ResultRow) : this(GuildRepository.GuildPayload(row));
   public constructor(payload: GuildRepository.GuildPayload) : this(
     payload.id,
-    payload.startRpgCalendar,
-    payload.startRpgDate,
     payload.humanInitialLife,
     payload.oniInitialLife,
     payload.hybridInitialLife,
@@ -67,8 +63,6 @@ class Guild(
   ) : Guild {
     val payload = GuildRepository.GuildPayload(
       id = this.id,
-      startRpgCalendar = this.startRpgCalendar,
-      startRpgDate = this.startRpgDate,
       humanInitialLife = humanInitialLife ?: this.humanInitialLife,
       oniInitialLife = oniInitialLife ?: this.oniInitialLife,
       hybridInitialLife = hybridInitialLife ?: this.hybridInitialLife,

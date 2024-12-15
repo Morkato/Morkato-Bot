@@ -14,8 +14,6 @@ import java.time.Instant
 object GuildRepository {
   public data class GuildPayload(
     val id: String,
-    val startRpgCalendar: Instant,
-    val startRpgDate: Instant,
     val humanInitialLife: BigDecimal,
     val oniInitialLife: BigDecimal,
     val hybridInitialLife: BigDecimal,
@@ -31,8 +29,6 @@ object GuildRepository {
   ) {
     public constructor(row: ResultRow) : this(
       row[guilds.id],
-      row[guilds.start_rpg_calendar],
-      row[guilds.start_rpg_date],
       row[guilds.human_initial_life],
       row[guilds.oni_initial_life],
       row[guilds.hybrid_initial_life],
@@ -73,10 +69,35 @@ object GuildRepository {
       throw GuildNotFoundError(extra)
     }
   }
-  fun   createGuild(
+
+  fun virtual(id: String) : GuildPayload {
+    return GuildPayload(
+      id = id,
+      humanInitialLife = DefaultValue.humanInitialLife,
+      oniInitialLife = DefaultValue.oniInitialLife,
+      hybridInitialLife = DefaultValue.hybridInitialLife,
+      breathInitial = DefaultValue.breathInitial,
+      bloodInitial = DefaultValue.bloodInitial,
+      familyRoll = DefaultValue.familyRoll,
+      abilityRoll = DefaultValue.abilityRoll,
+      prodigyRoll = DefaultValue.prodigyRoll,
+      markRoll = DefaultValue.markRoll,
+      berserkRoll = DefaultValue.berserkRoll,
+      rollCategoryId = null,
+      offCategoryId = null
+    )
+  }
+
+  fun findOrCreate(id: String) : GuildPayload {
+    return try {
+      this.findById(id)
+    } catch (exc: GuildNotFoundError) {
+      this.createGuild(id)
+    }
+  }
+
+  fun createGuild(
     id: String,
-    rpgStartCalendar: Instant,
-    rpgStartDate: Instant? = null,
     humanInitialLife: BigDecimal? = null,
     oniInitialLife: BigDecimal? = null,
     hybridInitialLife: BigDecimal? = null,
@@ -94,10 +115,6 @@ object GuildRepository {
       it[this.id] = id
       it[this.roll_category_id] = rollCategoryId
       it[this.off_category_id] = offCategoryId
-      it[this.start_rpg_calendar] = rpgStartCalendar
-      if (rpgStartDate != null) {
-        it[this.start_rpg_date] = rpgStartDate
-      }
       if (humanInitialLife != null) {
         it[this.human_initial_life] = humanInitialLife
       }
@@ -131,8 +148,6 @@ object GuildRepository {
     }
     return GuildPayload(
       id = id,
-      startRpgCalendar = rpgStartCalendar,
-      startRpgDate = rpgStartDate ?: Instant.now(),
       humanInitialLife = humanInitialLife ?: DefaultValue.humanInitialLife,
       oniInitialLife = oniInitialLife ?: DefaultValue.oniInitialLife,
       hybridInitialLife = hybridInitialLife ?: DefaultValue.hybridInitialLife,

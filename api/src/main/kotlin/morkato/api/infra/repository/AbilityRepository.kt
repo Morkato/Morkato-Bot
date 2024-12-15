@@ -61,10 +61,7 @@ object AbilityRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id.toString()
-      throw AbilityNotFoundError(extra)
+      throw AbilityNotFoundError(guildId, id.toString())
     }
   }
   fun createAbility(

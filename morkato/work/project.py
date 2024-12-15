@@ -1,115 +1,147 @@
 from morkato.utils import parse_arguments
-from .extension import (ErrorCallback, Extension)
-from .converters import (ConverterManager, Converter)
-from .types import (ToRegistryObject, Coro)
+from .extension import (ErrorCallback, Converter, Extension)
+from .types import ToRegistryObject
 from .builder import MessageBuilder
-from discord.ext.commands.core import Command
+from .bot import MorkatoBot
+from discord.flags import Intents
 from discord import app_commands as apc
 from types import MethodType
+from glob import glob
 from typing import (
+  get_origin,
+  get_args,
+  overload,
   Optional,
-  Callable,
   Iterable,
   TypeVar,
   Type,  
   Dict,
+  List,
   Any
 )
+import importlib.util
 import inspect
 import logging
+import asyncio
+import sys
+import os
 
 ToRegistryObjectT = TypeVar('ToRegistryObjectT', bound=ToRegistryObject)
 ExtensionT = TypeVar('ExtensionT', bound=Extension)
+MorkatoBotT = TypeVar("MorkatoBotT", bound=MorkatoBot)
 T = TypeVar('T')
 _log = logging.getLogger(__name__)
 
 def registry(object: ToRegistryObjectT) -> ToRegistryObjectT:
   object.__registry_class__ = True
   return object
-class ProjectManager:
-  def __init__(
-    self, *,
-    add_command: Callable[[Command], None],
-    tree_add_command: Callable[[apc.Command], None],
-    remove_command: Callable[[str], None],
-    tree_remove_command: Callable[[apc.Command], None],
-    tree_sync: Callable[..., Coro[None]],
-    base_message_builder: Optional[str] = None
-  ) -> None:
-    self.loaded_extensions: Dict[str, Extension] = {}
-    self.converters: ConverterManager = ConverterManager()
-    self.catching: Dict[Type[Any], ErrorCallback] = {}
-    self.injected: Dict[Type[Any], Any] = {}
-    self.builder = MessageBuilder(base_message_builder)
-    self.add_command = add_command
-    self.tree_add_command = tree_add_command
-    self.remove_command = remove_command
-    self.tree_remove_command = tree_remove_command
-    self.sync = tree_sync
-  def _get_value(self, annotation: Any) -> Any:
-    if annotation is ConverterManager:
-      return self.converters
-    elif annotation is MessageBuilder:
-      return self.builder
-    try:
-      return self.injected[annotation]
-    except KeyError:
+class BotBuilder:
+  def __init__(self, content: MessageBuilder, home: str, intents: Intents) -> None:
+    self.__loaded_converters: Dict[Type[Any], Converter[Any]] = {}
+    self.__loaded_extensions: Dict[str, Extension] = {}
+    self.__unloaded_extensions: List[Type[Extension]] = []
+    self.__unloaded_converters: List[Type[Converter[Any]]] = []
+    self.__injected: Dict[Type[Any], Any] = {}
+    self.__tree_cls: Optional[Type[apc.CommandTree]] = None
+    self.__command_prefix = '!'
+    self.__content = content
+    self.__catching: Dict[Type[Any], ErrorCallback] = {}
+    self.__home = os.path.abspath(os.path.normpath(home))
+    self.__intents = intents
+  def to_inject_value(self, annotation: Any) -> Any:
+    if annotation is MessageBuilder:
+      return self.__content
+    value = self.__injected.get(annotation)
+    if value is None:
       raise TypeError("Annotation: %s.%s is not injected" % (annotation.__module__, annotation.__name__))
+    return value
+  def command_prefix(self, prefix: str, /) -> None:
+    self.__command_prefix = prefix
+  def tree(self, cls: Type[apc.CommandTree], /) -> None:
+    self.__tree_cls = cls
+  def token(self, token: str, /) -> None:
+    self.__token = token
   def inject(self, cls: Type[T], object: T, /) -> None:
-    self.injected[cls] = object
-  def values(self) -> Iterable[Extension]:
-    return self.loaded_extensions.values()
-  def add_extension(self, extension: ExtensionT) -> None:
-    self.loaded_extensions[extension.__extension_name__] = extension
-  def get_error_handler(self, cls: Type[Exception]) -> ErrorCallback:
-    handler  = self.catching.get(cls)
-    if handler is None:
-      genn = (
-        handler
-        for (current_cls, handler) in self.catching.items()
-        if issubclass(cls, current_cls)
-      )
-      handler = next(genn, None)
-      if handler is None:
-        raise KeyError("Handler for :class %s: is not found." % cls)
-    return handler
-  async def load_extension(self, extension: Type[ExtensionT], /) -> None:
-    parameters = inspect.signature(MethodType(extension.__init__, object())).parameters
-    (args, kwargs) = parse_arguments(parameters, key=self._get_value)
-    loaded_extension = extension(*args, **kwargs)
-    await loaded_extension.setup()
-    for command in extension.__extension_commands__.copy().values():
-      self.add_command(command)
-      command._callback = MethodType(command._callback, loaded_extension)
-      command._extension = extension
-    for command in extension.__extension_app_commands__.copy().values():
-      self.tree_add_command(command)
-      command._callback = MethodType(command._callback, loaded_extension)
-    for handler in extension.__errors_handlers__.copy().values():
-      self.catching[handler.err_cls] = handler
-      handler.set_extension(loaded_extension)
-    _log.info("Extension: %s.%s is already loaded" % (extension.__module__, extension.__name__))
-  async def unload_extension(self, name: str) -> None:
-    extension = self.loaded_extensions.pop(name)
-    await extension.close()
-    for command_name in extension.__extension_commands__.keys():
-      self.remove_command(command_name)
-    for command_name in extension.__extension_app_commands__.keys():
-      self.tree_remove_command(command_name)
-    for handler in extension.__errors_handlers__.keys():
-      self.catching.pop(handler, None)
-    if extension.__extension_app_commands__:
-      await self.sync()
-  async def load_converter(self, converter: Type[Converter[Any, Any]], /) -> None:
-    parameters = inspect.signature(MethodType(converter.__init__, object())).parameters
-    (args, kwargs) = parse_arguments(parameters, key=self._get_value)
-    loaded_converter = converter(*args, **kwargs)
-    await loaded_converter.setup()
-    self.converters.loaded[converter] = loaded_converter
-    _log.info("Converter: %s.%s is already loaded" % (converter.__module__.strip(".__init__"), converter.__name__))
-  async def unload_converter(self, converter: Type[Converter[Any, Any]], /) -> None:
+    self.__injected[cls] = object
+  def get_unloaded_registries(self, name: str, /, extensions: List[Type[Extension]], converters: List[Type[Converter[Any]]]) -> None:
+    if name.endswith(".__init__"):
+      name = name[:-9]
     try:
-      loaded_converter = self.converters.loaded.pop(converter)
-      await loaded_converter.close()
+      module = sys.modules[name]
     except KeyError:
-      pass
+      spec = importlib.util.find_spec(name)
+      if spec is None:
+        raise ModuleNotFoundError("Module is not found: %s" % name)
+      module = importlib.util.module_from_spec(spec)
+      spec.loader.exec_module(module)
+      sys.modules[module.__name__] = module
+    members = inspect.getmembers(module)
+    registries = (member for (name, member) in members if getattr(member, '__registry_class__', False))
+    for registry_class in registries:
+      if issubclass(registry_class, Extension):
+        extensions.append(registry_class)
+      elif issubclass(registry_class, Converter):
+        converters.append(registry_class)
+  def from_home(self) -> None:
+    if not self.__home in sys.path:
+      sys.path.append(self.__home)
+    unloaded_extensions: Iterable[str] = glob(os.path.join("extension", "*.py"), root_dir=self.__home)
+    unloaded_extensions = (uex[:-3].replace('/', '.') for uex in unloaded_extensions)
+    for name in unloaded_extensions:
+      self.get_unloaded_registries(name, self.__unloaded_extensions, self.__unloaded_converters)
+  async def load_converter(self, converter: Type[Converter[Any]], /) -> None:
+    parameters = inspect.signature(MethodType(converter.__init__, object())).parameters
+    (args, kwargs) = parse_arguments(parameters, key=self.to_inject_value)
+    loaded_converter = converter(*args, **kwargs)
+    self.__loaded_converters[converter.__convert_class__] = loaded_converter
+    await loaded_converter.start()
+    _log.info("Converter: %s.%s is loaded" % (converter.__module__, converter.__name__))
+  async def load_extension(self, extension: Type[Extension], /) -> None:
+    parameters = inspect.signature(MethodType(extension.__init__, object())).parameters
+    (args, kwargs) = parse_arguments(parameters, key=self.to_inject_value)
+    to_inject_converters = ((key, get_args(klass)[0]) for (key, klass) in extension.__annotations__.items() if get_origin(klass) is Converter)
+    loaded_extension = extension(*args, **kwargs)
+    for (key, cls) in to_inject_converters:
+      setattr(loaded_extension, key, self.__loaded_converters[cls])
+    await loaded_extension.start()
+    self.__loaded_extensions[extension.__extension_name__] = loaded_extension
+    _log.info("Extension: %s.%s is loaded" % (extension.__module__, extension.__name__))
+  @overload
+  def login(self, cls: Type[MorkatoBotT], /) -> MorkatoBotT: ...
+  @overload
+  def login(self, /) -> MorkatoBot: ...
+  def login(self, cls: Optional[Type[MorkatoBotT]] = None) -> MorkatoBotT:
+    if cls is None:
+      cls = MorkatoBot
+    bot = cls(
+      command_prefix=self.__command_prefix,
+      tree_cls=self.__tree_cls,
+      extensions=self.__loaded_extensions,
+      converters=self.__loaded_converters,
+      content=self.__content,
+      injected=self.__injected,
+      catching=self.__catching,
+      intents=self.__intents
+    )
+    return bot
+  async def setup(self, bot: MorkatoBot) -> None:
+    for unloaded_converter in self.__unloaded_converters:
+      await self.load_converter(unloaded_converter)
+    for unloaded_extension in self.__unloaded_extensions:
+      await self.load_extension(unloaded_extension)
+    to_setup_converters = map(lambda conv: conv.setup(), self.__loaded_converters.values())
+    to_setup_extensions = map(lambda ext: ext.setup(), self.__loaded_extensions.values())
+    await asyncio.gather(*to_setup_converters)
+    await asyncio.gather(*to_setup_extensions)
+    for extension in self.__loaded_extensions.values():
+      for command in extension.__extension_commands__.copy().values():
+        bot.add_command(command)
+        command._callback = MethodType(command._callback, extension)
+        command._extension = extension
+      for command in extension.__extension_app_commands__.copy().values():
+        bot.tree.add_command(command)
+        command._callback = MethodType(command._callback, extension)
+        command._extension = extension
+      for handler in extension.__errors_handlers__.copy().values():
+        self.__catching[handler.err_cls] = handler
+        handler.set_extension(extension)

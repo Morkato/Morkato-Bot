@@ -34,7 +34,7 @@ services:
     container_name: morkato-cdn
     restart: no
     build:
-      context: cdn
+      context: api
       dockerfile: ../cdn.dockerfile
     volumes:
       - "morkato-data:/usr/morkato"
@@ -56,7 +56,9 @@ services:
       - "morkato.net"
     environment:
       BOT_TOKEN: ${BOT_TOKEN:?The "BOT_TOKEN" is required to construct image and run container}
+      CDN_URL: "${CDN_URL:-http://morkato-cdn:5500}"
       URL: ${URL:-http://morkato-api:5500}
+      BOT_PREFIX: ${BOT_PREFIX:->}
 volumes:
   dmorkato:
     external: true

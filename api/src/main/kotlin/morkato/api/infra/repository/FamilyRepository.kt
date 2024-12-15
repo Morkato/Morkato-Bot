@@ -56,10 +56,7 @@ object FamilyRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id.toString()
-      throw FamilyNotFoundError(extra)
+      throw FamilyNotFoundError(guildId, id.toString())
     }
   }
   fun createFamily(

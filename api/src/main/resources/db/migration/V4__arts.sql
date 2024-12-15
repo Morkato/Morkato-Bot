@@ -6,7 +6,7 @@ CREATE TABLE "arts"(
   "guild_id" discord_id_type NOT NULL,
   "id" id_type NOT NULL DEFAULT snowflake_id('art_snowflake_seq'),
   "type" art_type NOT NULL,
-  "energy" energy_type NOT NULL DEFAULT 25,
+  "energy" attr_type NOT NULL DEFAULT 25,
   "life" attr_type NOT NULL DEFAULT 1,
   "breath" attr_type NOT NULL DEFAULT 1,
   "blood" attr_type NOT NULL DEFAULT 1,

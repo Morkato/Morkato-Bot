@@ -32,15 +32,19 @@ class ArtController {
   fun findAllByGuildId(
     @PathVariable("guild_id") @IdSchema guild_id: String
   ) : List<ArtResponseData> {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val attacks = guild.getAllAttacks().toMutableList()
-    return guild.getAllArts()
-      .map { art ->
-        val (valid, invalid) = attacks.partition { art.id == it.artId }
-        attacks.clear()
-        attacks.addAll(invalid)
-        ArtResponseData(art, valid.map(::ArtAttackResponseData))
-      }.toList()
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val attacks = guild.getAllAttacks().toMutableList()
+      guild.getAllArts()
+        .map { art ->
+          val (valid, invalid) = attacks.partition { art.id == it.artId }
+          attacks.clear()
+          attacks.addAll(invalid)
+          ArtResponseData(art, valid.map(::ArtAttackResponseData))
+        }.toList()
+    } catch (exc: GuildNotFoundError) {
+      listOf()
+    }
   }
   @PostMapping
   @Transactional
@@ -48,7 +52,7 @@ class ArtController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @RequestBody @Valid data: ArtCreateData
   ) : ArtResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
+    val guild = Guild(GuildRepository.findOrCreate(guild_id))
     val art = guild.createArt(
       name = data.name,
       type = data.type,
@@ -67,10 +71,14 @@ class ArtController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : ArtResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val art = guild.getArt(id.toLong())
-    val attacks = art.getAllAttacks()
-    return ArtResponseData(art, attacks.map(::ArtAttackResponseData).toList())
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val art = guild.getArt(id.toLong())
+      val attacks = art.getAllAttacks()
+      ArtResponseData(art, attacks.map(::ArtAttackResponseData).toList())
+    } catch (exc: GuildNotFoundError) {
+      throw ArtNotFoundError(guild_id, id)
+    }
   }
   @PutMapping("/{id}")
   @Transactional
@@ -79,20 +87,24 @@ class ArtController {
     @PathVariable("id") @IdSchema id: String,
     @RequestBody @Valid data: ArtUpdateData
   ) : ArtResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val before = guild.getArt(id.toLong())
-    val art = before.update(
-      name = data.name,
-      type = data.type,
-      description = data.description,
-      banner = data.banner,
-      energy = data.energy,
-      life = data.life,
-      breath = data.breath,
-      blood = data.blood
-    )
-    val attacks = art.getAllAttacks()
-    return ArtResponseData(art, attacks.map(::ArtAttackResponseData).toList())
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val before = guild.getArt(id.toLong())
+      val art = before.update(
+        name = data.name,
+        type = data.type,
+        description = data.description,
+        banner = data.banner,
+        energy = data.energy,
+        life = data.life,
+        breath = data.breath,
+        blood = data.blood
+      )
+      val attacks = art.getAllAttacks()
+      ArtResponseData(art, attacks.map(::ArtAttackResponseData).toList())
+    } catch (exc: GuildNotFoundError) {
+      throw ArtNotFoundError(guild_id, id)
+    }
   }
   @DeleteMapping("/{id}")
   @Transactional
@@ -100,9 +112,13 @@ class ArtController {
     @PathVariable("guild_id") @IdSchema guild_id: String,
     @PathVariable("id") @IdSchema id: String
   ) : ArtResponseData {
-    val guild = Guild(GuildRepository.findById(guild_id))
-    val art = guild.getArt(id.toLong())
-    val attacks = art.getAllAttacks()
-    return ArtResponseData(art.delete(), attacks.map(::ArtAttackResponseData).toList())
+    return try {
+      val guild = Guild(GuildRepository.findById(guild_id))
+      val art = guild.getArt(id.toLong())
+      val attacks = art.getAllAttacks()
+      ArtResponseData(art.delete(), attacks.map(::ArtAttackResponseData).toList())
+    } catch (exc: GuildNotFoundError) {
+      throw ArtNotFoundError(guild_id, id)
+    }
   }
 }

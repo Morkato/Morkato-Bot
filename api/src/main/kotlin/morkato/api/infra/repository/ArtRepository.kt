@@ -66,10 +66,7 @@ object ArtRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id.toString()
-      throw ArtNotFoundError(extra)
+      throw ArtNotFoundError(guildId, id.toString())
     }
   }
   fun createArt(

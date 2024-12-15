@@ -68,10 +68,7 @@ object NpcRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id.toString()
-      throw NpcNotFoundError(extra)
+      throw NpcNotFoundError(guildId, id.toString())
     }
   }
   fun findBySurname(guildId: String, surname: String) : NpcPayload {
@@ -87,10 +84,7 @@ object NpcRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = surname
-      throw NpcNotFoundError(extra)
+      throw NpcNotFoundError(guildId, surname)
     }
   }
   fun findByPlayerId(guildId: String, id: String): NpcPayload {
@@ -106,10 +100,7 @@ object NpcRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["player_id"] = id
-      throw NpcNotFoundError(extra)
+      throw NpcNotFoundError(guildId, id)
     }
   }
   fun createNpc(

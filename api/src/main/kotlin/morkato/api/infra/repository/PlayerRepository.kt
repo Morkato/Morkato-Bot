@@ -53,10 +53,7 @@ object PlayerRepository {
           .single()
       )
     } catch (exc: NoSuchElementException) {
-      val extra: MutableMap<String, Any?> = mutableMapOf()
-      extra["guild_id"] = guildId
-      extra["id"] = id
-      throw PlayerNotFoundError(extra)
+      throw PlayerNotFoundError(guildId, id)
     }
   }
   fun createPlayer(

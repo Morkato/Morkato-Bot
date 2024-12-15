@@ -3,7 +3,7 @@
 --  // 0: Nenhuma
 --  // (1 << 1): Prodígio
 --  // (1 << 2): Marca
---  // (1 << 3): Berserk Mode
+--  // (1 << 3): Berserk
 CREATE SEQUENCE "npc_snowflake_seq";
 CREATE TABLE "npcs" (
   "name" name_type NOT NULL,
@@ -12,8 +12,8 @@ CREATE TABLE "npcs" (
   "guild_id" discord_id_type NOT NULL,
   "family_id" id_type NOT NULL,
   "id" id_type NOT NULL DEFAULT snowflake_id('npc_snowflake_seq'),
-  "max_energy" energy_type NOT NULL DEFAULT 100,
-  "energy" energy_type NOT NULL DEFAULT 100,
+  "max_energy" attr_type NOT NULL DEFAULT 100,
+  "energy" attr_type NOT NULL DEFAULT 100,
   "flags" INTEGER NOT NULL DEFAULT 0,
   "max_life" attr_type NOT NULL DEFAULT 0,
   "max_breath" attr_type NOT NULL DEFAULT 0,

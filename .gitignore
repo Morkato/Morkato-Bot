@@ -300,3 +300,4 @@ spec
 *.gitignore.*
 gitignore/
 api/id.ts
+./storage

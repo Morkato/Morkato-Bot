@@ -3,7 +3,7 @@ CREATE TABLE "abilities" (
   "name" name_type NOT NULL,
   "key" key_type NOT NULL,
   "id" id_type NOT NULL DEFAULT snowflake_id('ability_snowflake_seq'),
-  "energy" energy_type NOT NULL,
+  "energy" attr_type NOT NULL,
   "guild_id" discord_id_type NOT NULL,
   "percent" percent_type NOT NULL DEFAULT 0,
   "npc_type" INTEGER NOT NULL,

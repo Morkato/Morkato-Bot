@@ -3,8 +3,6 @@ from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
 from typing_extensions import Self
 from discord import ClientUser
-from typing import Iterable
-from glob import glob
 
 class AppBot(MorkatoBot):
   def __init__(self, *args, **kwargs):
@@ -25,7 +23,3 @@ class AppBot(MorkatoBot):
     self.inject(MorkatoConnectionState, self.morkato_connection)
     self.inject(HTTPClient, self.morkato_http)
     self.inject(ClientUser, self.user)
-    unloaded_extensions: Iterable[str] = glob("app/extensions/*.py") + glob("app/converters/*.py")
-    unloaded_extensions = (uex[:-3].replace('/', '.') for uex in unloaded_extensions)
-    for name in unloaded_extensions:
-      await self.load_morkato_extension(name)

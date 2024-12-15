@@ -28,7 +28,7 @@ DECLARE
   _player_id discord_id_type;
   ability_ids id_type[];
   ability_id id_type;
-  max_energy energy_type;
+  max_energy attr_type;
 BEGIN
   IF NEW.player_id IS NULL THEN
     RETURN NEW;

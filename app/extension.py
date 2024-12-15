@@ -1,20 +1,15 @@
-from morkato.work.converters import (ConverterManager, Converter)
 from morkato.work.context import EmbedBuilderView
 from morkato.work.builder import MessageBuilder
-from morkato.work.context import MorkatoContext
 from morkato.work.embeds import EmbedBuilder
 from morkato.work.extension import Extension
-from morkato.guild import Guild
 from morkato.state import MorkatoConnectionState
+from morkato.guild import Guild
 from morkato.http import HTTPClient
 from morkato.player import Player
 from morkato.abc import Snowflake
 from typing import (
   TypeVar,
-  Union,
-  Type,
-  Dict,
-  Any
+  Dict
 )
 import discord
 
@@ -27,13 +22,11 @@ class BaseExtension(Extension):
     connection: MorkatoConnectionState, 
     http: HTTPClient, 
     builder: MessageBuilder, 
-    converters: ConverterManager, 
     user: discord.ClientUser
   ) -> None:
     self.connection = connection
     self.http = http
     self.builder = builder
-    self.converters = converters
     self.user = user
   async def get_morkato_guild(self, guild: Snowflake) -> Guild:
     morkato = self.connection.get_cached_guild(guild.id)
@@ -75,8 +68,6 @@ class BaseExtension(Extension):
     await interaction.edit_original_response(view=view)
     if wait:
       await view.wait()
-  async def convert(self, cls: Type[Converter[P, T]], ctx: Union[discord.Interaction, MorkatoContext], arg: str, /, **kwargs) -> T:
-    return await self.converters.convert(cls, ctx, arg, **kwargs)
   async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
     player = guild.get_cached_player(id)
     if player is None:
