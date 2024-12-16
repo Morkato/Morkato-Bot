@@ -1,5 +1,5 @@
 from morkbmt.context import MorkatoContext
-from morkbmt.extension import (Converter, command)
+from morkbmt.extension import (ExtensionCommandBuilder, Converter, command)
 from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.errors import PlayerNotFoundError
@@ -11,6 +11,7 @@ from app.interfaces import ObjectWithPercentT
 from app.extension import BaseExtension
 from app.view import RegistryPlayerUi
 from random import randint
+from typing_extensions import Self
 from typing import (
   Optional,
   Callable,
@@ -25,7 +26,7 @@ class RPGRollsExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
   tofamily: Converter[Family]
   toability: Converter[Ability]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
   async def registry_family(self, ctx: MorkatoContext, player: Player) -> Family:
     families = sorted(player._families.values(), key=lambda family: len(family.name), reverse=True)

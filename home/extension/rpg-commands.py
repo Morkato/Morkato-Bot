@@ -1,4 +1,4 @@
-from morkbmt.extension import (Converter, command)
+from morkbmt.extension import (ExtensionCommandBuilder, Converter, command)
 from morkbmt.context import MorkatoContext
 from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
@@ -7,6 +7,7 @@ from morkato.art import (ArtType, Art)
 from morkato.npc import Npc
 from app.extension import BaseExtension
 from datetime import (datetime, timedelta)
+from typing_extensions import Self
 from typing import (Callable, ClassVar, Optional, Dict, List)
 from enum import Enum
 import app.embeds
@@ -26,7 +27,7 @@ class RPGCommands(BaseExtension):
   ENERGY_PEER: ClassVar[int] = 72
   LANGUAGE: ClassVar[str]
   toart: Converter[Art]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.TRAIN_OPTIONS_HANDLERS: Dict[TrainOption, Callable[..., None]] = {
       TrainOption.TRAIN: self.on_train_train,

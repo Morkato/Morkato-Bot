@@ -8,6 +8,9 @@ from typing_extensions import Self
 from typing import (
   get_args,
   get_origin,
+  Concatenate,
+  ParamSpec,
+  Protocol,
   Coroutine,
   ClassVar,
   Generic,
@@ -24,11 +27,13 @@ from typing import (
 import asyncio
 
 T = TypeVar('T')
+P = ParamSpec('P')
 ExceptionT = TypeVar('ExteptionT', bound="Exception")
+ExtensionT = TypeVar('ExtensionT', bound="Extension")
 GenericCoroCallable = Callable[..., Coro[T]]
 ErrorCallbackHandler = Callable[["Extension", "MorkatoContext", ExceptionT], Coro[None]]
 
-class MorkatoCommand(Command[None, ..., Any]):
+class MorkatoCommand(Command[None, P, Any]):
   def __init__(self, *args, **kwargs) -> None:
     super().__init__(*args, **kwargs)
     self.extension: Optional[Extension] = None
@@ -109,9 +114,6 @@ class Converter(Generic[T], metaclass=ConverterHandlerMeta):
   async def close(self) -> None: ...
 class ExtensionMeta(type):
   __extension_name__: str
-  __extension_app_commands__: Dict[str, apc.Command[None, ..., Any]]
-  __extension_commands__: Dict[str, Command[Any, ..., Any]]
-  __errors_handlers__: Dict[Type[Any], ErrorCallback]
   __inject_values__: Dict[str, Type[Any]]
   def __new__(cls, name: str, bases: List[type], attrs: Dict[str, Any], /, **kwargs) -> Self:
     app_commands: Dict[str, apc.Command[None, ..., Any]] = {}
@@ -147,12 +149,46 @@ class ExtensionMeta(type):
     return super().__new__(cls, name, bases, attrs)
 class Extension(metaclass=ExtensionMeta):
   __extension_name__: str
-  __extension_app_commands__: Dict[str, apc.Command[None, ..., Any]]
-  __extension_commands__: Dict[str, MorkatoCommand]
-  __errors_handlers__: Dict[Type[Any], ErrorCallback]
   __inject_values__: Dict[str, Type[Any]]
   msgbuilder: MessageBuilder
   def __init__(self) -> None: ...
+  async def setup(self, commands: "ExtensionCommandBuilder[Self]") -> None:
+    pass
+  async def close(self) -> None:
+    pass
+class ExtensionCommandBuilder(Protocol[ExtensionT]):
+  def command(self, name: str, callback: Callable[Concatenate[MorkatoContext, P], Coro[None]], /, **attrs) -> MorkatoCommand[P]: ...
+  def app_command(self, name: str, callback: apc.commands.CommandCallback, /, **attrs) -> apc.Command: ...
+  def exception(self, cls: Type[ExceptionT], callback: ErrorCallbackHandler[ExceptionT], /) -> ErrorCallback[ExceptionT]: ...
+  def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None: ...
+class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
+  def __init__(self, extension: ExtensionT):
+    self.__extension = extension
+    self.__app_commands: Dict[str, apc.Command[None, ..., Any]] = {}
+    self.__commands: Dict[str, MorkatoCommand] = {}
+    self.__error_handlers: Dict[Type[Any], ErrorCallback[Any]] = {}
+  def get_extension(self) -> ExtensionT:
+    return self.__extension
+  def get_app_commands(self) -> Dict[str, apc.Command[None, ..., Any]]:
+    return self.__app_commands
+  def get_commands(self) -> Dict[str, MorkatoCommand]:
+    return self.__commands
+  def get_error_handlers(self) -> Dict[Type[Any], ErrorCallback[Any]]:
+    return self.__error_handlers
+  def command(self, name: str, callback: Callable[Concatenate[MorkatoContext, P], Coro[None]], /, **attrs) -> MorkatoCommand[P]:
+    command = MorkatoCommand(callback, name=name, **attrs)
+    command.extension = self.__extension
+    self.__commands[name] = command
+    return command
+  def app_command(self, name: str, callback: apc.commands.CommandCallback, /, **attrs) -> apc.Command:
+    register = apc.command(name=name, **attrs)
+    command = register(callback)
+    self.__app_commands[name] = command
+    return command
+  def exception(self, cls: Type[ExceptionT], callback: ErrorCallbackHandler[ExceptionT], /) -> ErrorCallback[ExceptionT]:
+    handler = ErrorCallback(callback, cls)
+    self.__error_handlers[cls] = handler
+    return handler
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None:
     checker: Callable[[Union[MorkatoContext, Interaction]]] = predicate
     if isinstance(command, apc.Command):
@@ -163,9 +199,3 @@ class Extension(metaclass=ExtensionMeta):
         return await predicate(context)
       checker = predicate_interaction
     command.add_check(checker)
-  async def start(self) -> None:
-    pass
-  async def setup(self) -> None:
-    pass
-  async def close(self) -> None:
-    pass

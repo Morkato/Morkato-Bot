@@ -1,9 +1,11 @@
+from morkbmt.extension import ExtensionCommandBuilder
 from morkbmt.core import registry
 from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
 from discord.ext import commands
 from discord import app_commands as apc
 from discord import (Interaction, User)
+from typing_extensions import Self
 from typing import (Optional, ClassVar)
 import app.errors
 import app.embeds
@@ -11,7 +13,7 @@ import app.embeds
 @registry
 class RPGPlayer(BaseExtension):
   LANGUAGE: ClassVar[str]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
     self.check(self.player_registry, self.manage_guild_perms)

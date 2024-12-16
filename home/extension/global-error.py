@@ -1,10 +1,11 @@
 from morkbmt.msgbuilder import UnknownMessageContent
-from morkbmt.extension import exception
+from morkbmt.extension import (ExtensionCommandBuilder, exception)
 from morkbmt.context import MorkatoContext
 from morkbmt.core import registry
 from morkato.art import Art
 from app.extension import BaseExtension
 from app.errors import (AppError, NoActionError)
+from typing_extensions import Self
 from typing import (
   ClassVar,
   Type,
@@ -20,7 +21,7 @@ class GlobalErrorExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
   def registry_message(self, cls: Type[Exception], key: str, /) -> None:
     self.keys[cls] = key
-  async def setup(self):
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.keys: Dict[Type[Exception], str] = {}
   @exception(NoActionError)

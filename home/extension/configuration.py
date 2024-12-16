@@ -1,4 +1,4 @@
-from morkbmt.extension import Converter
+from morkbmt.extension import (ExtensionCommandBuilder, Converter)
 from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.ability import Ability
@@ -8,6 +8,7 @@ from morkato.art import Art
 from app.embeds.base import BaseEmbedBuilder
 from app.extension import BaseExtension
 from unidecode import unidecode
+from typing_extensions import Self
 from typing import (
   Optional,
   Iterator,
@@ -27,7 +28,7 @@ class MorkatoConfiguration(BaseExtension):
   toart: Converter[Art] # Injected when :.start: is called
   toability: Converter[Ability] # Injected when :.start: is called
   tofamily: Converter[Family] # Injected when :.start: is called
-  async def setup(self):
+  async def setup(self, commands: ExtensionCommandBuilder[Self]):
     BaseEmbedBuilder.setup(self.msgbuilder, self.user.display_avatar.url)
     self.msgbuilder.from_archive("global-error.yml")
     self.msgbuilder.from_archive("rpg-commands.yml")

@@ -1,11 +1,12 @@
+from morkbmt.extension import ExtensionCommandBuilder
 from morkbmt.core import registry
 from morkato.utils import NoNullDict
 from app.extension import BaseExtension
-from discord.ext import commands
 from discord.interactions import Interaction
 from discord.message import Attachment
 from discord.channel import TextChannel
 from discord import app_commands as apc
+from typing_extensions import Self
 from typing import ClassVar
 import app.errors
 import aiohttp
@@ -13,7 +14,7 @@ import aiohttp
 @registry
 class Utility(BaseExtension):
   LANGUAGE: ClassVar[str]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.has_guild_perms = commands.has_guild_permissions(manage_messages=True, manage_channels=True)
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.check(self.wipe_category, self.has_guild_perms)

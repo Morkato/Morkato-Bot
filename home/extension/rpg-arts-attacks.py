@@ -1,4 +1,4 @@
-from morkbmt.extension import Converter
+from morkbmt.extension import (ExtensionCommandBuilder, Converter)
 from morkbmt.core import registry
 from morkato.attack import AttackFlags
 from morkato.utils import NoNullDict
@@ -8,6 +8,7 @@ from discord.interactions import Interaction
 from app.extension import BaseExtension
 from discord import app_commands as apc
 from discord.ext import commands
+from typing_extensions import Self
 from typing import (Optional, ClassVar)
 from enum import Enum
 import app.errors
@@ -24,7 +25,7 @@ class AttackChoiceIntent(Enum):
 class RPGArtsAttacksExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
   toart: Converter[Art]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.check(self.art_create, self.manage_guild_perms)

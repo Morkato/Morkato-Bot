@@ -1,4 +1,4 @@
-from morkbmt.extension import Converter
+from morkbmt.extension import (ExtensionCommandBuilder, Converter)
 from morkbmt.core import registry
 from morkato.utils import NoNullDict
 from morkato.family import Family
@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.interactions import Interaction
 from discord import app_commands as apc
 from enum import Enum
+from typing_extensions import Self
 from typing import (
   Optional,
   ClassVar
@@ -25,7 +26,7 @@ class RPGFamiliesAbilities(BaseExtension):
   LANGUAGE: ClassVar[str]
   tofamily: Converter[Family]
   toability: Converter[Ability]
-  async def setup(self) -> None:
+  async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
     self.check(self.family_create, self.manage_guild_perms)
     self.check(self.family_update, self.manage_guild_perms)

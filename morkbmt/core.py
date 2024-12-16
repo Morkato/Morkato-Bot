@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .extension import (ErrorCallback, Converter, Extension)
+from .extension import (ErrorCallback, Converter, Extension, ExtensionCommandBuilderImpl)
 from .msgbuilder import MessageBuilder
 from morkato.utils import parse_arguments
 from discord.flags import Intents
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 import importlib.util
 import inspect
 import logging
-import asyncio
+import traceback
 import sys
 import os
 
@@ -102,7 +102,7 @@ class BotBuilder:
     self.__loaded_converters[converter.__convert_class__] = loaded_converter
     await loaded_converter.start()
     _log.info("Success to load converter: %s.%s %s values is injected." % (converter.__module__, converter.__name__, len(values)))
-  async def load_extension(self, extension: Type[Extension], /) -> None:
+  async def load_extension(self, extension: Type[Extension], /) -> Optional[ExtensionCommandBuilderImpl[Extension]]:
     values = extension.__inject_values__
     loaded_extension = extension()
     for (key, cls) in values.items():
@@ -115,17 +115,24 @@ class BotBuilder:
           value = self.to_inject_value(cls)
       except TypeError:
         _log.warning("Failed to load extension: %s.%s value: %s (%s.%s) is not injected." % (extension.__module__, extension.__name__, key, cls.__module__, cls.__name__))
-        return
+        return None
       except KeyError:
         origin = get_args(cls)[0]
         _log.warning("Failed to load extension: %s.%s converter: %s (%s.%s[%s.%s]) is not injected." % (extension.__module__, extension.__name__, key, Converter.__module__, cls.__name__, origin.__module__, origin.__name__))
-        return
+        return None
       if value is None:
         raise NotImplementedError
       setattr(loaded_extension, key, value)
-    await loaded_extension.start()
+    commands: ExtensionCommandBuilderImpl[Extension] = ExtensionCommandBuilderImpl(loaded_extension)
+    try:
+      await loaded_extension.setup(commands)
+    except Exception as exc:
+      _log.error("Failed to setup extension: %s.%s traceback:", extension.__module__, extension.__name__)
+      traceback.print_exc()
+      return None
     self.__loaded_extensions[extension.__extension_name__] = loaded_extension
     _log.info("Success to load extension: %s.%s %s values injected." % (extension.__module__, extension.__name__, len(values)))
+    return commands
   @overload
   def login(self, cls: Type[MorkatoBotT], /) -> MorkatoBotT: ...
   @overload
@@ -148,21 +155,12 @@ class BotBuilder:
     for unloaded_converter in self.__unloaded_converters:
       await self.load_converter(unloaded_converter)
     for unloaded_extension in self.__unloaded_extensions:
-      await self.load_extension(unloaded_extension)
-    to_setup_converters = map(lambda conv: conv.setup(), self.__loaded_converters.values())
-    to_setup_extensions = map(lambda ext: ext.setup(), self.__loaded_extensions.values())
-    await asyncio.gather(*to_setup_converters)
-    await asyncio.gather(*to_setup_extensions)
-    for extension in self.__loaded_extensions.values():
-      for command in extension.__extension_commands__.copy().values():
+      commands = await self.load_extension(unloaded_extension)
+      if commands is None:
+        continue
+      for command in commands.get_commands().values():
         bot.add_command(command)
-        command._callback = MethodType(command._callback, extension)
-        command._extension = extension
-      for command in extension.__extension_app_commands__.copy().values():
-        bot.tree.add_command(command)
-        command._callback = MethodType(command._callback, extension)
-        command._extension = extension
-      for handler in extension.__errors_handlers__.copy().values():
-        self.__catching[handler.err_cls] = handler
-        handler.set_extension(extension)
+      for app_command in commands.get_app_commands().values():
+        bot.tree.add_command(app_command)
+      self.__catching.update(commands.get_error_handlers())
 class MorkatoCommandTree(apc.CommandTree[MorkatoBotT]): ...
