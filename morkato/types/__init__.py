@@ -17,8 +17,6 @@ AlwaysActivateType = Literal["ALWAYS_ACTIVATE"]
 RequiredActivateType = Literal["REQUIRED_ACTIVATE"]
 AbilityType = Literal[AlwaysActivateType, RequiredActivateType]
 class Guild(TypedDict):
-  start_rpg_date: str
-  start_rpg_calendar: str
   human_initial_life: int
   oni_initial_life: int
   hybrid_initial_life: int

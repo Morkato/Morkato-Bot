@@ -24,17 +24,15 @@ class RPGCommands(BaseExtension):
   KEKKIJUTSU_KEYS: ClassVar[List[str]] = ["kekki", "kekkijutsu"]
   FIGHTING_STYLE_KEYS: ClassVar[List[str]] = ["fight", "fighting-style", "fight-style"]
   ENERGY_PEER: ClassVar[int] = 72
-  TRAIN_OPTIONS_HANDLERS: Dict[TrainOption, Callable[..., None]]
-  ART_OPTIONS_HANDLERS: Dict[ArtOption, Callable[..., None]]
-  LANGUAGE: str
+  LANGUAGE: ClassVar[str]
   toart: Converter[Art]
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
-    self.TRAIN_OPTIONS_HANDLERS = {
+    self.TRAIN_OPTIONS_HANDLERS: Dict[TrainOption, Callable[..., None]] = {
       TrainOption.TRAIN: self.on_train_train,
       TrainOption.NOTRAIN: self.on_train_notrain
     }
-    self.ART_OPTIONS_HANDLERS = {
+    self.ART_OPTIONS_HANDLERS: Dict[ArtOption, Callable[..., None]] = {
       ArtOption.GET: self.on_art_get,
       ArtOption.LIST: self.on_art_list
     }

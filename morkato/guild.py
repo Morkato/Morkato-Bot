@@ -40,8 +40,6 @@ class Guild:
     self.hybrid_initial_life = payload["hybrid_initial_life"]
     self.breath_initial = payload["breath_initial"]
     self.blood_initial = payload["blood_initial"]
-    self.start_rpg_calendar = datetime.strptime(payload["start_rpg_calendar"], DATE_FORMAT)
-    self.start_rpg_date = datetime.strptime(payload["start_rpg_date"], DATE_FORMAT)
     self.roll_category_id = int(payload["roll_category_id"]) if payload["roll_category_id"] is not None else None
     self.off_category_id = int(payload["off_category_id"]) if payload["off_category_id"] is not None else None
   def clear(self) -> None:
@@ -54,9 +52,6 @@ class Guild:
     self.arts: UnresolvedSnowflakeList[Art] = UnresolvedArtList(self.state, self)
     self.abilities: UnresolvedSnowflakeList[Ability] = UnresolvedAbilityList(self.state, self)
     self.families: UnresolvedSnowflakeList[Family] = UnresolvedFamilyList(self.state, self)
-  def now(self) -> datetime:
-    addition = datetime.now() - self.start_rpg_date
-    return self.start_rpg_calendar + addition
   async def update(
     self, *,
     human_initial_life: Optional[int] = None,

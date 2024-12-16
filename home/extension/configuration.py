@@ -26,6 +26,13 @@ T = TypeVar('T')
 
 @registry
 class MorkatoConfiguration(BaseExtension):
+  toattack: Converter[Attack] # Injected when :.start: is called
+  toart: Converter[Art] # Injected when :.start: is called
+  toability: Converter[Ability] # Injected when :.start: is called
+  tofamily: Converter[Family] # Injected when :.start: is called
+  async def start(self):
+    print(self.__inject_values__)
+    print(self.__annotations__)
   async def setup(self):
     BaseEmbedBuilder.setup(self.builder, self.user.display_avatar.url)
     self.from_archive("global-error.yml")
@@ -76,8 +83,8 @@ class IDConverter(Converter[T]):
     return arg
 @registry
 class AbilityConverter(IDConverter[Ability]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, abilities: UnresolvedSnowflakeList[Ability]) -> Ability:
-    await self.resolve(abilities)
+  async def convert(self, arg: Union[str, int], *, abilities: UnresolvedSnowflakeList[Ability]) -> Ability:
+    await abilities.resolve()
     if isinstance(arg, int):
       ability = abilities.get(arg)
       if ability is None:
@@ -91,7 +98,7 @@ class AbilityConverter(IDConverter[Ability]):
     return ability
 @registry
 class FamilyConverter(IDConverter[Family]):
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, families: UnresolvedSnowflakeList[Family]) -> Family:
+  async def convert(self, arg: Union[str, int], *, families: UnresolvedSnowflakeList[Family]) -> Family:
     await self.resolve(families)
     if isinstance(arg, int):
       family = families.get(arg)
@@ -148,7 +155,7 @@ class AttackConverter(IDConverter[Attack]):
     if art_name is not None:
       ArtConverter._validate_art_name(art_name)
     return (attack_name, art_name)
-  async def convert(self, ctx: Union[Interaction, MorkatoContext], arg: Union[str, int], *, attacks: Dict[str, Attack], arts: UnresolvedSnowflakeList[Art], to_art: Converter[Art]) -> Attack:
+  async def convert(self, arg: Union[str, int], *, attacks: Dict[str, Attack], arts: UnresolvedSnowflakeList[Art], to_art: Converter[Art]) -> Attack:
     await self.resolve(arts)
     if isinstance(arg, int):
       attack = attacks.get(arg)

@@ -1,5 +1,5 @@
 from morkato.work.context import MorkatoContext
-from morkato.work.extension import command
+from morkato.work.extension import (Converter, command)
 from morkato.work.project import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.errors import PlayerNotFoundError
@@ -14,14 +14,17 @@ from random import randint
 from typing import (
   Optional,
   Callable,
+  ClassVar,
   Dict
 )
 import app.embeds
 import app.errors
 
 @registry
-class RPGRolls(BaseExtension):
-  LANGUAGE: str
+class RPGRollsExtension(BaseExtension):
+  LANGUAGE: ClassVar[str]
+  tofamily: Converter[Family]
+  toability: Converter[Ability]
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
   async def registry_family(self, ctx: MorkatoContext, player: Player) -> Family:
@@ -56,7 +59,7 @@ class RPGRolls(BaseExtension):
     self, models: UnresolvedSnowflakeList[ObjectWithPercentT], *,
     filter: Optional[Callable[[ObjectWithPercentT], bool]] = None
   ) -> ObjectWithPercentT:
-    await self.resolve(models)
+    await models.resolve()
     if len(models) == 0:
       raise app.errors.AppError("modelsIsEmpty")
     objs = [elem for elem in models if filter(elem)] if filter is not None else models
@@ -92,7 +95,6 @@ class RPGRolls(BaseExtension):
       await ctx.send(content)
       return
     guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.abilities)
     rolled_abilities: Dict[int, int] = {}
     for i in range(quantity):
       ability = await self.roll(guild.abilities)
@@ -116,7 +118,6 @@ class RPGRolls(BaseExtension):
       await ctx.send(content)
       return
     guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.families)
     rolled_families: Dict[int, int] = {}
     for i in range(quantity):
       family = await self.roll(guild.families)
@@ -147,7 +148,7 @@ class RPGRolls(BaseExtension):
   async def ability(self, ctx: MorkatoContext, *, ability_query: Optional[str]) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
     if ability_query is not None:
-      ability = await self.convert(app.converters.AbilityConverter, ctx, ability_query, abilities=guild.abilities)
+      ability = await self.toability(ability_query, abilities=guild.abilities)
       builder = app.embeds.AbilityBuilder(ability)
       await ctx.send_embed(builder)
       return

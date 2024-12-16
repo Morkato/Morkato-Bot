@@ -6,12 +6,13 @@ from discord.interactions import Interaction
 from discord.message import Attachment
 from discord.channel import TextChannel
 from discord import app_commands as apc
+from typing import ClassVar
 import app.errors
 import aiohttp
 
 @registry
 class Utility(BaseExtension):
-  LANGUAGE: str
+  LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
     self.has_guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
     self.LANGUAGE = self.builder.PT_BR

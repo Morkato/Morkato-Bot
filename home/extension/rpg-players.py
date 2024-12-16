@@ -3,14 +3,14 @@ from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
 from discord import app_commands as apc
 from discord import (Interaction, User)
-from typing import Optional
+from typing import (Optional, ClassVar)
 import app.errors
 import app.embeds
 import app.checks
 
 @registry
 class RPGPlayer(BaseExtension):
-  LANGUAGE: str
+  LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
     self.has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)

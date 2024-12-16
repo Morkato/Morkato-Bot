@@ -8,11 +8,10 @@ from discord.interactions import Interaction
 from app.extension import BaseExtension
 from discord import app_commands as apc
 from discord.ext import commands
-from typing import Optional
+from typing import (Optional, ClassVar)
 from enum import Enum
 import app.errors
 import app.embeds
-import app.checks
 
 class AttackChoiceIntent(Enum):
   UNAVOIDABLE = AttackFlags.UNAVOIDABLE
@@ -23,7 +22,7 @@ class AttackChoiceIntent(Enum):
   DEFENSIVE = AttackFlags.DEFENSIVE
 @registry
 class RPGArtsAttacksExtension(BaseExtension):
-  LANGUAGE: str
+  LANGUAGE: ClassVar[str]
   toart: Converter[Art]
   async def setup(self) -> None:
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
@@ -34,7 +33,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     self.check(self.attack_update, self.manage_guild_perms)
     self.check(self.attack_set_intent, self.manage_guild_perms)
     self.check(self.attack_reset_intents, self.manage_guild_perms)
-    print("Art", self.toart)
   @apc.command(
     name="art-create",
     description="[RPG Utilitários] Cria uma nova arte."

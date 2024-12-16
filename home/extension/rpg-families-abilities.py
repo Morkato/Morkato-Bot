@@ -1,15 +1,19 @@
+from morkato.work.extension import Converter
 from morkato.work.project import registry
 from morkato.utils import NoNullDict
+from morkato.family import Family
+from morkato.ability import Ability
 from morkato.npc import NpcTypeFlags
 from app.extension import BaseExtension
+from discord.ext import commands
 from discord.interactions import Interaction
 from discord import app_commands as apc
 from enum import Enum
 from typing import (
-  Optional
+  Optional,
+  ClassVar
 )
 import app.embeds
-import app.checks
 import app.errors
 
 class NpcTypeFlagsChoice(Enum):
@@ -18,9 +22,18 @@ class NpcTypeFlagsChoice(Enum):
   HYBRID = NpcTypeFlags.HYBRID
 @registry
 class RPGFamiliesAbilities(BaseExtension):
-  LANGUAGE: str
+  LANGUAGE: ClassVar[str]
+  tofamily: Converter[Family]
+  toability: Converter[Ability]
   async def setup(self) -> None:
-    self.has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
+    self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
+    self.check(self.family_create, self.manage_guild_perms)
+    self.check(self.family_update, self.manage_guild_perms)
+    self.check(self.family_delete, self.manage_guild_perms)
+    self.check(self.ability_create, self.manage_guild_perms)
+    self.check(self.ability_update, self.manage_guild_perms)
+    self.check(self.ability_delete, self.manage_guild_perms)
+    self.check(self.ability_sync, self.manage_guild_perms)
     self.LANGUAGE = self.builder.PT_BR
   @apc.command(
     name="family-create",
@@ -36,7 +49,6 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    await self.resolve(guild.families)
     family = await guild.create_family(
       name=name,
       npc_type=0,

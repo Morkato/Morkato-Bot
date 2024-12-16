@@ -8,9 +8,8 @@ from discord.ext.commands.errors import (
 )
 from .extension import (ErrorCallback, Extension, Converter)
 from discord.message import Message
-from .tree import MorkatoCommandTree
+from .core import (MorkatoCommandTree, MessageBuilder)
 from .context import MorkatoContext
-from .builder import MessageBuilder
 from typing import (
   Optional,
   TypeVar,
@@ -25,7 +24,7 @@ T = TypeVar('T')
 class MorkatoBot(Bot):
   def __init__(
     self, *args,
-    content: MessageBuilder,
+    msgbuilder: MessageBuilder,
     extensions: Dict[str, Extension],
     converters: Dict[Type[Any], Converter[Any]],
     catching: Dict[Type[Any], ErrorCallback],
@@ -40,7 +39,7 @@ class MorkatoBot(Bot):
       **kwargs,
       tree_cls=tree_cls
     )
-    self.morkcontent = content
+    self.msgbuilder = msgbuilder
     self.morkextensions = extensions
     self.morkconverters = converters
     self.morkcatching = catching

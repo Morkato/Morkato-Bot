@@ -18,13 +18,11 @@ _log = logging.getLogger(__name__)
 @registry
 class GlobalErrorExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
-  toart: Converter[Art]
   def registry_message(self, cls: Type[Exception], key: str, /) -> None:
     self.keys[cls] = key
   async def setup(self):
     self.LANGUAGE = self.builder.PT_BR
     self.keys: Dict[Type[Exception], str] = {}
-    print(self.toart)
   @exception(NoActionError)
   async def on_no_action_error(self, ctx: MorkatoContext, exc: NoActionError) -> None: ...
   @exception(AppError)

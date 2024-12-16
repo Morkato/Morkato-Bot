@@ -1,7 +1,7 @@
+from __future__ import annotations
 from morkato.utils import parse_arguments
 from .extension import (ErrorCallback, Converter, Extension)
 from .types import ToRegistryObject
-from .builder import MessageBuilder
 from .bot import MorkatoBot
 from discord.flags import Intents
 from discord import app_commands as apc
@@ -23,11 +23,24 @@ import importlib.util
 import inspect
 import logging
 import asyncio
+import yaml
 import sys
 import os
 
+class MessageBuilderException(Exception): ...
+class UnknownMessageContent(MessageBuilderException):
+  def __init__(self, language: str, key: str) -> None:
+    super().__init__("Unknown message content for key: %s.%s" % (language, key))
+    self.language = language
+    self.key = key
+class KeyAlreadyExists(MessageBuilderException):
+  def __init__(self, language: str, key: str, value: str) -> None:
+    super().__init__("Key: %s in language: %s already exists. This is value: %s" % (key, language, value))
+    self.language = language
+    self.key = key
+    self.value = value
+
 ToRegistryObjectT = TypeVar('ToRegistryObjectT', bound=ToRegistryObject)
-ExtensionT = TypeVar('ExtensionT', bound=Extension)
 MorkatoBotT = TypeVar("MorkatoBotT", bound=MorkatoBot)
 T = TypeVar('T')
 _log = logging.getLogger(__name__)
@@ -35,8 +48,46 @@ _log = logging.getLogger(__name__)
 def registry(object: ToRegistryObjectT) -> ToRegistryObjectT:
   object.__registry_class__ = True
   return object
+class MessageBuilder:
+  PT_BR = "ptBR"
+  EN_US = "enUS"
+  def __init__(self, base: Optional[str] = None) -> None:
+    self.messages: Dict[str, Dict[str, str]] = {}
+    self.base = base or '.'
+  def get_content_unknown_formatting(self, language: str, key: str) -> str:
+    try:
+      builder = self.messages[language]
+      content = builder[key]
+      return content
+    except KeyError:
+      raise UnknownMessageContent(language, key)
+  def get_content(self, language: str, key: str, /, *args, **parameters) -> str:
+    content = self.get_content_unknown_formatting(language, key)
+    if not args and not parameters:
+      return content
+    return (content % args).format(**parameters)
+  def from_archive(self, local: str, /) -> None:
+    local = os.path.join(self.base, local)
+    languages: Optional[Dict[str, Any]] = None
+    with open(local, 'r') as fp:
+      languages = yaml.safe_load(fp)
+    for (language, obj) in languages.items():
+      self.extend(language, obj)
+  def set_content(self, language: str, key: str, value: str) -> None:
+    builder = self.messages.get(language)
+    if builder is None:
+      builder = self.messages[language] = {}
+    content = builder.get(key)
+    if content is not None:
+      raise KeyAlreadyExists(language, key, content)
+    builder[key] = value
+  def extend(self, language: str, obj: Dict[str, Any]) -> None:
+    for (key, value) in obj.items():
+      if not isinstance(value, str):
+        raise TypeError("Don't supports for this type, supports for :str: only.")
+      self.set_content(language, key, value)
 class BotBuilder:
-  def __init__(self, content: MessageBuilder, home: str, intents: Intents) -> None:
+  def __init__(self, msgbuilder: MessageBuilder, home: str, intents: Intents) -> None:
     self.__loaded_converters: Dict[Type[Any], Converter[Any]] = {}
     self.__loaded_extensions: Dict[str, Extension] = {}
     self.__unloaded_extensions: List[Type[Extension]] = []
@@ -44,13 +95,13 @@ class BotBuilder:
     self.__injected: Dict[Type[Any], Any] = {}
     self.__tree_cls: Optional[Type[apc.CommandTree]] = None
     self.__command_prefix = '!'
-    self.__content = content
+    self.__msgbuilder = msgbuilder
     self.__catching: Dict[Type[Any], ErrorCallback] = {}
     self.__home = os.path.abspath(os.path.normpath(home))
     self.__intents = intents
   def to_inject_value(self, annotation: Any) -> Any:
     if annotation is MessageBuilder:
-      return self.__content
+      return self.__msgbuilder
     value = self.__injected.get(annotation)
     if value is None:
       raise TypeError("Annotation: %s.%s is not injected" % (annotation.__module__, annotation.__name__))
@@ -99,10 +150,18 @@ class BotBuilder:
   async def load_extension(self, extension: Type[Extension], /) -> None:
     parameters = inspect.signature(MethodType(extension.__init__, object())).parameters
     (args, kwargs) = parse_arguments(parameters, key=self.to_inject_value)
-    to_inject_converters = ((key, get_args(klass)[0]) for (key, klass) in extension.__annotations__.items() if get_origin(klass) is Converter)
+    values = extension.__inject_values__
     loaded_extension = extension(*args, **kwargs)
-    for (key, cls) in to_inject_converters:
-      setattr(loaded_extension, key, self.__loaded_converters[cls])
+    for (key, cls) in values.items():
+      value: Any = None
+      if get_origin(cls) is Converter:
+        map_key = get_args(cls)[0]
+        value = self.__loaded_converters[map_key]
+      else:
+        value = self.to_inject_value(cls)
+      if value is None:
+        raise NotImplementedError
+      setattr(loaded_extension, key, value)
     await loaded_extension.start()
     self.__loaded_extensions[extension.__extension_name__] = loaded_extension
     _log.info("Extension: %s.%s is loaded" % (extension.__module__, extension.__name__))
@@ -118,7 +177,7 @@ class BotBuilder:
       tree_cls=self.__tree_cls,
       extensions=self.__loaded_extensions,
       converters=self.__loaded_converters,
-      content=self.__content,
+      msgbuilder=self.__msgbuilder,
       injected=self.__injected,
       catching=self.__catching,
       intents=self.__intents
@@ -145,3 +204,4 @@ class BotBuilder:
       for handler in extension.__errors_handlers__.copy().values():
         self.__catching[handler.err_cls] = handler
         handler.set_extension(extension)
+class MorkatoCommandTree(apc.CommandTree[MorkatoBotT]): ...
