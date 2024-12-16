@@ -1,6 +1,6 @@
-from morkbmt.bot import MorkatoBot
 from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
+from morkbmt.bot import MorkatoBot
 from typing_extensions import Self
 from discord import ClientUser
 

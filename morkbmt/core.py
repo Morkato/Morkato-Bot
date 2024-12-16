@@ -90,30 +90,42 @@ class BotBuilder:
     for name in unloaded_extensions:
       self.get_unloaded_registries(name, self.__unloaded_extensions, self.__unloaded_converters)
   async def load_converter(self, converter: Type[Converter[Any]], /) -> None:
-    parameters = inspect.signature(MethodType(converter.__init__, object())).parameters
-    (args, kwargs) = parse_arguments(parameters, key=self.to_inject_value)
-    loaded_converter = converter(*args, **kwargs)
+    values = converter.__inject_values__
+    loaded_converter = converter()
+    for (key, cls) in values.items():
+      try:
+        value: Any = self.to_inject_value(cls)
+      except TypeError:
+        _log.warning("Failed to load converter: %s.%s value: %s (%s.%s) is not injected." % (converter.__module__, converter.__name__, key, cls.__module__, cls.__name__))
+        return
+      setattr(loaded_converter, key, value)
     self.__loaded_converters[converter.__convert_class__] = loaded_converter
     await loaded_converter.start()
-    _log.info("Converter: %s.%s is loaded" % (converter.__module__, converter.__name__))
+    _log.info("Success to load converter: %s.%s %s values is injected." % (converter.__module__, converter.__name__, len(values)))
   async def load_extension(self, extension: Type[Extension], /) -> None:
-    parameters = inspect.signature(MethodType(extension.__init__, object())).parameters
-    (args, kwargs) = parse_arguments(parameters, key=self.to_inject_value)
     values = extension.__inject_values__
-    loaded_extension = extension(*args, **kwargs)
+    loaded_extension = extension()
     for (key, cls) in values.items():
       value: Any = None
-      if get_origin(cls) is Converter:
-        map_key = get_args(cls)[0]
-        value = self.__loaded_converters[map_key]
-      else:
-        value = self.to_inject_value(cls)
+      try:
+        if get_origin(cls) is Converter:
+          map_key = get_args(cls)[0]
+          value = self.__loaded_converters[map_key]
+        else:
+          value = self.to_inject_value(cls)
+      except TypeError:
+        _log.warning("Failed to load extension: %s.%s value: %s (%s.%s) is not injected." % (extension.__module__, extension.__name__, key, cls.__module__, cls.__name__))
+        return
+      except KeyError:
+        origin = get_args(cls)[0]
+        _log.warning("Failed to load extension: %s.%s converter: %s (%s.%s[%s.%s]) is not injected." % (extension.__module__, extension.__name__, key, Converter.__module__, cls.__name__, origin.__module__, origin.__name__))
+        return
       if value is None:
         raise NotImplementedError
       setattr(loaded_extension, key, value)
     await loaded_extension.start()
     self.__loaded_extensions[extension.__extension_name__] = loaded_extension
-    _log.info("Extension: %s.%s is loaded" % (extension.__module__, extension.__name__))
+    _log.info("Success to load extension: %s.%s %s values injected." % (extension.__module__, extension.__name__, len(values)))
   @overload
   def login(self, cls: Type[MorkatoBotT], /) -> MorkatoBotT: ...
   @overload

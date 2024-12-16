@@ -70,15 +70,32 @@ def exception(cls: Type[ExceptionT]) -> ExceptionDecorator[ExceptionT]:
 class ConverterHandlerMeta(type):
   __converter_name__: str
   __registry_class__: bool
+  __inject_values__: Dict[str, Type[Any]]
   def __new__(cls, name: str, bases: Tuple[Any], attrs: Dict[str, Any], /, **kwargs) -> Self:
-    name = kwargs.pop("name", name)
+    inject_values: Dict[str, Type[Any]] = {}
+    annotations = attrs.get("__annotations__", {})
     attrs["__converter_name__"] = kwargs.pop("name", name)
     attrs["__registry_class__"] = False
+    attrs["__inject_values__"] = inject_values
+    if kwargs:
+      raise NotImplementedError
+    metas = (meta for meta in bases if isinstance(meta, cls))
+    for meta in metas:
+      inject_values.update(meta.__inject_values__)
+    for (key, annotation) in annotations.items():
+      if get_origin(annotation) is ClassVar or key.startswith("__") and key.endswith("__"):
+        continue
+      if isinstance(get_origin(annotation) or annotation, ConverterHandlerMeta):
+        raise TypeError("You don't inject converter in anhoter converter.")
+      if key in attrs:
+        raise ValueError("Value already initialized in namespace.")
+      inject_values[key] = annotation
     return super().__new__(cls, name, bases, attrs, **kwargs)
 class Converter(Generic[T], metaclass=ConverterHandlerMeta):
   __converter_name__: str
   __registry_class__: bool
   __convert_class__: Type[T]
+  __inject_values__: Dict[str, Type[Any]]
   def __init_subclass__(cls, **kwgs) -> None:
     super().__init_subclass__(**kwgs)
     cls.__convert_class__ = get_args(cls.__orig_bases__[0])[0]
@@ -115,6 +132,8 @@ class ExtensionMeta(type):
     for (key, annotation) in annotations.items():
       if get_origin(annotation) is ClassVar or key.startswith("__") and key.endswith("__"):
         continue
+      if isinstance(annotation, ExtensionMeta):
+        raise TypeError("You don't inject extension in anhoter extension.")
       if key in attrs:
         raise ValueError("Value already initialized in namespace.")
       inject_values[key] = annotation
