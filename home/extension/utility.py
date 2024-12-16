@@ -1,7 +1,7 @@
-from morkato.work.project import registry
+from morkato.work.core import registry
 from morkato.utils import NoNullDict
-from app.checks import has_guild_permissions
 from app.extension import BaseExtension
+from discord.ext import commands
 from discord.interactions import Interaction
 from discord.message import Attachment
 from discord.channel import TextChannel
@@ -14,9 +14,9 @@ import aiohttp
 class Utility(BaseExtension):
   LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
-    self.has_guild_perms = has_guild_permissions(manage_messages=True, manage_channels=True)
+    self.has_guild_perms = commands.has_guild_permissions(manage_messages=True, manage_channels=True)
     self.LANGUAGE = self.builder.PT_BR
-    self.wipe_category.add_check(self.has_guild_perms)
+    self.check(self.wipe_category, self.has_guild_perms)
   async def image_upload(self, interaction: Interaction, filename: str, image: bytes) -> None:
     await self.connection.upload_image(
       author_id=interaction.user.id,

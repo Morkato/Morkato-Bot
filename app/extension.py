@@ -17,17 +17,9 @@ T = TypeVar('T')
 P = TypeVar('P')
 
 class BaseExtension(Extension):
-  def __init__(
-    self, *, 
-    connection: MorkatoConnectionState, 
-    http: HTTPClient, 
-    builder: MessageBuilder, 
-    user: discord.ClientUser
-  ) -> None:
-    self.connection = connection
-    self.http = http
-    self.builder = builder
-    self.user = user
+  connection: MorkatoConnectionState
+  user: discord.ClientUser
+  http: HTTPClient
   async def get_morkato_guild(self, guild: Snowflake) -> Guild:
     morkato = self.connection.get_cached_guild(guild.id)
     if morkato is None:

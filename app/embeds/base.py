@@ -1,4 +1,4 @@
-from morkato.work.builder import MessageBuilder
+from morkato.work.msgbuilder import MessageBuilder
 from morkato.work.embeds import EmbedBuilder
 
 class BaseEmbedBuilder(EmbedBuilder):

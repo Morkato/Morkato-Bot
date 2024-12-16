@@ -133,6 +133,7 @@ class Extension(metaclass=ExtensionMeta):
   __errors_handlers__: Dict[Type[Any], ErrorCallback]
   __inject_values__: Dict[str, Type[Any]]
   msgbuilder: MessageBuilder
+  def __init__(self) -> None: ...
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None:
     checker: Callable[[Union[MorkatoContext, Interaction]]] = predicate
     if isinstance(command, apc.Command):

@@ -1,6 +1,7 @@
-from morkato.work.core import (UnknownMessageContent, registry)
-from morkato.work.extension import (Converter, exception)
+from morkato.work.msgbuilder import UnknownMessageContent
+from morkato.work.extension import exception
 from morkato.work.context import MorkatoContext
+from morkato.work.core import registry
 from morkato.art import Art
 from app.extension import BaseExtension
 from app.errors import (AppError, NoActionError)

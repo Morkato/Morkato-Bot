@@ -7,7 +7,6 @@ from morkato.attack import Attack
 from morkato.art import Art
 from app.embeds.base import BaseEmbedBuilder
 from app.extension import BaseExtension
-from discord import Interaction
 from unidecode import unidecode
 from typing import (
   Optional,

@@ -1,21 +1,21 @@
-from morkato.work.project import registry
+from morkato.work.core import registry
 from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
+from discord.ext import commands
 from discord import app_commands as apc
 from discord import (Interaction, User)
 from typing import (Optional, ClassVar)
 import app.errors
 import app.embeds
-import app.checks
 
 @registry
 class RPGPlayer(BaseExtension):
   LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
     self.LANGUAGE = self.builder.PT_BR
-    self.has_guild_perms = app.checks.has_guild_permissions(manage_guild=True)
-    self.player_registry.add_check(self.has_guild_perms)
-    self.player_reset.add_check(self.has_guild_perms)
+    self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
+    self.check(self.player_registry, self.manage_guild_perms)
+    self.check(self.player_reset, self.manage_guild_perms)
   @apc.command(
     name="pregistry",
     description="[RPG Utilitários] Registra um jogador"
