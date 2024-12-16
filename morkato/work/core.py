@@ -1,13 +1,13 @@
 from __future__ import annotations
-from morkato.utils import parse_arguments
 from .extension import (ErrorCallback, Converter, Extension)
-from .types import ToRegistryObject
-from .bot import MorkatoBot
+from .msgbuilder import MessageBuilder
+from morkato.utils import parse_arguments
 from discord.flags import Intents
 from discord import app_commands as apc
 from types import MethodType
 from glob import glob
 from typing import (
+  TYPE_CHECKING,
   get_origin,
   get_args,
   overload,
@@ -19,73 +19,24 @@ from typing import (
   List,
   Any
 )
+if TYPE_CHECKING:
+  from .types import ToRegistryObject
+  from .bot import MorkatoBot
 import importlib.util
 import inspect
 import logging
 import asyncio
-import yaml
 import sys
 import os
 
-class MessageBuilderException(Exception): ...
-class UnknownMessageContent(MessageBuilderException):
-  def __init__(self, language: str, key: str) -> None:
-    super().__init__("Unknown message content for key: %s.%s" % (language, key))
-    self.language = language
-    self.key = key
-class KeyAlreadyExists(MessageBuilderException):
-  def __init__(self, language: str, key: str, value: str) -> None:
-    super().__init__("Key: %s in language: %s already exists. This is value: %s" % (key, language, value))
-    self.language = language
-    self.key = key
-    self.value = value
-
-ToRegistryObjectT = TypeVar('ToRegistryObjectT', bound=ToRegistryObject)
-MorkatoBotT = TypeVar("MorkatoBotT", bound=MorkatoBot)
+ToRegistryObjectT = TypeVar('ToRegistryObjectT', bound="ToRegistryObject")
+MorkatoBotT = TypeVar("MorkatoBotT", bound="MorkatoBot")
 T = TypeVar('T')
 _log = logging.getLogger(__name__)
 
 def registry(object: ToRegistryObjectT) -> ToRegistryObjectT:
   object.__registry_class__ = True
   return object
-class MessageBuilder:
-  PT_BR = "ptBR"
-  EN_US = "enUS"
-  def __init__(self, base: Optional[str] = None) -> None:
-    self.messages: Dict[str, Dict[str, str]] = {}
-    self.base = base or '.'
-  def get_content_unknown_formatting(self, language: str, key: str) -> str:
-    try:
-      builder = self.messages[language]
-      content = builder[key]
-      return content
-    except KeyError:
-      raise UnknownMessageContent(language, key)
-  def get_content(self, language: str, key: str, /, *args, **parameters) -> str:
-    content = self.get_content_unknown_formatting(language, key)
-    if not args and not parameters:
-      return content
-    return (content % args).format(**parameters)
-  def from_archive(self, local: str, /) -> None:
-    local = os.path.join(self.base, local)
-    languages: Optional[Dict[str, Any]] = None
-    with open(local, 'r') as fp:
-      languages = yaml.safe_load(fp)
-    for (language, obj) in languages.items():
-      self.extend(language, obj)
-  def set_content(self, language: str, key: str, value: str) -> None:
-    builder = self.messages.get(language)
-    if builder is None:
-      builder = self.messages[language] = {}
-    content = builder.get(key)
-    if content is not None:
-      raise KeyAlreadyExists(language, key, content)
-    builder[key] = value
-  def extend(self, language: str, obj: Dict[str, Any]) -> None:
-    for (key, value) in obj.items():
-      if not isinstance(value, str):
-        raise TypeError("Don't supports for this type, supports for :str: only.")
-      self.set_content(language, key, value)
 class BotBuilder:
   def __init__(self, msgbuilder: MessageBuilder, home: str, intents: Intents) -> None:
     self.__loaded_converters: Dict[Type[Any], Converter[Any]] = {}

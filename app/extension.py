@@ -1,5 +1,5 @@
 from morkato.work.context import EmbedBuilderView
-from morkato.work.builder import MessageBuilder
+from morkato.work.msgbuilder import MessageBuilder
 from morkato.work.embeds import EmbedBuilder
 from morkato.work.extension import Extension
 from morkato.state import MorkatoConnectionState
@@ -73,10 +73,6 @@ class BaseExtension(Extension):
     if player is None:
       player = await guild.fetch_player(id)
     return player
-  def from_archive(self, filepath: str, /) -> None:
-    self.builder.from_archive(filepath)
-  def get_content(self, language: str, key: str, /, *args, **parameters) -> str:
-    return self.builder.safe_get_content(language, key, *args, **parameters)
 class ConfirmationView(discord.ui.View):
   CHECK = '✅'
   UNCHECK = '❌'

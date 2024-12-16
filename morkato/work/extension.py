@@ -1,8 +1,9 @@
-from .types import ListenerFuncType, Coro
 from discord.interactions import Interaction
 from discord.ext.commands import Command
 from discord import app_commands as apc
+from .msgbuilder import MessageBuilder
 from .context import MorkatoContext
+from .types import Coro
 from typing_extensions import Self
 from typing import (
   get_args,
@@ -25,9 +26,7 @@ import asyncio
 T = TypeVar('T')
 ExceptionT = TypeVar('ExteptionT', bound="Exception")
 GenericCoroCallable = Callable[..., Coro[T]]
-CommandDecorator = Callable[[GenericCoroCallable[Any]], "MorkatoCommand"]
-ErrorCallbackHandler = Callable[["Extension", "MorkatoContext", "ExceptionT"], Coro[None]]
-ExceptionDecorator = Callable[["ErrorCallbackHandler[ExceptionT]"], "ErrorCallback[ExceptionT]"]
+ErrorCallbackHandler = Callable[["Extension", "MorkatoContext", ExceptionT], Coro[None]]
 
 class MorkatoCommand(Command[None, ..., Any]):
   def __init__(self, *args, **kwargs) -> None:
@@ -55,6 +54,8 @@ class ErrorCallback(Generic[ExceptionT]):
   def set_extension(self, extension: "Extension") -> None:
     self._extension = extension
 
+CommandDecorator = Callable[[GenericCoroCallable[Any]], MorkatoCommand]
+ExceptionDecorator = Callable[[ErrorCallbackHandler[ExceptionT]], ErrorCallback[ExceptionT]]
 def command(name: str, **attrs) -> CommandDecorator:
   def decorator(func: Callable[..., Coroutine[Any, Any, Any]]) -> MorkatoCommand:
     if isinstance(func, MorkatoCommand):
@@ -108,6 +109,9 @@ class ExtensionMeta(type):
     attrs["__inject_values__"] = inject_values
     if kwargs:
       raise NotImplementedError
+    metas = (meta for meta in bases if isinstance(meta, cls))
+    for meta in metas:
+      inject_values.update(meta.__inject_values__)
     for (key, annotation) in annotations.items():
       if get_origin(annotation) is ClassVar or key.startswith("__") and key.endswith("__"):
         continue
@@ -128,6 +132,7 @@ class Extension(metaclass=ExtensionMeta):
   __extension_commands__: Dict[str, MorkatoCommand]
   __errors_handlers__: Dict[Type[Any], ErrorCallback]
   __inject_values__: Dict[str, Type[Any]]
+  msgbuilder: MessageBuilder
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None:
     checker: Callable[[Union[MorkatoContext, Interaction]]] = predicate
     if isinstance(command, apc.Command):

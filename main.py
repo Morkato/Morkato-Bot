@@ -1,5 +1,4 @@
-from morkato.work.builder import MessageBuilder
-from morkato.work.project import BotBuilder
+from morkato.work.core import (BotBuilder, MessageBuilder)
 from discord.flags import Intents
 from app.bot import AppBot
 import discord.utils
