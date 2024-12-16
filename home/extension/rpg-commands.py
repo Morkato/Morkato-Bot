@@ -1,6 +1,6 @@
-from morkato.work.extension import (Converter, command)
-from morkato.work.context import MorkatoContext
-from morkato.work.core import registry
+from morkbmt.extension import (Converter, command)
+from morkbmt.context import MorkatoContext
+from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.guild import Guild
 from morkato.art import (ArtType, Art)

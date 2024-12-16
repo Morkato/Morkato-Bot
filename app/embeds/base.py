@@ -1,5 +1,5 @@
-from morkato.work.msgbuilder import MessageBuilder
-from morkato.work.embeds import EmbedBuilder
+from morkbmt.msgbuilder import MessageBuilder
+from morkbmt.embeds import EmbedBuilder
 
 class BaseEmbedBuilder(EmbedBuilder):
   CHUNK_SIZE: int

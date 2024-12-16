@@ -1,5 +1,5 @@
-from morkato.work.extension import Converter
-from morkato.work.core import registry
+from morkbmt.extension import Converter
+from morkbmt.core import registry
 from morkato.utils import NoNullDict
 from morkato.family import Family
 from morkato.ability import Ability

@@ -1,5 +1,5 @@
-from morkato.work.extension import Converter
-from morkato.work.core import registry
+from morkbmt.extension import Converter
+from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.ability import Ability
 from morkato.family import Family

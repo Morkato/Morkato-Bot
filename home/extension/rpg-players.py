@@ -1,4 +1,4 @@
-from morkato.work.core import registry
+from morkbmt.core import registry
 from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
 from discord.ext import commands

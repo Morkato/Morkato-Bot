@@ -1,5 +1,5 @@
-from morkato.work.extension import Converter
-from morkato.work.core import registry
+from morkbmt.extension import Converter
+from morkbmt.core import registry
 from morkato.attack import AttackFlags
 from morkato.utils import NoNullDict
 from morkato.types import ArtType

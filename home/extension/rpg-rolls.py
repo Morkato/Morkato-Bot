@@ -1,6 +1,6 @@
-from morkato.work.context import MorkatoContext
-from morkato.work.extension import (Converter, command)
-from morkato.work.core import registry
+from morkbmt.context import MorkatoContext
+from morkbmt.extension import (Converter, command)
+from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.errors import PlayerNotFoundError
 from morkato.ability import Ability

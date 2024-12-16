@@ -1,4 +1,4 @@
-from morkato.work.msgbuilder import (
+from morkbmt.msgbuilder import (
   UnknownMessageContent,
   MessageBuilder
 )
