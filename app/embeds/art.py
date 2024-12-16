@@ -9,8 +9,8 @@ class ArtBuilder(BaseEmbedBuilder):
   def __init__(self, art: Art) -> None:
     self.attacks = art.attacks
     self.art = art
-    self.attack_line_style = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "attackLineStyle")
-    self.default_embed_description = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "defaultEmbedDescription")
+    self.attack_line_style = self.builder.get_content(self.LANGUAGE, "attackLineStyle")
+    self.default_embed_description = self.builder.get_content(self.LANGUAGE, "defaultEmbedDescription")
     key: str
     if art.type == art.RESPIRATION:
       key = "artRespirationTitle"
@@ -55,11 +55,11 @@ class ArtCreatedBuilder(ArtBuilder):
     super().__init__(art)
     self.footer_text: str
     if self.art.type == self.art.RESPIRATION:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "respirationCreated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "respirationCreated")
     elif self.art.type == self.art.KEKKIJUTSU:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "kekkijutsuCreated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "kekkijutsuCreated")
     elif self.art.type == self.art.FIGHTING_STYLE:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "fightingStyleCreated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "fightingStyleCreated")
   async def build_base_embed(self) -> Embed:
     embed = await super().build_base_embed()
     embed.set_footer(
@@ -72,11 +72,11 @@ class ArtUpdatedBuilder(ArtBuilder):
     super().__init__(art)
     self.footer_text: str
     if self.art.type == self.art.RESPIRATION:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "respirationUpdated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "respirationUpdated")
     elif self.art.type == self.art.KEKKIJUTSU:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "kekkijutsuUpdated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "kekkijutsuUpdated")
     elif self.art.type == self.art.FIGHTING_STYLE:
-      self.footer_text = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "fightingStyleUpdated")
+      self.footer_text = self.builder.get_content(self.LANGUAGE, "fightingStyleUpdated")
   async def build_base_embed(self) -> Embed:
     embed = await super().build_base_embed()
     embed.set_footer(

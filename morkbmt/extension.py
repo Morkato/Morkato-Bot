@@ -161,6 +161,8 @@ class ExtensionCommandBuilder(Protocol[ExtensionT]):
   def app_command(self, name: str, callback: apc.commands.CommandCallback, /, **attrs) -> apc.Command: ...
   def exception(self, cls: Type[ExceptionT], callback: ErrorCallbackHandler[ExceptionT], /) -> ErrorCallback[ExceptionT]: ...
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None: ...
+  def guild_only(self, command: Union[MorkatoCommand, apc.Command], /) -> None: ...
+  def rename(self, command: apc.Command, /, **parameters) -> None: ...
 class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def __init__(self, extension: ExtensionT):
     self.__extension = extension
@@ -199,3 +201,15 @@ class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
         return await predicate(context)
       checker = predicate_interaction
     command.add_check(checker)
+  def guild_only(self, command: Union[MorkatoCommand, apc.Command], /) -> None:
+    if isinstance(command, apc.Command):
+      register = apc.guild_only()
+      register(command)
+      return
+    checker = lambda ctx: ctx.guild is not None
+    self.check(command, checker)
+  def rename(self, command: apc.Command, /, **parameters) -> None:
+    if isinstance(command, MorkatoCommand):
+      return None
+    register = apc.rename(**parameters)
+    register(command)

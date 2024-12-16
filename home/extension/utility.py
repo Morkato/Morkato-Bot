@@ -8,6 +8,7 @@ from discord.channel import TextChannel
 from discord import app_commands as apc
 from typing_extensions import Self
 from typing import ClassVar
+import discord.ext.commands
 import app.errors
 import aiohttp
 
@@ -15,7 +16,7 @@ import aiohttp
 class Utility(BaseExtension):
   LANGUAGE: ClassVar[str]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
-    self.has_guild_perms = commands.has_guild_permissions(manage_messages=True, manage_channels=True)
+    self.has_guild_perms = discord.ext.commands.has_guild_permissions(manage_messages=True, manage_channels=True)
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.check(self.wipe_category, self.has_guild_perms)
   async def image_upload(self, interaction: Interaction, filename: str, image: bytes) -> None:

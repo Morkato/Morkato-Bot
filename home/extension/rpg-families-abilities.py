@@ -14,6 +14,7 @@ from typing import (
   Optional,
   ClassVar
 )
+import discord.ext.commands
 import app.embeds
 import app.errors
 
@@ -27,7 +28,7 @@ class RPGFamiliesAbilities(BaseExtension):
   tofamily: Converter[Family]
   toability: Converter[Ability]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
-    self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
+    self.manage_guild_perms = discord.ext.commands.has_guild_permissions(manage_guild=True)
     self.check(self.family_create, self.manage_guild_perms)
     self.check(self.family_update, self.manage_guild_perms)
     self.check(self.family_delete, self.manage_guild_perms)

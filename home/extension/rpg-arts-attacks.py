@@ -6,10 +6,9 @@ from morkato.types import ArtType
 from morkato.art import Art
 from discord.interactions import Interaction
 from app.extension import BaseExtension
-from discord import app_commands as apc
-from discord.ext import commands
 from typing_extensions import Self
 from typing import (Optional, ClassVar)
+import discord.ext.commands
 from enum import Enum
 import app.errors
 import app.embeds
@@ -26,19 +25,38 @@ class RPGArtsAttacksExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
   toart: Converter[Art]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
-    self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
+    self.manage_guild_perms = discord.ext.commands.has_guild_permissions(manage_guild=True)
     self.LANGUAGE = self.msgbuilder.PT_BR
-    self.check(self.art_create, self.manage_guild_perms)
-    self.check(self.art_update, self.manage_guild_perms)
-    self.check(self.attack_create, self.manage_guild_perms)
-    self.check(self.attack_update, self.manage_guild_perms)
-    self.check(self.attack_set_intent, self.manage_guild_perms)
-    self.check(self.attack_reset_intents, self.manage_guild_perms)
-  @apc.command(
-    name="art-create",
-    description="[RPG Utilitários] Cria uma nova arte."
-  )
-  @apc.guild_only()
+    art_create = commands.app_command("art-create", self.art_create, description="[RPG Utilitários] Cria uma nova arte.")
+    art_update = commands.app_command("art-update", self.art_update, description="[RPG Utilitários] Atualiza uma arte já existente.")
+    attack_create = commands.app_command("attack-create", self.attack_create, description="[RPG Utilitários] Cria um novo ataque.")
+    attack_update = commands.app_command("attack-update", self.attack_update, description="[RPG Utilitários] Atualiza um ataque já existente.")
+    attack_delete = commands.app_command("attack-delete", self.attack_delete, description="[RPG Utilitários] Excluí um ataque.")
+    attack_set_intent = commands.app_command("attack-set-intent", self.attack_set_intent, description="[RPG Utilitários] Manipula as intenções de um ataque.")
+    attack_reset_intents = commands.app_command("attack-reset-intent", self.attack_reset_intents, description="[RPG Utilitários] Volta as intenções de um ataque para padrão.")
+    
+    commands.guild_only(art_create)
+    commands.guild_only(art_update)
+    commands.guild_only(attack_create)
+    commands.guild_only(attack_update)
+    commands.guild_only(attack_delete)
+    commands.guild_only(attack_set_intent)
+    commands.guild_only(attack_reset_intents)
+
+    commands.rename(art_update, art_query="art")
+    commands.rename(attack_create, art_query="art")
+    commands.rename(attack_update, attack_query="attack")
+    commands.rename(attack_delete, attack_query="attack")
+    commands.rename(attack_set_intent, attack_query="attack")
+    commands.rename(attack_reset_intents, attack_query="attack")
+    
+    commands.check(art_create, self.manage_guild_perms)
+    commands.check(art_update, self.manage_guild_perms)
+    commands.check(attack_create, self.manage_guild_perms)
+    commands.check(attack_update, self.manage_guild_perms)
+    commands.check(attack_delete, self.manage_guild_perms)
+    commands.check(attack_set_intent, self.manage_guild_perms)
+    commands.check(attack_reset_intents, self.manage_guild_perms)
   async def art_create(
     self, interaction: Interaction, /, *,
     name: str,
@@ -64,12 +82,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     )
     builder = app.embeds.ArtCreatedBuilder(art)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="art-update",
-    description="[RPG Utilitários] Atualiza uma arte já existente."
-  )
-  @apc.rename(art_query="art")
-  @apc.guild_only()
   async def art_update(
     self, interaction: Interaction, /, *,
     art_query: str,
@@ -100,12 +112,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     await art.update(**kwargs)
     builder = app.embeds.ArtUpdatedBuilder(art)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="attack-create",
-    description="[RPG Utilitários] Cria um novo ataque."
-  )
-  @apc.rename(art_query="art")
-  @apc.guild_only()
   async def attack_create(
     self, interaction: Interaction, /, *,
     art_query: str,
@@ -145,12 +151,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     )
     builder = app.embeds.AttackCreatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="attack-update",
-    description="[RPG Utilitários] Atualiza um ataque já existente."
-  )
-  @apc.rename(attack_query="attack")
-  @apc.guild_only()
   async def attack_update(
     self, interaction: Interaction, /, *,
     attack_query: str,
@@ -193,12 +193,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     await attack.update(**kwargs)
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="attack-delete",
-    description="[RPG Utilitários] Excluí um ataque."
-  )
-  @apc.rename(attack_query="attack")
-  @apc.guild_only()
   async def attack_delete(self, interaction: Interaction, attack_query: str) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
@@ -211,12 +205,6 @@ class RPGArtsAttacksExtension(BaseExtension):
       content=self.builder.get_content(self.LANGUAGE, "attackDelete", attack=attack),
       view=None
     )
-  @apc.command(
-    name="attack-set-intent",
-    description="[RPG Utilitários] Manipula as intenções de um ataque."
-  )
-  @apc.rename(attack_query="attack")
-  @apc.guild_only()
   async def attack_set_intent(self, interaction: Interaction, attack_query: str, intent: AttackChoiceIntent) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
@@ -228,12 +216,6 @@ class RPGArtsAttacksExtension(BaseExtension):
     await attack.update(flags=new_flags)
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="attack-reset-intents",
-    description="[RPG Utilitários] Volta as intenções de um ataque para padrão."
-  )
-  @apc.guild_only()
-  @apc.rename(attack_query="attack")
   async def attack_reset_intents(self, interaction: Interaction, /, *, attack_query: str) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
