@@ -12,7 +12,7 @@ import app.embeds
 class RPGPlayer(BaseExtension):
   LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
     self.check(self.player_registry, self.manage_guild_perms)
     self.check(self.player_reset, self.manage_guild_perms)

@@ -14,8 +14,7 @@ from typing import (
   TypeVar,
   Tuple,
   Union,
-  Dict,
-  Any
+  Dict
 )
 import app.errors
 import re
@@ -28,21 +27,18 @@ class MorkatoConfiguration(BaseExtension):
   toart: Converter[Art] # Injected when :.start: is called
   toability: Converter[Ability] # Injected when :.start: is called
   tofamily: Converter[Family] # Injected when :.start: is called
-  async def start(self):
-    print(self.__inject_values__)
-    print(self.__annotations__)
   async def setup(self):
-    BaseEmbedBuilder.setup(self.builder, self.user.display_avatar.url)
-    self.from_archive("global-error.yml")
-    self.from_archive("rpg-commands.yml")
-    self.from_archive("rpg-rolls.yml")
-    self.from_archive("rpg-guild.yml")
-    self.from_archive("rpg-utility.yml")
-    self.from_archive("rpg-families-abilities.yml")
-    self.from_archive("rpg-arts-attacks.yml")
-    self.from_archive("rpg-players.yml")
-    self.from_archive("embeds.yml")
-    self.from_archive("utility.yml")
+    BaseEmbedBuilder.setup(self.msgbuilder, self.user.display_avatar.url)
+    self.msgbuilder.from_archive("global-error.yml")
+    self.msgbuilder.from_archive("rpg-commands.yml")
+    self.msgbuilder.from_archive("rpg-rolls.yml")
+    self.msgbuilder.from_archive("rpg-guild.yml")
+    self.msgbuilder.from_archive("rpg-utility.yml")
+    self.msgbuilder.from_archive("rpg-families-abilities.yml")
+    self.msgbuilder.from_archive("rpg-arts-attacks.yml")
+    self.msgbuilder.from_archive("rpg-players.yml")
+    self.msgbuilder.from_archive("embeds.yml")
+    self.msgbuilder.from_archive("utility.yml")
 def strip_text(
   text: str, *,
   ignore_accents: Optional[bool] = None,

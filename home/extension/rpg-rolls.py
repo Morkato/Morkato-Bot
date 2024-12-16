@@ -26,7 +26,7 @@ class RPGRollsExtension(BaseExtension):
   tofamily: Converter[Family]
   toability: Converter[Ability]
   async def setup(self) -> None:
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
   async def registry_family(self, ctx: MorkatoContext, player: Player) -> Family:
     families = sorted(player._families.values(), key=lambda family: len(family.name), reverse=True)
     if len(families) == 0:

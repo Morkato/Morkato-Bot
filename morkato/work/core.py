@@ -61,8 +61,6 @@ class BotBuilder:
     self.__command_prefix = prefix
   def tree(self, cls: Type[apc.CommandTree], /) -> None:
     self.__tree_cls = cls
-  def token(self, token: str, /) -> None:
-    self.__token = token
   def inject(self, cls: Type[T], object: T, /) -> None:
     self.__injected[cls] = object
   def get_unloaded_registries(self, name: str, /, extensions: List[Type[Extension]], converters: List[Type[Converter[Any]]]) -> None:
@@ -84,7 +82,7 @@ class BotBuilder:
         extensions.append(registry_class)
       elif issubclass(registry_class, Converter):
         converters.append(registry_class)
-  def from_home(self) -> None:
+  def prepare(self) -> None:
     if not self.__home in sys.path:
       sys.path.append(self.__home)
     unloaded_extensions: Iterable[str] = glob(os.path.join("extension", "*.py"), root_dir=self.__home)

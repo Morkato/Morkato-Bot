@@ -34,7 +34,7 @@ class RPGFamiliesAbilities(BaseExtension):
     self.check(self.ability_update, self.manage_guild_perms)
     self.check(self.ability_delete, self.manage_guild_perms)
     self.check(self.ability_sync, self.manage_guild_perms)
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
   @apc.command(
     name="family-create",
     description="[RPG Utilitários] Cria uma família"

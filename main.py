@@ -42,5 +42,5 @@ if __name__ == "__main__":
   msgbuilder = MessageBuilder(os.path.join(MORKATO_HOME, "content"))
   builder = BotBuilder(msgbuilder, MORKATO_HOME, Intents.all())
   builder.command_prefix(PREFIX)
-  builder.from_home()
+  builder.prepare()
   main(builder, BOT_TOKEN)

@@ -26,7 +26,7 @@ class RPGArtsAttacksExtension(BaseExtension):
   toart: Converter[Art]
   async def setup(self) -> None:
     self.manage_guild_perms = commands.has_guild_permissions(manage_guild=True)
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
     self.check(self.art_create, self.manage_guild_perms)
     self.check(self.art_update, self.manage_guild_perms)
     self.check(self.attack_create, self.manage_guild_perms)

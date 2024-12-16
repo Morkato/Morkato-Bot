@@ -15,7 +15,7 @@ class Utility(BaseExtension):
   LANGUAGE: ClassVar[str]
   async def setup(self) -> None:
     self.has_guild_perms = commands.has_guild_permissions(manage_messages=True, manage_channels=True)
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
     self.check(self.wipe_category, self.has_guild_perms)
   async def image_upload(self, interaction: Interaction, filename: str, image: bytes) -> None:
     await self.connection.upload_image(

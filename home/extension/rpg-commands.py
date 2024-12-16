@@ -27,7 +27,7 @@ class RPGCommands(BaseExtension):
   LANGUAGE: ClassVar[str]
   toart: Converter[Art]
   async def setup(self) -> None:
-    self.LANGUAGE = self.builder.PT_BR
+    self.LANGUAGE = self.msgbuilder.PT_BR
     self.TRAIN_OPTIONS_HANDLERS: Dict[TrainOption, Callable[..., None]] = {
       TrainOption.TRAIN: self.on_train_train,
       TrainOption.NOTRAIN: self.on_train_notrain
