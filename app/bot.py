@@ -1,4 +1,4 @@
-from morkato.work.bot import MorkatoBot
+from morkbmt.bot import MorkatoBot
 from morkato.state import MorkatoConnectionState
 from morkato.http import HTTPClient
 from typing_extensions import Self
