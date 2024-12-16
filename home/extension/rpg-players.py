@@ -16,13 +16,12 @@ class RPGPlayer(BaseExtension):
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
     self.manage_guild_perms = discord.ext.commands.has_guild_permissions(manage_guild=True)
-    self.check(self.player_registry, self.manage_guild_perms)
-    self.check(self.player_reset, self.manage_guild_perms)
-  @apc.command(
-    name="pregistry",
-    description="[RPG Utilitários] Registra um jogador"
-  )
-  @apc.guild_only()
+    player_registry = commands.app_command("pregistry", self.player_registry, description="[RPG Utilitários] Registra um jogador.")
+    player_reset = commands.app_command("preset", self.player_reset, description="[RPG Utilitários] Excluí o contexto para um jogador.")
+    commands.check(player_registry, self.manage_guild_perms)
+    commands.check(player_reset, self.manage_guild_perms)
+    commands.guild_only(player_registry)
+    commands.guild_only(player_reset)
   async def player_registry(
     self, interaction: Interaction, *,
     user: User,
@@ -40,11 +39,6 @@ class RPGPlayer(BaseExtension):
     npc = await player.registry(name, surname, icon=icon)
     builder = app.embeds.NpcCardBuilder(npc)
     await self.send_embed(interaction, builder, resolve_all=True)
-  @apc.command(
-    name="preset",
-    description="[RPG Utilitários] Excluí o contexto para um jogador"
-  )
-  @apc.guild_only()
   async def player_reset(self, interaction: Interaction, user: User) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)

@@ -1,3 +1,4 @@
+from discord.ext.commands.core import (get_signature_parameters, unwrap_function)
 from discord.interactions import Interaction
 from discord.ext.commands import Command
 from discord import app_commands as apc
@@ -25,6 +26,7 @@ from typing import (
   Any
 )
 import asyncio
+import inspect
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -34,12 +36,26 @@ GenericCoroCallable = Callable[..., Coro[T]]
 ErrorCallbackHandler = Callable[["Extension", "MorkatoContext", ExceptionT], Coro[None]]
 
 class MorkatoCommand(Command[None, P, Any]):
-  def __init__(self, *args, **kwargs) -> None:
-    super().__init__(*args, **kwargs)
+  def __init__(self, func: Callable[Concatenate[MorkatoContext, P], Coro[None]], **kwargs) -> None:
+    super().__init__(func, **kwargs)
     self.extension: Optional[Extension] = None
+    self._cog = None
   @property
   def cog(self) -> None:
     return None
+  @property
+  def callback(self) -> Callable[Concatenate[MorkatoContext, P], Coro[None]]:
+    return self._callback
+  @callback.setter
+  def callback(self, func: Callable[Concatenate[MorkatoContext, P], Coro[None]]) -> None:
+    self._callback = func
+    unwrap = unwrap_function(func)
+    self.module: str = unwrap.__module__
+    try:
+        globalns = unwrap.__globals__
+    except AttributeError:
+        globalns = {}
+    self.params: Dict[str, inspect.Parameter] = get_signature_parameters(func, globalns, skip_parameters=1)
 class ErrorCallback(Generic[ExceptionT]):
   def __init__(self, callback: ErrorCallbackHandler[ExceptionT], error_cls: Any) -> None:
     self._extension: Optional[Extension] = None
@@ -55,7 +71,7 @@ class ErrorCallback(Generic[ExceptionT]):
   async def invoke(self, ctx: MorkatoContext, error: ExceptionT) -> None:
     if self._extension is None:
       raise RuntimeError
-    await self.callback(self._extension, ctx, error)
+    await self.callback(ctx, error)
   def set_extension(self, extension: "Extension") -> None:
     self._extension = extension
 
@@ -190,6 +206,7 @@ class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def exception(self, cls: Type[ExceptionT], callback: ErrorCallbackHandler[ExceptionT], /) -> ErrorCallback[ExceptionT]:
     handler = ErrorCallback(callback, cls)
     self.__error_handlers[cls] = handler
+    handler.set_extension(self.__extension)
     return handler
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None:
     checker: Callable[[Union[MorkatoContext, Interaction]]] = predicate
