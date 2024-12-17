@@ -2,7 +2,6 @@ from morkbmt.extension import ExtensionCommandBuilder
 from morkbmt.msgbuilder import UnknownMessageContent
 from morkbmt.context import MorkatoContext
 from morkbmt.core import registry
-from morkato.art import Art
 from app.extension import BaseExtension
 from app.errors import (AppError, NoActionError)
 from typing_extensions import Self

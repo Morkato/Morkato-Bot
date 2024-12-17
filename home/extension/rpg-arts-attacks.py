@@ -2,6 +2,7 @@ from morkbmt.extension import (ExtensionCommandBuilder, Converter)
 from morkbmt.core import registry
 from morkato.attack import AttackFlags
 from morkato.utils import NoNullDict
+from morkato.attack import Attack
 from morkato.types import ArtType
 from morkato.art import Art
 from discord.interactions import Interaction
@@ -23,6 +24,7 @@ class AttackChoiceIntent(Enum):
 @registry
 class RPGArtsAttacksExtension(BaseExtension):
   LANGUAGE: ClassVar[str]
+  toattack: Converter[Attack]
   toart: Converter[Art]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.manage_guild_perms = discord.ext.commands.has_guild_permissions(manage_guild=True)
@@ -108,7 +110,7 @@ class RPGArtsAttacksExtension(BaseExtension):
     if not kwargs:
       raise app.errors.AppError("commandKwargsIsEmpty")
     guild = await self.get_morkato_guild(interaction.guild)
-    art = await self.convert(app.converters.ArtConverter, interaction, art_query, arts=guild.arts)
+    art = await self.toart(art_query, arts=guild.arts)
     await art.update(**kwargs)
     builder = app.embeds.ArtUpdatedBuilder(art)
     await self.send_embed(interaction, builder, resolve_all=True)
@@ -132,7 +134,7 @@ class RPGArtsAttacksExtension(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    art = await self.convert(app.converters.ArtConverter, interaction, art_query, arts=guild.arts)
+    art = await self.toart(art_query, arts=guild.arts)
     attack = await art.create_attack(
       name = name,
       name_prefix_art = prefix,
@@ -189,26 +191,26 @@ class RPGArtsAttacksExtension(BaseExtension):
     if not kwargs:
       raise app.errors.AppError("commandKwargsIsEmpty")
     guild = await self.get_morkato_guild(interaction.guild)
-    attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
+    attack = await self.toattack(attack_query, arts=guild.arts, attacks=guild._attacks, to_art=self.toart)
     await attack.update(**kwargs)
     builder = app.embeds.AttackUpdatedBuilder(attack)
     await self.send_embed(interaction, builder, resolve_all=True)
   async def attack_delete(self, interaction: Interaction, attack_query: str) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
-    confirm = await self.send_confirmation(interaction, content=self.builder.get_content(self.LANGUAGE, "beforeDeleteAttack", attack=attack))
+    attack = await self.toattack(attack_query, arts=guild.arts, attacks=guild._attacks, to_art=self.toart)
+    confirm = await self.send_confirmation(interaction, content=self.msgbuilder.get_content(self.LANGUAGE, "beforeDeleteAttack", attack=attack))
     if not confirm:
       return
     await attack.delete()
     await interaction.edit_original_response(
-      content=self.builder.get_content(self.LANGUAGE, "attackDelete", attack=attack),
+      content=self.msgbuilder.get_content(self.LANGUAGE, "attackDelete", attack=attack),
       view=None
     )
   async def attack_set_intent(self, interaction: Interaction, attack_query: str, intent: AttackChoiceIntent) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
+    attack = await self.toattack(attack_query, arts=guild.arts, attacks=guild._attacks, to_art=self.toart)
     if attack.flags.hasflag(intent.value):
       raise app.errors.AppError("attackAlreadyHasIntent")
     new_flags = attack.flags.copy()
@@ -219,7 +221,7 @@ class RPGArtsAttacksExtension(BaseExtension):
   async def attack_reset_intents(self, interaction: Interaction, /, *, attack_query: str) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    attack = await self.convert(app.converters.AttackConverter, interaction, attack_query, arts=guild.arts, attacks=guild._attacks)
+    attack = await self.toattack(attack_query, arts=guild.arts, attacks=guild._attacks, to_art=self.toart)
     if attack.flags.isempty():
       raise app.errors.AppError("attackIntentsIsEmpty")
     await attack.update(flags=AttackFlags(0))

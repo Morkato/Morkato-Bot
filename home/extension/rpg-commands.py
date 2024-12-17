@@ -2,6 +2,7 @@ from morkbmt.extension import (ExtensionCommandBuilder, Converter, command)
 from morkbmt.context import MorkatoContext
 from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
+from morkato.attack import Attack
 from morkato.art import (ArtType, Art)
 from app.extension import BaseExtension
 from typing_extensions import Self
@@ -24,6 +25,7 @@ class RPGCommands(BaseExtension):
   RESPIRATION_KEYS: ClassVar[List[str]] = ["resp", "respiration"]
   KEKKIJUTSU_KEYS: ClassVar[List[str]] = ["kekki", "kekkijutsu"]
   FIGHTING_STYLE_KEYS: ClassVar[List[str]] = ["fight", "fighting-style", "fight-style"]
+  toattack: Converter[Attack]
   toart: Converter[Art]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
@@ -71,6 +73,6 @@ class RPGCommands(BaseExtension):
     await handler(ctx, art_query, arts=guild.arts)
   async def attack(self, ctx: MorkatoContext, *, attack_query: str) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
-    attack = await self.convert(app.converters.AttackConverter, ctx, attack_query, arts=guild.arts, attacks=guild._attacks)
+    attack = await self.toattack(attack_query, arts=guild.arts, attacks=guild._attacks, to_art=self.toart)
     builder = app.embeds.AttackBuilder(attack)
     await ctx.send_embed(builder, resolve_all=True)

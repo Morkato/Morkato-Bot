@@ -2,7 +2,6 @@ from morkbmt.extension import ExtensionCommandBuilder
 from morkbmt.core import registry
 from morkato.errors import PlayerNotFoundError
 from app.extension import BaseExtension
-from discord import app_commands as apc
 from discord import (Interaction, User)
 from typing_extensions import Self
 from typing import (Optional, ClassVar)
@@ -31,21 +30,21 @@ class RPGPlayer(BaseExtension):
   ) -> None:
     if not interaction.user.guild_permissions.manage_guild:
       user = interaction.user
+    await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     player = await self.get_cached_or_fetch_player(guild, user.id)
     if player.already_registered():
       raise app.errors.AppError("playerAlreadyRegistered")
-    await interaction.response.defer()
     npc = await player.registry(name, surname, icon=icon)
-    builder = app.embeds.NpcCardBuilder(npc)
-    await self.send_embed(interaction, builder, resolve_all=True)
+    content = self.msgbuilder.get_content(self.LANGUAGE, "playerRegistry", user=interaction.user, player=player, npc=npc)
+    await interaction.edit_original_response(content=content)
   async def player_reset(self, interaction: Interaction, user: User) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
     try:
       player = await self.get_cached_or_fetch_player(guild, user.id)
       await player.delete()
-      content = self.get_content(self.LANGUAGE, "playerReset", user=user)
+      content = self.msgbuilder.get_content(self.LANGUAGE, "playerReset", user=user)
       await interaction.edit_original_response(content=content)
     except PlayerNotFoundError:
       raise app.errors.AppError("invalidPlayerContext")

@@ -5,9 +5,7 @@ from morkato.family import Family
 from morkato.ability import Ability
 from morkato.npc import NpcTypeFlags
 from app.extension import BaseExtension
-from discord.ext import commands
 from discord.interactions import Interaction
-from discord import app_commands as apc
 from enum import Enum
 from typing_extensions import Self
 from typing import (
@@ -102,7 +100,8 @@ class RPGFamiliesAbilities(BaseExtension):
     if not kwargs:
       raise app.errors.AppError("onEmptyKwargsWhenUpdateFamily")
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    family = await self.tofamily(family_query, families=guild.families)
+    await family.update(**kwargs)
     builder = app.embeds.FamilyUpdated(family)
     await self.send_embed(interaction, builder, resolve_all=True)
   async def family_delete(
@@ -111,14 +110,14 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    family = await self.tofamily(family_query, families=guild.families)
     await family.delete()
     builder = app.embeds.FamilyDeleted(family)
     await self.send_embed(interaction, builder, resolve_all=True)
   async def activate_family_roll(self, interaction: Interaction, *, family_query: str, npc_type: NpcTypeFlagsChoice) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
+    family = await self.tofamily(family_query, families=guild.families)
     flags = family.npc_type
     if flags.hasflag(npc_type.value):
       raise app.errors.AppError("familyHasFlag")
@@ -145,7 +144,7 @@ class RPGFamiliesAbilities(BaseExtension):
       description = description,
       banner = banner
     )
-    builder = app.embeds.AbilityBuilder(ability)
+    builder = app.embeds.AbilityCreated(ability)
     await self.send_embed(interaction, builder, resolve_all=True)
   async def ability_update(
     self, interaction: Interaction, *,
@@ -157,7 +156,7 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
+    ability = await self.toability(ability_query, abilities=guild.abilities)
     kwargs = NoNullDict(
       name = name,
       percent = percent,
@@ -165,7 +164,7 @@ class RPGFamiliesAbilities(BaseExtension):
       banner = banner
     )
     if not kwargs:
-      content = self.builder.get_content(self.LANGUAGE, "onEmptyKwargsWhenUpdateAbility")
+      content = self.msgbuilder.get_content(self.LANGUAGE, "onEmptyKwargsWhenUpdateAbility")
       await interaction.edit_original_response(content=content)
       return
     await ability.update(**kwargs)
@@ -177,7 +176,7 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
+    ability = await self.toability(ability_query, abilities=guild.abilities)
     await ability.delete()
     builder = app.embeds.AbilityDeleted(ability)
     await self.send_embed(interaction, builder, resolve_all=True)
@@ -188,10 +187,10 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.pong()
     guild = await self.get_morkato_guild(interaction.guild)
-    family = await self.convert(app.converters.FamilyConverter, interaction, family_query, families=guild.families)
-    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
+    family = await self.tofamily(family_query, families=guild.families)
+    ability = await self.toability(ability_query, abilities=guild.abilities)
     await family.sync_ability(ability)
-    content = await self.get_content(self.LANGUAGE, "syncAbilityWithFamily", ability=ability, family=family)
+    content = await self.msgbuilder.get_content(self.LANGUAGE, "syncAbilityWithFamily", ability=ability, family=family)
     await interaction.response.send_message(content)
   async def activate_ability_roll(
     self, interaction: Interaction, *,
@@ -200,11 +199,11 @@ class RPGFamiliesAbilities(BaseExtension):
   ) -> None:
     await interaction.response.defer()
     guild = await self.get_morkato_guild(interaction.guild)
-    ability = await self.convert(app.converters.AbilityConverter, interaction, ability_query, abilities=guild.abilities)
+    ability = await self.toability(ability_query, abilities=guild.abilities)
     flags = ability.npc_type
     if flags.hasflag(npc_type.value):
       raise app.errors.AppError("onAbilityHasFlag")
     flags.set(npc_type.value)
     await ability.update(npc_type=flags)
-    content = self.builder.get_content(self.LANGUAGE, "onAbilitySetFlag")
+    content = self.msgbuilder.get_content(self.LANGUAGE, "onAbilitySetFlag")
     await interaction.edit_original_response(content=content)

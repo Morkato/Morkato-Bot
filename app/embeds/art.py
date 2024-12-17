@@ -9,8 +9,8 @@ class ArtBuilder(BaseEmbedBuilder):
   def __init__(self, art: Art) -> None:
     self.attacks = art.attacks
     self.art = art
-    self.attack_line_style = self.builder.get_content(self.LANGUAGE, "attackLineStyle")
-    self.default_embed_description = self.builder.get_content(self.LANGUAGE, "defaultEmbedDescription")
+    self.attack_line_style = self.msgbuilder.get_content(self.LANGUAGE, "attackLineStyle")
+    self.default_embed_description = self.msgbuilder.get_content(self.LANGUAGE, "defaultEmbedDescription")
     key: str
     if art.type == art.RESPIRATION:
       key = "artRespirationTitle"
@@ -18,7 +18,7 @@ class ArtBuilder(BaseEmbedBuilder):
       key = "artKekkijutsuTitle"
     elif art.type == art.FIGHTING_STYLE:
       key = "artFightingStyleTitle"
-    self.title = self.builder.get_content(self.LANGUAGE, key, art=art)
+    self.title = self.msgbuilder.get_content(self.LANGUAGE, key, art=art)
   async def build_base_embed(self) -> Embed:
     description = self.art.description or self.default_embed_description
     embed = Embed(
@@ -55,11 +55,11 @@ class ArtCreatedBuilder(ArtBuilder):
     super().__init__(art)
     self.footer_text: str
     if self.art.type == self.art.RESPIRATION:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "respirationCreated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "respirationCreated")
     elif self.art.type == self.art.KEKKIJUTSU:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "kekkijutsuCreated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "kekkijutsuCreated")
     elif self.art.type == self.art.FIGHTING_STYLE:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "fightingStyleCreated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "fightingStyleCreated")
   async def build_base_embed(self) -> Embed:
     embed = await super().build_base_embed()
     embed.set_footer(
@@ -72,11 +72,11 @@ class ArtUpdatedBuilder(ArtBuilder):
     super().__init__(art)
     self.footer_text: str
     if self.art.type == self.art.RESPIRATION:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "respirationUpdated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "respirationUpdated")
     elif self.art.type == self.art.KEKKIJUTSU:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "kekkijutsuUpdated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "kekkijutsuUpdated")
     elif self.art.type == self.art.FIGHTING_STYLE:
-      self.footer_text = self.builder.get_content(self.LANGUAGE, "fightingStyleUpdated")
+      self.footer_text = self.msgbuilder.get_content(self.LANGUAGE, "fightingStyleUpdated")
   async def build_base_embed(self) -> Embed:
     embed = await super().build_base_embed()
     embed.set_footer(
@@ -96,14 +96,14 @@ class ArtTrainBuilder(BaseEmbedBuilder):
       key = "artKekkijutsuTitle"
     elif art.type == art.FIGHTING_STYLE:
       key = "artFightingStyleTitle"
-    title = self.builder.get_content(self.LANGUAGE, key, art=art)
+    title = self.msgbuilder.get_content(self.LANGUAGE, key, art=art)
     description = "No description\n\n" if art.description is None else "%s\n\n" % art.description
-    description += self.builder.get_content(self.LANGUAGE, "trainLifeUpLineStyle", life=numerize(art.life)) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, "trainLifeUpLineStyle", life=numerize(art.life)) + '\n'
     if art.type in (art.RESPIRATION, art.FIGHTING_STYLE):
-      description += self.builder.get_content(self.LANGUAGE, "trainBreathUpLineStyle", breath=numerize(art.breath)) + '\n'
+      description += self.msgbuilder.get_content(self.LANGUAGE, "trainBreathUpLineStyle", breath=numerize(art.breath)) + '\n'
     if art.type in (art.KEKKIJUTSU, art.FIGHTING_STYLE):
-      description += self.builder.get_content(self.LANGUAGE, "trainBloodUpLineStyle", breath=numerize(art.blood)) + '\n'
-    description += self.builder.get_content(self.LANGUAGE, "trainEnergyDownLineStyle", energy=art.energy) + '\n'
+      description += self.msgbuilder.get_content(self.LANGUAGE, "trainBloodUpLineStyle", breath=numerize(art.blood)) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, "trainEnergyDownLineStyle", energy=art.energy) + '\n'
     embed = Embed(
       title = title,
       description = description
@@ -121,11 +121,11 @@ class PlayerArtTrainBuilder(ArtTrainBuilder):
     npc = self.npc
     author_name: str
     if npc.type == npc.HUMAN:
-      author_name = self.builder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath))
+      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath))
     elif npc.type == npc.ONI:
-      author_name = self.builder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life + art.life), blood=numerize(npc.max_blood + art.blood))
+      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life + art.life), blood=numerize(npc.max_blood + art.blood))
     elif npc.type == npc.HYBRID:
-      author_name = self.builder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath), blood=numerize(npc.max_blood + art.blood))
+      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath), blood=numerize(npc.max_blood + art.blood))
     embed.set_author(
       name = author_name,
       icon_url = npc.icon

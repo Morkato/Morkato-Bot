@@ -1,4 +1,5 @@
 ptBR:
   playerAlreadyRegistered: "Este jogador já está registrado."
   playerReset: "O contexto do jogador: **`@{user.name}`** foi excluído."
+  playerRegistry: "O jogador chamado: **{user.name}** foi registrado em nome de: {npc.name} ({npc.surname})."
   invalidPlayerContext: "O jogador não possui nenhum contexto para apagar."

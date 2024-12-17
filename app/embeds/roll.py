@@ -11,7 +11,7 @@ class EmbedBuilderRolledObject(BaseEmbedBuilder):
     title: str,
     style: str
     ) -> None:
-    self.description = self.builder.safe_get_content(self.LANGUAGE, "rolledObjectDescription", quantity=quantity)
+    self.description = self.msgbuilder.get_content(self.LANGUAGE, "rolledObjectDescription", quantity=quantity)
     self.quantity = quantity
     self.models = models
     self.rolled = rolled
@@ -53,8 +53,8 @@ class FamilyRolledBuilder(EmbedBuilderRolledObject):
       models = models,
       rolled = rolled,
       quantity = quantity,
-      title = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "rolledFamiliesTitle"),
-      style = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "rolledFamiliesLineStyle")
+      title = self.msgbuilder.get_content(self.LANGUAGE, "rolledFamiliesTitle"),
+      style = self.msgbuilder.get_content(self.LANGUAGE, "rolledFamiliesLineStyle")
     )
 class AbilityRolledBuilder(EmbedBuilderRolledObject):
   def __init__(
@@ -66,6 +66,6 @@ class AbilityRolledBuilder(EmbedBuilderRolledObject):
       models = models,
       rolled = rolled,
       quantity = quantity,
-      title = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "rolledAbilitiesTitle"),
-      style = self.builder.safe_get_content_unknown_formatting(self.LANGUAGE, "rolledAbilitiesLineStyle")
+      title = self.msgbuilder.get_content(self.LANGUAGE, "rolledAbilitiesTitle"),
+      style = self.msgbuilder.get_content(self.LANGUAGE, "rolledAbilitiesLineStyle")
     )

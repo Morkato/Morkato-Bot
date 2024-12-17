@@ -49,14 +49,14 @@ class RPGRollsExtension(BaseExtension):
       raise NotImplementedError
     family = await ctx.send_select_menu(
       models=families,
-      title=self.builder.safe_get_content(self.LANGUAGE, "familySelectMenuTitle"),
-      description=self.builder.get_content(self.LANGUAGE, "familySelectMenuDescription", user=ctx.author),
-      selected_line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
-      line_style=self.builder.get_content_unknown_formatting(self.LANGUAGE, "familySelectMenuNotSelectedLineStyle"),
+      title=self.msgbuilder.get_content(self.LANGUAGE, "familySelectMenuTitle"),
+      description=self.msgbuilder.get_content(self.LANGUAGE, "familySelectMenuDescription", user=ctx.author),
+      selected_line_style=self.msgbuilder.get_content(self.LANGUAGE, "familySelectMenuSelectedLineStyle"),
+      line_style=self.msgbuilder.get_content(self.LANGUAGE, "familySelectMenuNotSelectedLineStyle"),
       key=lambda family: app.embeds.FamilyBuilder(family)
     )
     await player.update(family=family)
-    content = self.get_content(self.LANGUAGE, "onRegistryPlayerFamily", ctx.author.name, family.name)
+    content = self.msgbuilder.get_content(self.LANGUAGE, "onRegistryPlayerFamily", ctx.author.name, family.name)
     await ctx.send(content)
     return family
   async def registry_player(self, ctx: MorkatoContext, guild: Guild) -> Optional[Player]:
@@ -103,7 +103,7 @@ class RPGRollsExtension(BaseExtension):
     )
   async def sim_ability_roll(self, ctx: MorkatoContext, /, quantity: int) -> None:
     if not quantity in range(1, 1000000):
-      content = self.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
+      content = self.msgbuilder.get_content(self.LANGUAGE, "onQuantityOutRangeForSimRoll")
       await ctx.send(content)
       return
     guild = await self.get_morkato_guild(ctx.guild)
@@ -141,7 +141,7 @@ class RPGRollsExtension(BaseExtension):
     await ctx.send_embed(result, resolve_all=True)
   async def family(self, ctx: MorkatoContext) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
-    await self.resolve(guild.families)
+    await guild.families.resolve()
     if len(guild.families) == 0:
       raise app.errors.AppError("onFamilyEmpty")
     player = await self.get_or_registry_player(ctx, guild)
@@ -158,7 +158,7 @@ class RPGRollsExtension(BaseExtension):
       builder = app.embeds.AbilityBuilder(ability)
       await ctx.send_embed(builder)
       return
-    await self.resolve(guild.abilities)
+    await guild.abilities.resolve()
     if len(guild.abilities) == 0:
       raise app.errors.AppError("onAbilityEmpty")
     player = await self.get_cached_or_fetch_player(guild, ctx.author.id)
@@ -187,7 +187,7 @@ class RPGRollsExtension(BaseExtension):
     new_flags = flags.copy()
     new_flags.set(flags.PRODIGY)
     await player.update(prodigy_roll=player.prodigy_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetProdigy")
+    content = self.msgbuilder.get_content(self.LANGUAGE, "onPlayerGetProdigy")
     await ctx.send(content)
   async def mark(self, ctx: MorkatoContext) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
@@ -204,7 +204,7 @@ class RPGRollsExtension(BaseExtension):
     new_flags = flags.copy()
     new_flags.set(flags.MARK)
     await player.update(mark_roll=player.mark_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetMark")
+    content = self.msgbuilder.get_content(self.LANGUAGE, "onPlayerGetMark")
     await ctx.send(content)
   async def berserk(self, ctx: MorkatoContext) -> None:
     guild = await self.get_morkato_guild(ctx.guild)
@@ -221,5 +221,5 @@ class RPGRollsExtension(BaseExtension):
     new_flags = flags.copy()
     new_flags.set(flags.BERSERK)
     await player.update(berserk_roll=player.berserk_roll - 1, flags=new_flags)
-    content = self.get_content(self.LANGUAGE, "onPlayerGetBerserk")
+    content = self.msgbuilder.get_content(self.LANGUAGE, "onPlayerGetBerserk")
     await ctx.send(content)

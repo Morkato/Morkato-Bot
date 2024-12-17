@@ -7,6 +7,7 @@ from typing import (
 )
 import importlib.util
 import discord.utils
+import logging
 import discord
 import asyncio
 import sys
@@ -37,7 +38,7 @@ def main(class_location: Optional[str] = None, *argv) -> int:
     return 1
   sys.path.append(os.path.abspath(MORKATO_HOME))
   discord.utils.setup_logging(
-    root=True
+    level=logging.INFO
   )
   cls: Type[MorkatoBot] = MorkatoBot
   if class_location is not None:

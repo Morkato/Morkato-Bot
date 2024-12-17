@@ -10,26 +10,26 @@ class NpcCardBuilder(BaseEmbedBuilder):
     self.npc = npc
     self.author_name: str
     if npc.type == npc.HUMAN:
-      self.author_name = self.builder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life), breath=numerize(npc.max_breath))
+      self.author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life), breath=numerize(npc.max_breath))
     elif npc.type == npc.ONI:
-      self.author_name = self.builder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life), blood=numerize(npc.max_blood))
+      self.author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life), blood=numerize(npc.max_blood))
     elif npc.type == npc.HYBRID:
-      self.author_name = self.builder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life), breath=numerize(npc.max_breath), blood=numerize(npc.max_blood))
+      self.author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life), breath=numerize(npc.max_breath), blood=numerize(npc.max_blood))
     flags = npc.flags
     prodigyKey = "npcProdigyIsValidLineStyle" if flags.prodigy else "npcProdigyIsNotValidLineStyle"
     description = ''
-    description += self.builder.get_content(self.LANGUAGE, "npcFamilyLineStyle", npc=npc) + '\n'
-    description += self.builder.get_content(self.LANGUAGE, "npcEnergyLineStyle", npc=npc) + '\n'
-    description += self.builder.get_content_unknown_formatting(self.LANGUAGE, prodigyKey) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, "npcFamilyLineStyle", npc=npc) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, "npcEnergyLineStyle", npc=npc) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, prodigyKey) + '\n'
     if self.npc.type in (self.npc.HUMAN, self.npc.HYBRID):
       markKey = "npcMarkIsValidLineStyle" if flags.mark else "npcMarkIsNotValidLineStyle"
-      description += self.builder.get_content_unknown_formatting(self.LANGUAGE, markKey) + '\n'
+      description += self.msgbuilder.get_content(self.LANGUAGE, markKey) + '\n'
     if self.npc.type in (self.npc.ONI, self.npc.HYBRID):
       berserkKey = "npcBerserkIsValidLineStyle" if flags.berserk else "npcBerserkIsNotValidLineStyle"
-      description += self.builder.get_content_unknown_formatting(self.LANGUAGE, berserkKey) + '\n'
-    description += self.builder.get_content_unknown_formatting(self.LANGUAGE, "npcAbilitiesPresent") + "\n\n"
+      description += self.msgbuilder.get_content(self.LANGUAGE, berserkKey) + '\n'
+    description += self.msgbuilder.get_content(self.LANGUAGE, "npcAbilitiesPresent") + "\n\n"
     self.description = description
-    self.abilities_line_style = self.builder.get_content_unknown_formatting(self.LANGUAGE, "npcAbilitiesLineStyle")
+    self.abilities_line_style = self.msgbuilder.get_content(self.LANGUAGE, "npcAbilitiesLineStyle")
   def get_color(self) -> int:
     if self.npc.type == self.npc.HUMAN:
       return Colour.from_rgb(0, 255, 0)

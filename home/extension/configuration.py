@@ -94,7 +94,7 @@ class AbilityConverter(IDConverter[Ability]):
 @registry
 class FamilyConverter(IDConverter[Family]):
   async def convert(self, arg: Union[str, int], *, families: UnresolvedSnowflakeList[Family]) -> Family:
-    await self.resolve(families)
+    await families.resolve()
     if isinstance(arg, int):
       family = families.get(arg)
       if family is None:
@@ -151,7 +151,7 @@ class AttackConverter(IDConverter[Attack]):
       ArtConverter._validate_art_name(art_name)
     return (attack_name, art_name)
   async def convert(self, arg: Union[str, int], *, attacks: Dict[str, Attack], arts: UnresolvedSnowflakeList[Art], to_art: Converter[Art]) -> Attack:
-    await self.resolve(arts)
+    await arts.resolve()
     if isinstance(arg, int):
       attack = attacks.get(arg)
       if attack is None:

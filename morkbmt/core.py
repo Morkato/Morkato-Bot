@@ -1,10 +1,9 @@
 from __future__ import annotations
 from .extension import (ErrorCallback, Converter, Extension, ExtensionCommandBuilderImpl)
 from .msgbuilder import MessageBuilder
-from morkato.utils import parse_arguments
+from discord.interactions import Interaction
 from discord.flags import Intents
 from discord import app_commands as apc
-from types import MethodType
 from glob import glob
 from typing import (
   TYPE_CHECKING,
@@ -163,4 +162,25 @@ class BotBuilder:
       for app_command in commands.get_app_commands().values():
         bot.tree.add_command(app_command)
       self.__catching.update(commands.get_error_handlers())
-class MorkatoCommandTree(apc.CommandTree[MorkatoBotT]): ...
+class MorkatoCommandTree(apc.CommandTree[MorkatoBotT]):
+  async def on_error(self, interaction: Interaction[MorkatoBotT], exception: apc.AppCommandError):
+    ctx = await interaction.client.get_context(interaction)
+    base_exception: Optional[Exception] = None
+    if isinstance(exception, apc.CommandInvokeError):
+      base_exception = exception.original
+    exc_cls = type(exception)
+    callback = interaction.client.morkcatching.get(exc_cls)
+    if callback is not None:
+      await callback.invoke(ctx, exception)
+      return
+    if base_exception is None:
+      return await super().on_error(interaction, exception)
+    base_exc_cls = type(base_exception)
+    callback = interaction.client.morkcatching.get(base_exc_cls)
+    if callback is None:
+      try:
+        catching = (callback for (cls, callback) in interaction.client.morkcatching.items() if issubclass(base_exc_cls, cls))
+        callback = next(catching)
+      except StopIteration:
+        return await super().on_error(interaction, exception)
+    await callback.invoke(ctx, base_exception)

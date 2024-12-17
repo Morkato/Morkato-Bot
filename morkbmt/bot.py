@@ -6,22 +6,19 @@ from discord.ext.commands.errors import (
   ConversionError
 )
 from .extension import (ErrorCallback, Extension, Converter)
-from .core import (MorkatoCommandTree, MessageBuilder, BotBuilder)
+from .core import (MorkatoCommandTree, MessageBuilder)
 from .context import MorkatoContext
 from typing import (
   Optional,
   TypeVar,
+  Union,
   Type,
   Dict,
   Any
 )
-import importlib.util
 import discord.utils
 import discord
 import logging
-import asyncio
-import sys
-import os
 
 _log = logging.getLogger(__name__)
 T = TypeVar('T')
@@ -48,8 +45,8 @@ class MorkatoBot(Bot):
     self.morkconverters = converters
     self.morkcatching = catching
     self.injected = injected
-  async def get_context(self, message: discord.Message, /) -> MorkatoContext:
-    return await super().get_context(message, cls=MorkatoContext)
+  async def get_context(self, origin: Union[discord.Message, discord.Interaction], /) -> MorkatoContext:
+    return await super().get_context(origin, cls=MorkatoContext)
   async def on_ready(self) -> None:
     await self.tree.sync()
     _log.info("Estou conectado, como: %s" % self.user.name)
