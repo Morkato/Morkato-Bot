@@ -1,3 +1,4 @@
+from __future__ import annotations
 from discord.ext.commands.core import (get_signature_parameters, unwrap_function)
 from discord.interactions import Interaction
 from discord.ext.commands import Command
@@ -7,6 +8,7 @@ from .context import MorkatoContext
 from .types import Coro
 from typing_extensions import Self
 from typing import (
+  TYPE_CHECKING,
   get_args,
   get_origin,
   Concatenate,
@@ -25,6 +27,8 @@ from typing import (
   Dict,
   Any
 )
+if TYPE_CHECKING:
+  from .bot import MorkatoBot
 import asyncio
 import inspect
 
@@ -104,6 +108,8 @@ class ConverterHandlerMeta(type):
     for meta in metas:
       inject_values.update(meta.__inject_values__)
     for (key, annotation) in annotations.items():
+      if isinstance(annotation, str):
+        annotation = eval(annotation)
       if get_origin(annotation) is ClassVar or key.startswith("__") and key.endswith("__"):
         continue
       if isinstance(get_origin(annotation) or annotation, ConverterHandlerMeta):
@@ -148,6 +154,8 @@ class ExtensionMeta(type):
     for meta in metas:
       inject_values.update(meta.__inject_values__)
     for (key, annotation) in annotations.items():
+      if isinstance(annotation, str):
+        annotation = eval(annotation)
       if get_origin(annotation) is ClassVar or key.startswith("__") and key.endswith("__"):
         continue
       if isinstance(annotation, ExtensionMeta):
@@ -168,7 +176,22 @@ class Extension(metaclass=ExtensionMeta):
   __inject_values__: Dict[str, Type[Any]]
   msgbuilder: MessageBuilder
   def __init__(self) -> None: ...
-  async def setup(self, commands: "ExtensionCommandBuilder[Self]") -> None:
+  def start(self, application: ApplicationContext[Self], /) -> None:
+    """
+      Chamado quando a extensão é carregada.
+      Neste ponto, nenhuma depedência é injetada.
+    """
+    pass
+  async def login(self, loop: asyncio.AbstractEventLoop, /) -> None:
+    """
+      Semelhante ao :.start: porém aqui, todas as depedencias estão injetadas.
+      Chamado após o bot logar.
+    """
+    pass
+  async def setup(self, commands: ExtensionCommandBuilder[Self], /) -> None:
+    """
+      Chamado para registro de comandos
+    """
     pass
   async def close(self) -> None:
     pass
@@ -179,13 +202,18 @@ class ExtensionCommandBuilder(Protocol[ExtensionT]):
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None: ...
   def guild_only(self, command: Union[MorkatoCommand, apc.Command], /) -> None: ...
   def rename(self, command: apc.Command, /, **parameters) -> None: ...
+  def get_running_extension(self) -> ExtensionT: ...
+  def get_running_loop(self) -> asyncio.AbstractEventLoop: ...
+class ApplicationContext(Protocol[ExtensionT]):
+  def get_running_loop(self) -> asyncio.AbstractEventLoop: ...
+  def inject(self, object: Any, /) -> None: ...
 class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def __init__(self, extension: ExtensionT):
     self.__extension = extension
     self.__app_commands: Dict[str, apc.Command[None, ..., Any]] = {}
     self.__commands: Dict[str, MorkatoCommand] = {}
     self.__error_handlers: Dict[Type[Any], ErrorCallback[Any]] = {}
-  def get_extension(self) -> ExtensionT:
+  def get_running_extension(self) -> ExtensionT:
     return self.__extension
   def get_app_commands(self) -> Dict[str, apc.Command[None, ..., Any]]:
     return self.__app_commands
@@ -211,8 +239,8 @@ class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def check(self, command: Union[MorkatoCommand, apc.Command], predicate: Callable[[MorkatoContext], Union[Coro[bool], bool]]) -> None:
     checker: Callable[[Union[MorkatoContext, Interaction]]] = predicate
     if isinstance(command, apc.Command):
-      async def predicate_interaction(interaction: Interaction[Any]):
-        context = await MorkatoContext.from_interaction(interaction)
+      async def predicate_interaction(interaction: Interaction[MorkatoBot]):
+        context = await interaction.client.get_context(interaction)
         if not asyncio.iscoroutinefunction(predicate):
           return predicate(context)
         return await predicate(context)

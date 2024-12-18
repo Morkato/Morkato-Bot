@@ -60,8 +60,8 @@ class BotBuilder:
     self.__command_prefix = prefix
   def tree(self, cls: Type[apc.CommandTree], /) -> None:
     self.__tree_cls = cls
-  def inject(self, cls: Type[T], object: T, /) -> None:
-    self.__injected[cls] = object
+  def inject(self, object: Any, /) -> None:
+    self.__injected[type(object)] = object
   def get_unloaded_registries(self, name: str, /, extensions: List[Type[Extension]], converters: List[Type[Converter[Any]]]) -> None:
     if name.endswith(".__init__"):
       name = name[:-9]

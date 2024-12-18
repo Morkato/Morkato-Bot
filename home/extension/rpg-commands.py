@@ -7,11 +7,13 @@ from morkato.art import (ArtType, Art)
 from app.extension import BaseExtension
 from typing_extensions import Self
 from typing import (
+  Coroutine,
   Callable,
   ClassVar,
   Optional,
   Dict,
-  List
+  List,
+  Any
 )
 from enum import Enum
 import app.embeds
@@ -29,7 +31,7 @@ class RPGCommands(BaseExtension):
   toart: Converter[Art]
   async def setup(self, commands: ExtensionCommandBuilder[Self]) -> None:
     self.LANGUAGE = self.msgbuilder.PT_BR
-    self.ART_OPTIONS_HANDLERS: Dict[ArtOption, Callable[..., None]] = {
+    self.ART_OPTIONS_HANDLERS: Dict[ArtOption, Callable[..., Coroutine[Any, Any, Any]]] = {
       ArtOption.GET: self.on_art_get,
       ArtOption.LIST: self.on_art_list
     }

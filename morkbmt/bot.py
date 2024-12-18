@@ -72,3 +72,12 @@ class MorkatoBot(Bot):
     await callback.invoke(context, base_exception)
   def inject(self, cls: Type[T], object: T, /) -> None:
     self.injected[cls] = object
+  async def close(self) -> None:
+    task = self.loop.create_task(super().close(), name="discord.py: Client.close()")
+    for extension in self.morkextensions.values():
+      await extension.close()
+    for converter in self.morkconverters.values():
+      await converter.close()
+    self.morkextensions.clear()
+    self.morkconverters.clear()
+    await task
