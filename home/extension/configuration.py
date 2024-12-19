@@ -1,4 +1,4 @@
-from morkbmt.extension import (ExtensionCommandBuilder, Converter)
+from morkbmt.extension import (ExtensionCommandBuilder, Extension, Converter)
 from morkbmt.core import registry
 from morkato.abc import UnresolvedSnowflakeList
 from morkato.ability import Ability
@@ -6,7 +6,6 @@ from morkato.family import Family
 from morkato.attack import Attack
 from morkato.art import Art
 from app.embeds.base import BaseEmbedBuilder
-from app.extension import BaseExtension
 from unidecode import unidecode
 from typing_extensions import Self
 from typing import (
@@ -18,16 +17,18 @@ from typing import (
   Dict
 )
 import app.errors
+import discord
 import re
 
 T = TypeVar('T')
 
 @registry
-class MorkatoConfiguration(BaseExtension):
-  toattack: Converter[Attack] # Injected when :.start: is called
-  toart: Converter[Art] # Injected when :.start: is called
-  toability: Converter[Ability] # Injected when :.start: is called
-  tofamily: Converter[Family] # Injected when :.start: is called
+class MorkatoConfiguration(Extension):
+  toattack: Converter[Attack] # Injected when :.setup: is called
+  toart: Converter[Art] # Injected when :.setup: is called
+  toability: Converter[Ability] # Injected when :.setup: is called
+  tofamily: Converter[Family] # Injected when :.setup: is called
+  user: discord.ClientUser
   async def setup(self, commands: ExtensionCommandBuilder[Self]):
     BaseEmbedBuilder.setup(self.msgbuilder, self.user.display_avatar.url)
     self.msgbuilder.from_archive("global-error.yml")

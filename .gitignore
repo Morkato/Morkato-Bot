@@ -294,10 +294,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Special
-
-spec
-*.gitignore.*
-gitignore/
-api/id.ts
-./storage
+**/disabled

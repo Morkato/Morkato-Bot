@@ -9,6 +9,7 @@ from .types import Coro
 from typing_extensions import Self
 from typing import (
   TYPE_CHECKING,
+  runtime_checkable,
   get_args,
   get_origin,
   Concatenate,
@@ -131,8 +132,13 @@ class Converter(Generic[T], metaclass=ConverterHandlerMeta):
     raise NotImplementedError
   async def __call__(self, arg: str, /, **kwargs) -> T:
     return await self.convert(arg, **kwargs)
-  async def start(self) -> None: ...
-  async def setup(self) -> None: ...
+  def start(self, /) -> None:
+    """
+      Chamado quando o converter é carregada.
+      Neste ponto, nenhuma depedência é injetada.
+    """
+    pass
+  async def setup(self, /) -> None: ...
   async def close(self) -> None: ...
 class ExtensionMeta(type):
   __extension_name__: str
@@ -182,12 +188,6 @@ class Extension(metaclass=ExtensionMeta):
       Neste ponto, nenhuma depedência é injetada.
     """
     pass
-  async def login(self, loop: asyncio.AbstractEventLoop, /) -> None:
-    """
-      Semelhante ao :.start: porém aqui, todas as depedencias estão injetadas.
-      Chamado após o bot logar.
-    """
-    pass
   async def setup(self, commands: ExtensionCommandBuilder[Self], /) -> None:
     """
       Chamado para registro de comandos
@@ -195,6 +195,7 @@ class Extension(metaclass=ExtensionMeta):
     pass
   async def close(self) -> None:
     pass
+@runtime_checkable
 class ExtensionCommandBuilder(Protocol[ExtensionT]):
   def command(self, name: str, callback: Callable[Concatenate[MorkatoContext, P], Coro[None]], /, **attrs) -> MorkatoCommand[P]: ...
   def app_command(self, name: str, callback: apc.commands.CommandCallback, /, **attrs) -> apc.Command: ...
@@ -203,9 +204,9 @@ class ExtensionCommandBuilder(Protocol[ExtensionT]):
   def guild_only(self, command: Union[MorkatoCommand, apc.Command], /) -> None: ...
   def rename(self, command: apc.Command, /, **parameters) -> None: ...
   def get_running_extension(self) -> ExtensionT: ...
-  def get_running_loop(self) -> asyncio.AbstractEventLoop: ...
+@runtime_checkable
 class ApplicationContext(Protocol[ExtensionT]):
-  def get_running_loop(self) -> asyncio.AbstractEventLoop: ...
+  def get_running_extension(self) -> ExtensionT: ...
   def inject(self, object: Any, /) -> None: ...
 class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def __init__(self, extension: ExtensionT):
@@ -258,3 +259,11 @@ class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
       return None
     register = apc.rename(**parameters)
     register(command)
+class ApplicationContextImpl(ApplicationContext[ExtensionT]):
+  def __init__(self, extension: ExtensionT, injected: Dict[Type[Any], Any]) -> None:
+    self.__extension = extension
+    self.__injected = injected
+  def get_running_extension(self):
+    return self.__extension
+  def inject(self, object: Any, /) -> None:
+    self.__injected[type(object)] = object

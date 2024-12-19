@@ -5,10 +5,13 @@ from discord.ext.commands.errors import (
   CommandInvokeError,
   ConversionError
 )
+from .errors import (ExtensionInvokeError, ConverterInvokeError, ValueNotInjectedError)
 from .extension import (ErrorCallback, Extension, Converter)
 from .core import (MorkatoCommandTree, MessageBuilder)
 from .context import MorkatoContext
 from typing import (
+  get_origin,
+  get_args,
   Optional,
   TypeVar,
   Union,
@@ -26,8 +29,6 @@ class MorkatoBot(Bot):
   def __init__(
     self, *args,
     msgbuilder: MessageBuilder,
-    extensions: Dict[str, Extension],
-    converters: Dict[Type[Any], Converter[Any]],
     catching: Dict[Type[Any], ErrorCallback],
     injected: Dict[Type[Any], Any],
     **kwargs
@@ -41,8 +42,8 @@ class MorkatoBot(Bot):
       tree_cls=tree_cls
     )
     self.msgbuilder = msgbuilder
-    self.morkextensions = extensions
-    self.morkconverters = converters
+    self.morkextensions: Dict[str, Extension] = {}
+    self.morkconverters: Dict[Type[Any], Converter[Any]] = {}
     self.morkcatching = catching
     self.injected = injected
   async def get_context(self, origin: Union[discord.Message, discord.Interaction], /) -> MorkatoContext:
@@ -70,8 +71,8 @@ class MorkatoBot(Bot):
       except StopIteration:
         return await super().on_command_error(context, exception)
     await callback.invoke(context, base_exception)
-  def inject(self, cls: Type[T], object: T, /) -> None:
-    self.injected[cls] = object
+  def inject(self, object: Any, /) -> None:
+    self.injected[type(object)] = object
   async def close(self) -> None:
     task = self.loop.create_task(super().close(), name="discord.py: Client.close()")
     for extension in self.morkextensions.values():
@@ -81,3 +82,6 @@ class MorkatoBot(Bot):
     self.morkextensions.clear()
     self.morkconverters.clear()
     await task
+  async def login(self, token: str) -> None:
+    await super().login(token)
+    self.inject(self.user)

@@ -14,12 +14,11 @@ class AppBot(MorkatoBot):
     await self.morkato_http.static_login()
     return self
   async def __aexit__(self, *args) -> None:
-    await super().__aexit__(*args)
     await self.morkato_http.close()
+    await super().__aexit__(*args)
   async def _async_setup_hook(self) -> None:
     await super()._async_setup_hook()
     self.morkato_http.loop = self.loop
   async def setup_hook(self):
-    self.inject(MorkatoConnectionState, self.morkato_connection)
-    self.inject(HTTPClient, self.morkato_http)
-    self.inject(ClientUser, self.user)
+    self.inject(self.morkato_connection)
+    self.inject(self.morkato_http)
