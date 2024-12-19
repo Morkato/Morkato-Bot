@@ -1,18 +1,16 @@
 package morkato.api.model.family
 
-import morkato.api.infra.repository.AbilityFamilyRepository
 import morkato.api.infra.repository.FamilyRepository
 import morkato.api.model.guild.Guild
-
 import org.jetbrains.exposed.sql.ResultRow
 import java.math.BigDecimal
 
 class Family(
   val guild: Guild,
   val id: Long,
-  val percent: BigDecimal,
-  val npcType: Int,
   val name: String,
+  val percent: BigDecimal,
+  val userType: Int,
   val description: String?,
   val banner: String?
 ) {
@@ -20,53 +18,39 @@ class Family(
   public constructor(guild: Guild, payload: FamilyRepository.FamilyPayload) : this(
     guild,
     payload.id,
-    payload.percent,
-    payload.npcType,
     payload.name,
+    payload.percent,
+    payload.userType,
     payload.description,
     payload.banner
   );
-  fun getAllAbilities() : Sequence<AbilityFamilyRepository.AbilityFamilyPayload> {
-    return AbilityFamilyRepository.findAllByGuildIdAndFamilyId(this.guild.id, this.id)
-  }
   fun update(
     name: String?,
-    npcType: Int?,
     percent: BigDecimal?,
+    userType: Int?,
     description: String?,
     banner: String?
   ) : Family {
-    val payload = FamilyRepository.FamilyPayload(
-      guildId = this.guild.id,
-      id = this.id,
-      name = name ?: this.name,
-      npcType = npcType ?: this.npcType,
-      percent = percent ?: this.percent,
-      description = description ?: this.description,
-      banner = banner ?: this.banner
-    )
     FamilyRepository.updateFamily(
       guildId = this.guild.id,
       id = this.id,
       name = name,
-      npcType = npcType,
       percent = percent,
+      userType = userType,
       description = description,
       banner = banner
     )
-    return Family(this.guild, payload)
+    return Family(
+      guild = this.guild,
+      id = id,
+      name = name ?: this.name,
+      percent = percent ?: this.percent,
+      userType = userType ?: this.userType,
+      description = description ?: this.description,
+      banner = banner ?: this.banner
+    )
   }
-
-  fun addAbility(id: Long) : AbilityFamilyRepository.AbilityFamilyPayload {
-    return AbilityFamilyRepository.createAbilityFamily(this.guild.id, id, this.id)
-  }
-  fun dropAbility(id: Long) : AbilityFamilyRepository.AbilityFamilyPayload {
-    AbilityFamilyRepository.deleteAbilityFamily(this.guild.id, id, this.id)
-    return AbilityFamilyRepository.AbilityFamilyPayload(this.guild.id, id, this.id)
-  }
-
-  fun delete() : Family {
+  fun delete() : Unit {
     FamilyRepository.deleteFamily(this.guild.id, this.id)
-    return this
   }
 }

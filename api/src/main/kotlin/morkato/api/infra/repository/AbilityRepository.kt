@@ -7,20 +7,17 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.and
-
 import morkato.api.exception.model.AbilityNotFoundError
 import morkato.api.infra.tables.abilities
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 object AbilityRepository {
   public data class AbilityPayload(
     val guildId: String,
     val id: Long,
     val name: String,
-    val energy: BigDecimal,
     val percent: BigDecimal,
-    val npcType: Int,
+    val userType: Int,
     val description: String?,
     val banner: String?
   ) {
@@ -28,16 +25,11 @@ object AbilityRepository {
       row[abilities.guild_id],
       row[abilities.id],
       row[abilities.name],
-      row[abilities.energy],
       row[abilities.percent],
-      row[abilities.npc_type],
+      row[abilities.user_type],
       row[abilities.description],
       row[abilities.banner]
-    ) {}
-  }
-  private object DefaultValue {
-    const val percent: Int = 0
-    const val energy: Int = 0
+    );
   }
   fun findAllByGuildId(id: String) : Sequence<AbilityPayload> {
     return abilities
@@ -67,36 +59,29 @@ object AbilityRepository {
   fun createAbility(
     guildId: String,
     name: String,
-    energy: BigDecimal?,
+    userType: Int?,
     percent: BigDecimal?,
-    npcType: Int,
     description: String?,
     banner: String?
   ) : AbilityPayload {
     val id = abilities.insert {
       it[this.guild_id] = guildId
       it[this.name] = name
-      it[this.npc_type] = npcType
-      if (energy != null) {
-        it[this.energy] = energy
+      it[this.description] = description
+      it[this.banner] = banner
+      if (userType != null) {
+        it[this.user_type] = userType
       }
       if (percent != null) {
         it[this.percent] = percent
-      }
-      if (description != null) {
-        it[this.description] = description
-      }
-      if (banner != null) {
-        it[this.banner] = banner
       }
     } get abilities.id
     return AbilityPayload(
       guildId = guildId,
       id = id,
       name = name,
-      energy = energy ?: BigDecimal(DefaultValue.energy).setScale(3, RoundingMode.UP),
-      percent = percent ?: BigDecimal(0).setScale(3, RoundingMode.UP),
-      npcType = npcType,
+      percent = percent ?: BigDecimal(0),
+      userType = userType ?: 0,
       description = description,
       banner = banner
     )
@@ -105,9 +90,8 @@ object AbilityRepository {
     guildId: String,
     id: Long,
     name: String?,
-    energy: BigDecimal?,
+    userType: Int?,
     percent: BigDecimal?,
-    npcType: Int?,
     description: String?,
     banner: String?
   ) : Unit {
@@ -118,14 +102,11 @@ object AbilityRepository {
       if (name != null) {
         it[this.name] = name
       }
-      if (energy != null) {
-        it[this.energy] = energy
+      if (userType != null) {
+        it[this.user_type] = userType
       }
       if (percent != null) {
         it[this.percent] = percent
-      }
-      if (npcType != null) {
-        it[this.npc_type] = npcType
       }
       if (description != null) {
         it[this.description] = description

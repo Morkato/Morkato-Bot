@@ -2,10 +2,8 @@ package morkato.api.infra.tables
 
 import org.jetbrains.exposed.sql.Table
 
-object npcs_abilities : Table("npcs_abilities") {
+object users_abilities : Table("users_abilities") {
   val guild_id = discordSnowflakeIdType("guild_id")
-  val npc_id = idType("npc_id")
+  val user_id = discordSnowflakeIdType("user_id")
   val ability_id = idType("ability_id")
-
-  override val primaryKey = PrimaryKey(guild_id, npc_id, ability_id)
 }

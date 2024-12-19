@@ -1,16 +1,16 @@
 from discord.interactions import Interaction
-from morkato.player import Player
 from morkato.guild import Guild
+from morkato.user import User
 from typing import Optional
 from discord import ui
 import asyncio
 
-class RegistryPlayerUi(ui.View):
+class RegistryUserUi(ui.View):
   def __init__(self, guild: Guild, loop: asyncio.AbstractEventLoop) -> None:
     super().__init__(timeout=20)
-    self.future: asyncio.Future[Optional[Player]] = loop.create_future()
+    self.future: asyncio.Future[Optional[User]] = loop.create_future()
     self.guild = guild
-  def get(self) -> asyncio.Future[Optional[Player]]:
+  def get(self) -> asyncio.Future[Optional[User]]:
     return self.future
   async def on_timeout(self) -> None:
     try:
@@ -27,14 +27,14 @@ class RegistryPlayerUi(ui.View):
   @ui.button(emoji='👨', custom_id="HUMAN")
   async def human_choice(self, interaction: Interaction, btn: ui.Button) -> None:
     await interaction.response.defer()
-    player = await self.guild.create_player(interaction.user, "HUMAN")
+    player = await self.guild.create_user(interaction.user.id, type=User.HUMAN)
     self.future.set_result(player)
     self.clear_items()
     self.stop()
   @ui.button(emoji='👹', custom_id="ONI")
   async def oni_choice(self, interaction: Interaction, btn: ui.Button) -> None:
     await interaction.response.defer()
-    player = await self.guild.create_player(interaction.user, "ONI")
+    player = await self.guild.create_user(interaction.user.id, type=User.ONI)
     self.future.set_result(player)
     self.clear_items()
     self.stop()

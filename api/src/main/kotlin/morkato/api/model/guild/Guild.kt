@@ -1,20 +1,16 @@
 package morkato.api.model.guild
 
 import morkato.api.infra.repository.*
-
-import morkato.api.model.ability.AbilityType
 import morkato.api.model.ability.Ability
-import morkato.api.model.family.Family
 import morkato.api.model.attack.Attack
-import morkato.api.model.player.Player
-import morkato.api.model.npc.NpcType
-import morkato.api.model.npc.Npc
 import morkato.api.model.art.ArtType
 import morkato.api.model.art.Art
+import morkato.api.model.family.Family
+import morkato.api.model.user.User
+import morkato.api.model.user.UserType
 
 import org.jetbrains.exposed.sql.ResultRow
 import java.math.BigDecimal
-import java.time.Instant
 
 class Guild(
   val id: String,
@@ -136,7 +132,7 @@ class Guild(
 
   fun getAllAbilities() : Sequence<Ability> {
     return AbilityRepository.findAllByGuildId(this.id)
-      .map { Ability(this, it) }
+      .map { Ability(this@Guild, it) }
   }
   fun getAbility(id: Long) : Ability {
     val payload = AbilityRepository.findById(this.id, id)
@@ -144,18 +140,16 @@ class Guild(
   }
   fun createAbility(
     name: String,
-    energy: BigDecimal?,
+    userType: Int?,
     percent: BigDecimal?,
-    npcType: Int,
     description: String?,
     banner: String?
   ) : Ability {
     val payload = AbilityRepository.createAbility(
       guildId = this.id,
       name = name,
-      energy = energy,
+      userType = userType,
       percent = percent,
-      npcType = npcType,
       description = description,
       banner = banner
     )
@@ -172,97 +166,47 @@ class Guild(
   }
   fun createFamily(
     name: String,
-    npcType: Int?,
     percent: BigDecimal?,
+    userType: Int?,
     description: String?,
     banner: String?
   ) : Family {
     val payload = FamilyRepository.createFamily(
       guildId = this.id,
       name = name,
-      npcType = npcType,
       percent = percent,
+      userType = userType,
       description = description,
       banner = banner
     )
     return Family(this, payload)
   }
 
-  fun getAllAbilitiesFamilies() : Sequence<AbilityFamilyRepository.AbilityFamilyPayload> {
-    return AbilityFamilyRepository.findAllByGuildId(this.id)
+  fun getUser(id: String) : User {
+    val payload = UserRepository.findById(this.id, id)
+    return User(this, payload)
   }
-
-  fun getNpc(id: Long) : Npc {
-    val payload = NpcRepository.findById(this.id, id)
-    return Npc(this, payload)
-  }
-  fun getNpcBySurname(surname: String) : Npc {
-    val payload = NpcRepository.findBySurname(this.id, surname)
-    return Npc(this, payload)
-  }
-  fun createNpc(
-    playerId: String? = null,
-    name: String,
-    type: NpcType,
-    familyId: Long,
-    surname: String,
-    flags: Int?,
-    icon: String?
-  ) : Npc {
-    val life = when (type) {
-      NpcType.HUMAN -> this.humanInitialLife
-      NpcType.ONI -> this.oniInitialLife
-      NpcType.HYBRID -> this.hybridInitialLife
-    }
-    val breath = this.breathInitial
-    val blood = this.bloodInitial
-    val payload = NpcRepository.createNpc(
-      playerId = playerId,
-      guildId = this.id,
-      name = name,
-      type = type,
-      familyId = familyId,
-      surname = surname,
-      flags = flags,
-      life = life,
-      breath = breath,
-      blood = blood,
-      icon = icon
-    )
-    return Npc(this, payload)
-  }
-
-  fun getPlayer(id: String) : Player {
-    val payload = PlayerRepository.findById(this.id, id)
-    return Player(this, payload)
-  }
-  fun createPlayer(
+  fun createUser(
     id: String,
-    npcType: NpcType,
-    familyId: Long?,
-    abilityRoll: BigDecimal?,
-    familyRoll: BigDecimal?,
-    prodigyRoll: BigDecimal?,
-    markRoll: BigDecimal?,
-    berserkRoll: BigDecimal?,
-    flags: Int?
-  ) : Player {
-    val thisAbilityRoll = abilityRoll ?: this@Guild.abilityRoll
-    val thisFamilyRoll = familyRoll ?: this@Guild.familyRoll
-    val thisProdigyRoll = prodigyRoll ?: this.prodigyRoll
-    val thisMarkRoll = markRoll ?: this.markRoll
-    val thisBerserkRoll = berserkRoll ?: this.berserkRoll
-    val payload = PlayerRepository.createPlayer(
-      this.id, id,
-      npcType = npcType,
-      familyId = familyId,
-      abilityRoll = thisAbilityRoll,
-      familyRoll = thisFamilyRoll,
-      prodigyRoll = thisProdigyRoll,
-      markRoll = thisMarkRoll,
-      berserkRoll = thisBerserkRoll,
-      flags = flags
+    type: UserType,
+    flags: Int? = null,
+    abilityRoll: BigDecimal? = null,
+    familyRoll: BigDecimal? = null,
+    prodigyRoll: BigDecimal? = null,
+    markRoll: BigDecimal? = null,
+    berserkRoll: BigDecimal? = null
+  ) : User {
+    val payload = UserRepository.createUser(
+      guildId = this.id,
+      id = id,
+      type = type,
+      flags = flags,
+      abilityRoll = abilityRoll,
+      familyRoll = familyRoll,
+      prodigyRoll = prodigyRoll,
+      markRoll = markRoll,
+      berserkRoll = berserkRoll
     )
-    return Player(this, payload)
+    return User(this, payload)
   }
 }

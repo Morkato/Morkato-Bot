@@ -2,13 +2,13 @@ package morkato.api.infra.tables
 
 import org.jetbrains.exposed.sql.Table
 import morkato.api.model.art.ArtType
-import morkato.api.model.npc.NpcType
+import morkato.api.model.user.UserType
 
 fun Table.nameType(name: String) = this.varchar(name, length = 32)
 fun Table.keyType(name: String) = this.varchar(name, length = 32)
 fun Table.titleType(name: String) = this.varchar(name, 96)
 fun Table.artType(name: String) = this.enumerationByName<ArtType>(name, 16, klass = ArtType::class)
-fun Table.npcType(name: String) = this.enumerationByName<NpcType>(name, 16, klass = NpcType::class)
+fun Table.userType(name: String) = this.enumerationByName<UserType>(name, 16, klass = UserType::class)
 fun Table.descriptionType(name: String) = this.varchar(name, length = 2048)
 fun Table.bannerType(name: String) = this.text(name)
 fun Table.namePrefixArt(name: String) = this.varchar(name, length = 32)

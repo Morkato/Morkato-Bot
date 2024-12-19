@@ -4,9 +4,8 @@ enum class ModelType {
   IMAGE,
   ABILITY,
   FAMILY,
-  PLAYER,
+  USER,
   ATTACK,
   GUILD,
-  ART,
-  NPC;
+  ART;
 }

@@ -1,5 +1,6 @@
 package morkato.api.infra.repository
 
+import morkato.api.exception.model.FamilyNotFoundError
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
@@ -7,32 +8,28 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.and
-
-import morkato.api.exception.model.FamilyNotFoundError
 import morkato.api.infra.tables.families
-import morkato.api.model.npc.NpcType
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 object FamilyRepository {
   public data class FamilyPayload(
     val guildId: String,
     val id: Long,
-    val percent: BigDecimal,
-    val npcType: Int,
     val name: String,
+    val percent: BigDecimal,
+    val userType: Int,
     val description: String?,
     val banner: String?
   ) {
     public constructor(row: ResultRow) : this(
       row[families.guild_id],
       row[families.id],
-      row[families.percent],
-      row[families.npc_type],
       row[families.name],
+      row[families.percent],
+      row[families.user_type],
       row[families.description],
       row[families.banner]
-    ) {}
+    );
   }
   fun findAllByGuildId(id: String) : Sequence<FamilyPayload> {
     return families
@@ -52,7 +49,6 @@ object FamilyRepository {
             (families.guild_id eq guildId)
               .and(families.id eq id)
           })
-          .limit(1)
           .single()
       )
     } catch (exc: NoSuchElementException) {
@@ -62,27 +58,29 @@ object FamilyRepository {
   fun createFamily(
     guildId: String,
     name: String,
-    npcType: Int?,
     percent: BigDecimal?,
+    userType: Int?,
     description: String?,
     banner: String?
   ) : FamilyPayload {
     val id = families.insert {
       it[this.guild_id] = guildId
       it[this.name] = name
-      it[this.npc_type] = npcType ?: 0
       it[this.description] = description
       it[this.banner] = banner
       if (percent != null) {
         it[this.percent] = percent
+      }
+      if (userType != null) {
+        it[this.user_type] = userType
       }
     } get families.id
     return FamilyPayload(
       guildId = guildId,
       id = id,
       name = name,
-      npcType = npcType ?: 0,
-      percent = percent ?: BigDecimal(0).setScale(3, RoundingMode.UP),
+      percent = percent ?: BigDecimal(0),
+      userType = userType ?: 0,
       description = description,
       banner = banner
     )
@@ -91,8 +89,8 @@ object FamilyRepository {
     guildId: String,
     id: Long,
     name: String?,
-    npcType: Int?,
     percent: BigDecimal?,
+    userType: Int?,
     description: String?,
     banner: String?
   ) : Unit {
@@ -103,8 +101,8 @@ object FamilyRepository {
       if (name != null) {
         it[this.name] = name
       }
-      if (npcType != null) {
-        it[this.npc_type] = npcType
+      if (userType != null) {
+        it[this.user_type] = userType
       }
       if (percent != null) {
         it[this.percent] = percent

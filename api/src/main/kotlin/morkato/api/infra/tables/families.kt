@@ -8,7 +8,7 @@ object families : Table("families") {
 
   val name = nameType("name")
   val percent = percentType("percent")
-  val npc_type = integer("npc_type")
+  val user_type = integer("user_type")
   val description = descriptionType("description").nullable()
   val banner = bannerType("banner").nullable()
 

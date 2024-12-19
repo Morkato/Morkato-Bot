@@ -1,26 +1,21 @@
 from __future__ import annotations
-from datetime import datetime
-from .utils import (UnresolvedSnowflakeListImpl, CircularDict, NoNullDict, DATE_FORMAT)
+from .utils import (UnresolvedSnowflakeListImpl, CircularDict)
+from .abc import (UnresolvedSnowflakeList, Snowflake)
 from .ability import Ability
 from .family import Family
-from .abc import (UnresolvedSnowflakeList, Snowflake)
-from .player import Player
-from .npc import Npc
 from .attack import Attack
+from .user import User
 from .art import Art
 from .types import (
   Guild as GuildPayload,
-  AbilityType,
-  NpcType,
+  UserType,
   ArtType
 )
-from typing_extensions import Self
 from typing import (
   TYPE_CHECKING,
   SupportsInt,
   Optional,
   TypeVar,
-  Union,
   Dict
 )
 if TYPE_CHECKING:
@@ -45,78 +40,44 @@ class Guild:
   def clear(self) -> None:
     self.abilities_percent = 0
     self.families_percent = 0
-    self._npcs: CircularDict[int, Npc] = CircularDict(128)
-    self._players: CircularDict[int, Player] = CircularDict(128)
     self._attacks: Dict[int, Attack] = {}
+    self._users: CircularDict[int, User] = CircularDict(128)
 
     self.arts: UnresolvedSnowflakeList[Art] = UnresolvedArtList(self.state, self)
     self.abilities: UnresolvedSnowflakeList[Ability] = UnresolvedAbilityList(self.state, self)
     self.families: UnresolvedSnowflakeList[Family] = UnresolvedFamilyList(self.state, self)
-  async def update(
-    self, *,
-    human_initial_life: Optional[int] = None,
-    oni_initial_life: Optional[int] = None,
-    hybrid_initial_life: Optional[int] = None,
-    breath_initial: Optional[int] = None,
-    blood_initial: Optional[int] = None,
-    family_roll: Optional[int] = None,
-    ability_roll: Optional[int] = None,
-    roll_category_id: Optional[str] = None,
-    off_category_id: Optional[str] = None
-  ) -> Self:
-    kwargs = NoNullDict(
-      human_initial_life = human_initial_life,
-      oni_initial_life = oni_initial_life,
-      hybrid_initial_life = hybrid_initial_life,
-      breath_initial = breath_initial,
-      blood_initial = blood_initial,
-      family_roll = family_roll,
-      ability_roll = ability_roll,
-      roll_category_id = roll_category_id,
-      off_category_id = off_category_id
-    )
-    if kwargs:
-      payload = await self.http.update_guild(self.id, **kwargs)
-      self.from_payload(payload)
-    return self
-  def _add_npc(self, npc: Npc) -> None:
-    self._npcs[npc.id] = npc
-  def _add_player(self, player: Player) -> None:
-    self._players[player.id] = player
+  def get_cached_user(self, id: int) -> Optional[User]:
+    return self._users.get(id)
+  async def fetch_user(self, id: int) -> User:
+    payload = await self.http.fetch_user(self.id, id)
+    user = User(self.state, self, payload)
+    self._users[user.id] = user
+    return user
   def get_attack(self, id: int) -> Optional[Attack]:
     return self._attacks.get(id)
-  def get_cached_npc(self, id: Union[str, int]) -> Optional[Npc]:
-    return self._npcs.get(id)
-  def get_cached_player(self, id: int) -> Optional[Player]:
-    return self._players.get(id)
-  async def fetch_npc(self, id: Union[str, int]) -> Npc:
-    payload = await self.http.fetch_npc(self.id, id)
-    npc = Npc(self.state, self, payload)
-    ability_ids = (int(id) for id in payload["abilities"])
-    for ability_id in ability_ids:
-      ability = self.abilities.get(ability_id)
-      if ability is None:
-        raise RuntimeError
-      npc._abilities[ability.id] = ability
-    self._add_npc(npc)
-    return npc
-  async def fetch_player(self, id: int) -> Player:
-    if not self.families.already_loaded():
-      await self.families.resolve()
-    payload = await self.http.fetch_player(self.id, id)
-    player = Player(self.state, self, payload)
-    for family_id in payload["families"]:
-      family = self.families.get(int(family_id))
-      if family is None:
-        raise RuntimeError
-      player._families[family.id] = family
-    for ability_id in payload["abilities"]:
-      ability = self.abilities.get(int(ability_id))
-      if ability is None:
-        raise RuntimeError
-      player._abilities[ability.id] = ability
-    self._add_player(player)
-    return player
+  async def create_user(
+    self, id: int, *,
+    type: UserType,
+    flags: Optional[int] = None,
+    ability_roll: Optional[int] = None,
+    family_roll: Optional[int] = None,
+    prodigy_roll: Optional[int] = None,
+    mark_roll: Optional[int] = None,
+    berserk_roll: Optional[int] = None
+  ) -> User:
+    payload = await self.http.create_user(
+      self.id, id,
+      type = type,
+      flags = flags,
+      ability_roll = ability_roll,
+      family_roll = family_roll,
+      prodigy_roll = prodigy_roll,
+      mark_roll = mark_roll,
+      berserk_roll = berserk_roll
+    )
+    user = User(self.state, self, payload)
+    self._users[user.id] = user
+    return user
   async def create_art(
     self, name: str, type: ArtType, *,
     energy: Optional[int] = None,
@@ -140,28 +101,6 @@ class Guild:
     art = Art(self.state, self, payload)
     self.arts.add(art)
     return art
-  async def create_player(
-    self, user: Snowflake, npc_type: NpcType, *,
-    ability_roll: Optional[int] = None,
-    family_roll: Optional[int] = None,
-    prodigy_roll: Optional[int] = None,
-    mark_roll: Optional[int] = None,
-    berserk_roll: Optional[int] = None,
-    flags: Optional[SupportsInt] = None
-  ) -> Player:
-    payload = await self.http.create_player(
-      self.id, user.id,
-      npc_type = npc_type,
-      ability_roll = ability_roll,
-      family_roll = family_roll,
-      prodigy_roll = prodigy_roll,
-      mark_roll = mark_roll,
-      berserk_roll = berserk_roll,
-      flags = flags
-    )
-    player = Player(self.state, self, payload)
-    self._add_player(player)
-    return player
   async def create_ability(
     self, name: str, percent: int, npc_type: SupportsInt, *,
     energy: int,

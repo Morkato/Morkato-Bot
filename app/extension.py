@@ -1,7 +1,6 @@
 from morkato.state import MorkatoConnectionState
 from morkato.guild import Guild
 from morkato.http import HTTPClient
-from morkato.player import Player
 from morkato.abc import Snowflake
 from morkbmt.context import EmbedBuilderView
 from morkbmt.embeds import EmbedBuilder
@@ -59,11 +58,6 @@ class BaseExtension(Extension):
     await interaction.edit_original_response(view=view)
     if wait:
       await view.wait()
-  async def get_cached_or_fetch_player(self, guild: Guild, id: int) -> Player:
-    player = guild.get_cached_player(id)
-    if player is None:
-      player = await guild.fetch_player(id)
-    return player
 class ConfirmationView(discord.ui.View):
   CHECK = '✅'
   UNCHECK = '❌'

@@ -1,66 +1,56 @@
 package morkato.api.model.ability
 
 import morkato.api.infra.repository.AbilityRepository
-import morkato.api.model.guild.Guild
-
 import org.jetbrains.exposed.sql.ResultRow
+import morkato.api.model.guild.Guild
 import java.math.BigDecimal
 
 class Ability(
   val guild: Guild,
   val id: Long,
   val name: String,
-  val energy: BigDecimal,
   val percent: BigDecimal,
-  val npcType: Int,
+  val userType: Int,
   val description: String?,
   val banner: String?
 ) {
-  public constructor(guild: Guild, row: ResultRow) : this(guild, AbilityRepository.AbilityPayload(row)) {}
+  public constructor(guild: Guild, row: ResultRow) : this(guild, AbilityRepository.AbilityPayload(row));
   public constructor(guild: Guild, payload: AbilityRepository.AbilityPayload) : this(
-    guild,
+    guild = guild,
     payload.id,
     payload.name,
-    payload.energy,
     payload.percent,
-    payload.npcType,
+    payload.userType,
     payload.description,
     payload.banner
   );
-
   fun update(
     name: String?,
-    energy: BigDecimal?,
+    userType: Int?,
     percent: BigDecimal?,
-    npcType: Int?,
     description: String?,
     banner: String?
   ) : Ability {
-    val payload = AbilityRepository.AbilityPayload(
-      guildId = this.guild.id,
-      id = this.id,
-      name = name ?: this.name,
-      energy = energy ?: this.energy,
-      percent = percent ?: this.percent,
-      npcType = npcType ?: this.npcType,
-      description = description ?: this.description,
-      banner = banner ?: this.banner
-    )
     AbilityRepository.updateAbility(
       guildId = this.guild.id,
       id = this.id,
       name = name,
-      energy = energy,
       percent = percent,
-      npcType = npcType,
+      userType = userType,
       description = description,
       banner = banner
     )
-    return Ability(this.guild, payload)
+    return Ability(
+      guild = this.guild,
+      id = this.id,
+      name = name ?: this.name,
+      percent = percent ?: this.percent,
+      userType = userType ?: this.userType,
+      description = description ?: this.description,
+      banner = banner ?: this.banner
+    )
   }
-
-  fun delete() : Ability {
+  fun delete() : Unit {
     AbilityRepository.deleteAbility(this.guild.id, this.id)
-    return this
   }
 }

@@ -3,8 +3,6 @@ from morkbmt.msgbuilder import (
   MessageBuilder
 )
 from morkato.attack import Attack
-from morkato.family import Family
-from morkato.player import Player
 from typing_extensions import Self
 
 class NoActionError(Exception): ...
@@ -43,16 +41,3 @@ class AbilityNotFoundError(AppError):
 class FamilyNotFoundError(AppError):
   def __init__(self, family_query: str) -> None:
     super().__init__(f"error{type(self).__name__}", family_query)
-class PlayerAlreadyRegisteredFamily(AppError):
-  def __init__(self, player: Player) -> None:
-    super().__init__(f"error{type(self).__name__}")
-    self.player = player
-class DoNotPlayerHasFamily(AppError):
-  def __init__(self, player: Player, family: Family) -> None:
-    super().__init__(f"error{type(self).__name__}", family.name)
-    self.player = player
-    self.family = family
-class PlayerHasFamilyRolls(AppError):
-  def __init__(self, player: Player) -> None:
-    super().__init__(f"error{type(self).__name__}", player.family_roll)
-    self.player = player

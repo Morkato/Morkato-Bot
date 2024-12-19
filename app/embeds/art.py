@@ -1,8 +1,6 @@
 from numerize.numerize import numerize
 from .base import BaseEmbedBuilder
 from discord.embeds import Embed
-from morkato.player import Player
-from morkato.npc import Npc
 from morkato.art import Art
 
 class ArtBuilder(BaseEmbedBuilder):
@@ -111,23 +109,3 @@ class ArtTrainBuilder(BaseEmbedBuilder):
     if art.banner is not None:
       embed.set_image(url=art.banner)
     return embed
-class PlayerArtTrainBuilder(ArtTrainBuilder):
-  def __init__(self, npc: Npc, art: Art) -> None:
-    super().__init__(art)
-    self.npc = npc
-  async def build(self, page: int) -> Embed:
-    embed = await super().build(page)
-    art = self.art
-    npc = self.npc
-    author_name: str
-    if npc.type == npc.HUMAN:
-      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHumanPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath))
-    elif npc.type == npc.ONI:
-      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcOniPresent", npc=npc, life=numerize(npc.max_life + art.life), blood=numerize(npc.max_blood + art.blood))
-    elif npc.type == npc.HYBRID:
-      author_name = self.msgbuilder.get_content(self.LANGUAGE, "npcHybridPresent", npc=npc, life=numerize(npc.max_life + art.life), breath=numerize(npc.max_breath + art.breath), blood=numerize(npc.max_blood + art.blood))
-    embed.set_author(
-      name = author_name,
-      icon_url = npc.icon
-    )
-    return
