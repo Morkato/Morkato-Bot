@@ -1,4 +1,5 @@
 from .base import BaseEmbedBuilder
+from .user import UserRegistryEmbed
 from .family import (
   FamilyRegistryPlayer,
   FamilyCreated,
@@ -12,7 +13,8 @@ from .attack import (
   AttackBuilder
 )
 from .ability import (
-  AbilityRegistryPlayer,
+  AbilityRollMeBuilder,
+  AbilityRegistryUser,
   AbilityCreated,
   AbilityUpdated,
   AbilityDeleted,

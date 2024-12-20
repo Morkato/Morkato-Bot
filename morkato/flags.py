@@ -63,6 +63,8 @@ class Flags(metaclass=FlagsMeta):
     return self.__value
   def __hash__(self):
     return self.__value
+  def __getitem__(self, key: str, /) -> int:
+    return getattr(self, key)
   def hasflag(self, flag: int, /) -> bool:
     return (self.__value & flag) != 0
   def isempty(self) -> bool:

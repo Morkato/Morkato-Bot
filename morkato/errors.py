@@ -13,11 +13,10 @@ class MorkatoHTTPType(Enum):
 class ModelType(Enum):
   ABILITY = "ABILITY"
   FAMILY = "FAMILY"
-  PLAYER = "PLAYER"
+  USER = "USER"
   ATTACK = "ATTACK"
   GUILD = "GUILD"
   ART = "ART"
-  NPC = "NPC"
   GENERIC = "GENERIC"
 class MorkatoException(Exception):
   pass
@@ -30,5 +29,8 @@ class NotFoundError(HTTPException):
   def __init__(self, response: ClientResponse, model: ModelType, extra: Dict[str, Any]) -> None:
     super().__init__(response, extra)
     self.model = model
+class UserNotFoundError(NotFoundError):
+  def __init__(self, response: ClientResponse, extra: Dict[str, Any]) -> None:
+    super().__init__(response, ModelType.USER, extra)
 class MorkatoServerError(HTTPException):
   pass

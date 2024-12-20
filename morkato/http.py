@@ -1,6 +1,12 @@
-from .errors import (HTTPException, NotFoundError, MorkatoServerError, ModelType)
 from urllib.parse import quote
 from .utils import NoNullDict
+from .errors import (
+  MorkatoServerError,
+  UserNotFoundError,
+  HTTPException,
+  NotFoundError,
+  ModelType
+)
 from typing_extensions import Self
 from typing import (
   Optional,
@@ -120,6 +126,8 @@ class HTTPClient:
           if status == 404:
             model_name = data["model"]
             model = ModelType[model_name]
+            if model == ModelType.USER:
+              raise UserNotFoundError(response, extra)
             raise NotFoundError(response, model, extra)
           elif status >= 500:
             raise MorkatoServerError(response, extra)
@@ -320,8 +328,8 @@ class HTTPClient:
   async def create_ability(
     self, guild_id: int, *,
     name: str,
-    percent: int,
-    npc_type: SupportsInt,
+    percent: Optional[int],
+    user_type: Optional[SupportsInt],
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> AbilityPayload:
@@ -329,7 +337,7 @@ class HTTPClient:
     payload = NoNullDict(
       name = name,
       percent = percent,
-      npc_type = int(npc_type),
+      user_type = int(user_type) if user_type is not None else None,
       description = description,
       banner = banner
     )
@@ -338,7 +346,7 @@ class HTTPClient:
     self, guild_id: int, id: int, *,
     name: Optional[str] = None,
     percent: Optional[int] = None,
-    npc_type: Optional[SupportsInt] = None,
+    user_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> AbilityPayload:
@@ -349,8 +357,8 @@ class HTTPClient:
       description = description,
       banner = banner
     )
-    if npc_type is not None:
-      payload.update(npc_type=int(npc_type))
+    if user_type is not None:
+      payload.update(user_type=int(user_type))
     return await self.request(route, json=payload)
   async def delete_ability(self, guild_id: int, id: int) -> AbilityPayload:
     route = Route("DELETE", "/abilities/{guild_id}/{id}", guild_id=guild_id, id=id)
@@ -406,3 +414,6 @@ class HTTPClient:
     headers += name.encode('utf8')
     content = headers + image
     await self.request(route, data=content)
+  async def registry_user_ability(self, guild_id: int, user_id: int, ability_id: int) -> UserPayload:
+    route = Route("POST", "/users/{guild_id}/{user_id}/abilities/{ability_id}", guild_id=guild_id, user_id=user_id, ability_id=ability_id)
+    return await self.request(route)

@@ -5,6 +5,11 @@ ptBR:
   onFamilyDelete: "A família chamada: %s foi excluída!"
   onSyncFamilyWithPlayer: "A família chamada: **%s** foi sincronizada com o jogador: **`%s`**"
   onAbilityCreate: "A habilidade chamada: %s foi criada!"
+  abilityRollEmpty: "Não há habilidade para se obter e/ou simular."
+  abilityUserActivated: "Foi ativado o roll para a habilidade: **{ability.name}** para este novo tipo de usuário."
+  abilityUserAlreadyActivated: "O roll já está ativado para este usuário na habilidade requisitada."
+  abilityUserEmpty: "Você ainda não tirou nada nos rolls de habilidade."
+  abilityOtherUserEmpty: "O usuário **{user.name}** ainda não tirou nada nos rolls de habilidade."
 enUS:
   onFamilyCreate: "The family named: %s has been created!"
   onEmptyKwargsWhenUpdateFamily: "Wait... What do you want to update? Nothing?"

@@ -5,6 +5,7 @@ from morkbmt.msgbuilder import (
 from morkato.attack import Attack
 from typing_extensions import Self
 
+class ModelsEmptyError(Exception): ...
 class NoActionError(Exception): ...
 class AppError(Exception):
   def __init__(self, key: str, /, *args, **parameters) -> None:

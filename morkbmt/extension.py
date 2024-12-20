@@ -128,9 +128,9 @@ class Converter(Generic[T], metaclass=ConverterHandlerMeta):
     super().__init_subclass__(**kwgs)
     cls.__convert_class__ = get_args(cls.__orig_bases__[0])[0]
   def __init__(self) -> None: ...
-  async def convert(self, arg: str, /, **kwargs) -> T:
+  async def convert(self, arg: Any, /, **kwargs) -> T:
     raise NotImplementedError
-  async def __call__(self, arg: str, /, **kwargs) -> T:
+  async def __call__(self, arg: Any, /, **kwargs) -> T:
     return await self.convert(arg, **kwargs)
   def start(self, /) -> None:
     """

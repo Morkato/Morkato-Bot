@@ -102,17 +102,17 @@ class Guild:
     self.arts.add(art)
     return art
   async def create_ability(
-    self, name: str, percent: int, npc_type: SupportsInt, *,
-    energy: int,
+    self, name: str, *,
+    percent: Optional[int] = None,
+    user_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Ability:
     payload = await self.http.create_ability(
       self.id,
       name = name,
-      energy = energy,
       percent = percent,
-      npc_type = npc_type,
+      user_type = user_type,
       description = description,
       banner = banner
     )
@@ -121,7 +121,7 @@ class Guild:
     return ability
   async def create_family(
     self, name: str, *,
-    npc_type: SupportsInt,
+    user_type: SupportsInt,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -130,7 +130,7 @@ class Guild:
       self.id,
       name = name,
       percent = percent,
-      npc_type = npc_type,
+      user_type = user_type,
       description = description,
       banner = banner
     )

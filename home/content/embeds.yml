@@ -51,14 +51,17 @@ ptBR:
   rolledFamiliesLineStyle: "{}° - Família ({}%): **{}** caiu {} vezes."
   rolledAbilitiesTitle: "Simulação de rolls para: Habilidade"
   rolledAbilitiesLineStyle: "{}° - Habilidade ({}%): **{}** caiu {} vezes."
-  # app.embeds.player:
-  playerChoiceTypeTitle: "Escolha de Raça"
-  playerChoiceTypeDescription: "Você precisa registrar sua raça primeiro. Está escolha é imutável.\n\nClique em: **`👨`** para tornar-se um Humano\nClique em: **`👹`** para tornar-se um Oni"
+  # app.embeds.user:
+  userRegistryTitle: "Escolha de Raça"
+  userRegistryDescription: "**{author.name}** para poder prosseguir, é necessário que você escolha uma raça.\n\nClique em: **`👨`** para tornar-se um Humano\nClique em: **`👹`** para tornar-se um Oni"
   # app.embeds.ability:
   abilityTitle: "Habilidade: {ability.name}"
   abilityCreated: "Uma nova habilidade chamada: {ability.name} foi criada!"
   abilityUpdated: "A habilidade chamada: {ability.name} foi atualizada!"
   abilityDeleted: "A habilidade chamada: {ability.name} foi excluída!"
+  abilityRollValid: "Você obteve a habilidade chamada: {ability.name} parabéns!"
+  abilityUserTitle: "Habilidades tiradas em roll"
+  abilityUserLineStyle: "**{idx}° - Habilidade:** {ability.name}"
   # app.embeds.npc:
   npcHumanPresent: "{npc.name} [♥️ {life}][💨 {breath}]"
   npcOniPresent: "{npc.name} [♥️ {life}][🩸 {blood}]"

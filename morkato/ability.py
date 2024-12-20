@@ -29,15 +29,15 @@ class Ability:
   async def update(
     self, *,
     name: Optional[str] = None,
-    energy: Optional[int] = None,
-    npc_type: Optional[SupportsInt] = None,
+    user_type: Optional[SupportsInt] = None,
+    percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Self:
     payload = NoNullDict(
       name=name,
-      energy = energy,
-      npc_type=npc_type,
+      user_type=user_type,
+      percent=percent,
       description=description,
       banner=banner
     )
