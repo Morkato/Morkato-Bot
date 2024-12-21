@@ -5,7 +5,8 @@ ptBR:
   errorPlayerAlreadyRegisteredFamily: "Você já está sincronizado com uma família."
   errorAttackNotFoundError: "O ataque chamado: **%s** não existe."
   errorPlayerHasFamilyRolls: "Você ainda possui %s rolls."
-  errorAbilityNotFoundError: "A habilidade: **%s** não existe."
+  errorAbilityNotFoundError: "A habilidade chamada: **%s** não existe."
+  errorFamilyNotFoundError: "A família chamada: **%s** não existe."
   attackNameInvalid: "O nome deste ataque é invalido, o nome não pode exceder 32 caracteres ou não pode ter o caractere \":\" no nome."
   artNameInvalid: "O nome da arte não pode exceder 32 caracteres."
 enUS:

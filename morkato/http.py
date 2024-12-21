@@ -366,8 +366,8 @@ class HTTPClient:
   async def create_family(
     self, guild_id: int, *,
     name: str,
-    percent: int,
-    npc_type: Optional[SupportsInt] = None,
+    percent: Optional[int] = None,
+    user_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> FamilyPayload:
@@ -378,13 +378,13 @@ class HTTPClient:
       description = description,
       banner = banner
     )
-    if npc_type is not None:
-      payload.update(npc_type=int(npc_type))
+    if user_type is not None:
+      payload.update(user_type=int(user_type))
     return await self.request(route, json=payload)
   async def update_family(
     self, guild_id: int, id: int, *,
     name: Optional[str] = None,
-    npc_type: Optional[SupportsInt] = None,
+    user_type: Optional[SupportsInt] = None,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
@@ -396,8 +396,8 @@ class HTTPClient:
       description = description,
       banner = banner
     )
-    if npc_type is not None:
-      payload.update(npc_type=int(npc_type))
+    if user_type is not None:
+      payload.update(user_type=int(user_type))
     return await self.request(route, json=payload)
   async def delete_family(self, guild_id: int, id: int) -> FamilyPayload:
     route = Route("DELETE", "/families/{guild_id}/{id}", guild_id=guild_id, id=id)

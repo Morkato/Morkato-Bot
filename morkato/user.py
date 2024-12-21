@@ -74,6 +74,7 @@ class User:
     return self
   async def delete(self) -> None:
     await self.http.delete_user(self.guild.id, self.id)
+    self.guild._users.pop(self.id, None)
   async def sync_ability(self, ability: Snowflake) -> None:
     await self.http.registry_user_ability(self.guild.id, self.id, ability.id)
     self.abilities_id.append(ability.id)

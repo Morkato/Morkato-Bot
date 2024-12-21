@@ -11,6 +11,10 @@ ptBR:
   abilityUserEmpty: "Você ainda não tirou nada nos rolls de habilidade."
   abilityOtherUserEmpty: "O usuário **{user.name}** ainda não tirou nada nos rolls de habilidade."
   familyRollEmpty: "Não há família para se obter e/ou simular."
+  familyUserAlreadyActivated: "O roll já está ativado para este usuário na família requisitada."
+  familyUserActivated: "Foi ativado o roll para a família: **{family.name}** para este novo tipo de usuário."
+  familyUserEmpty: "Você ainda não tirou nada nos rolls de família."
+  familyOtherUserEmpty: "O usuário **{user.name}** ainda não tirou nada nos rolls de família."
 enUS:
   onFamilyCreate: "The family named: %s has been created!"
   onEmptyKwargsWhenUpdateFamily: "Wait... What do you want to update? Nothing?"

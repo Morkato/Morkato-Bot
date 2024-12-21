@@ -3,6 +3,7 @@ from morkbmt.context import MorkatoContext
 from morkbmt.bot import MorkatoBot
 from morkbmt.core import registry
 from morkato.errors import UserNotFoundError
+from morkato.types import UserType
 from morkato.family import Family
 from morkato.user import User
 from app.extension import BaseExtension
@@ -37,17 +38,20 @@ class RPGFamiliesExtension(BaseExtension):
     family_update = commands.app_command("family-update", self.family_update, description="[RPG Utilitários] Atualiza a família requisitada.")
     family_delete = commands.app_command("family-delete", self.family_delete, description="[RPG Utilitários] Excluí a família requisitada.")
     family = commands.command("family", self.family)
+    active_family_roll = commands.app_command("active-family-roll", self.active_family_roll, description="[RPG Utilitários] Ativa o roll para a família requisitada.")
 
+    commands.guild_only(active_family_roll)
     commands.guild_only(family_create)
     commands.guild_only(family_update)
     commands.guild_only(family_delete)
-    commands.guild_only(family)
 
+    commands.check(active_family_roll, self.manage_guild_perms)
     commands.check(family_create, self.manage_guild_perms)
     commands.check(family_update, self.manage_guild_perms)
     commands.check(family_delete, self.manage_guild_perms)
     commands.check(family, self.manage_guild_perms)
 
+    commands.rename(active_family_roll, family_query="family", user_type="user")
     commands.rename(family_update, family_query="family")
     commands.rename(family_delete, family_query="family")
 
@@ -73,7 +77,10 @@ class RPGFamiliesExtension(BaseExtension):
       if user is None:
         return
     family: Family
-    family = await app.utils.roll(guild.families, filter=self.family_filter(user))
+    try:
+      family = await app.utils.roll(guild.families, filter=self.family_filter(user))
+    except app.errors.ModelsEmptyError:
+      raise app.errors.AppError("familyRollEmpty")
     is_valid = user.family_roll != 0
     if is_valid:
       await user.sync_family(family)
@@ -110,7 +117,30 @@ class RPGFamiliesExtension(BaseExtension):
     family = await self.tofamily(query, families=guild.families)
     builder = app.embeds.FamilyBuilder(family)
     await ctx.send_embed(builder, resolve_all=True)
-  async def family_me(self, ctx: MorkatoContext, query: Optional[str]) -> None: ...
+  async def family_me(self, ctx: MorkatoContext, query: Optional[str]) -> None:
+    author = ctx.author
+    if query is not None:
+      author = await discord.ext.commands.UserConverter().convert(ctx, query)
+    guild = await self.get_morkato_guild(ctx.guild)
+    user = guild.get_cached_user(author.id)
+    try:
+      if user is None:
+        user = await guild.fetch_user(author.id)
+    except UserNotFoundError:
+      if ctx.author.id == author.id:
+        raise app.errors.AppError("familyUserEmpty")
+      raise app.errors.AppError("familyOtherUserEmpty", user=author)
+    if len(user.families_id) == 0:
+      if ctx.author.id == author.id:
+        raise app.errors.AppError("familyUserEmpty")
+      raise app.errors.AppError("familyOtherUserEmpty", user=author)
+    await guild.families.resolve()
+    families = {
+      family_id: await self.tofamily(family_id, families = guild.families)
+      for family_id in user.families_id
+    }
+    builder = app.embeds.FamilyRollMeBuilder(families)
+    await ctx.send_embed(builder, resolve_all=True)
   async def family(self, ctx: MorkatoContext, opt: Optional[FamilyOption], *, query: Optional[str]) -> None:
     if opt is None:
       opt = FamilyOption.GET if query is not None else FamilyOption.ROLL
@@ -165,3 +195,20 @@ class RPGFamiliesExtension(BaseExtension):
     await family.delete()
     builder = app.embeds.FamilyDeleted(family)
     await self.send_embed(interaction, builder, resolve_all=True)
+  
+  async def active_family_roll(
+    self, interaction: discord.Interaction[MorkatoBot], /,
+    family_query: str,
+    user_type: UserType
+  ) -> None:
+    await interaction.response.defer()
+    guild = await self.get_morkato_guild(interaction.guild)
+    family = await self.tofamily(family_query, families=guild.families)
+    flags = family.user_type.copy()
+    flag = flags[user_type]
+    if flags.hasflag(flag):
+      raise app.errors.AppError("familyUserAlreadyActivated", family=family)
+    flags.set(flag)
+    await family.update(user_type = flags)
+    content = self.msgbuilder.get_content(self.LANGUAGE, "familyUserActivated", family=family)
+    await interaction.edit_original_response(content=content)

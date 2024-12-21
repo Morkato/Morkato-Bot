@@ -1,20 +1,31 @@
 from morkato.family import Family
 from discord.embeds import Embed
 from .base import BaseEmbedBuilder
+from typing import Dict
+
+class FamilyRollMeBuilder(BaseEmbedBuilder):
+  def __init__(self, rolled_families: Dict[int, Family]) -> None:
+    self.families = rolled_families
+  async def build(self, page: int) -> Embed:
+    title = self.msgbuilder.get_content(self.LANGUAGE, "familyUserTitle")
+    style = self.msgbuilder.get_content(self.LANGUAGE, "familyUserLineStyle")
+    description = ''
+    for (idx, family) in enumerate(self.families.values(), start=1):
+      description += style.format(idx=idx, family=family)
+      description += '\n'
+    return Embed(
+      title = title,
+      description = description
+    )
 
 class FamilyBuilder(BaseEmbedBuilder):
   def __init__(self, family: Family) -> None:
-    self.ability_line_style = self.msgbuilder.get_content(self.LANGUAGE, "familyAbilityLineStyle")
     self.title = self.msgbuilder.get_content(self.LANGUAGE, "familyTitle", family=family)
     self.family = family
   async def build(self, page: int) -> Embed:
     description = self.family.description
     if description is None:
       description = self.msgbuilder.get_content(self.LANGUAGE, "defaultEmbedDescription")
-    if self.family._abilities:
-      description += "\n\n"
-      for (idx, ability) in enumerate(self.family._abilities.values(), start=1):
-        description += self.ability_line_style.format(idx=idx, ability=ability)
     embed = Embed(
       title = self.title,
       description = description

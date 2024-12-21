@@ -17,14 +17,12 @@ async def roll(
   filter: Optional[Callable[[ObjectWithPercentT], bool]] = None
 ) -> ObjectWithPercentT:
   await models.resolve()
-  if len(models) == 0:
-    raise ModelsEmptyError()
   objs = [elem for elem in models if filter(elem)] if filter is not None else models
   if len(objs) == 0:
     raise ModelsEmptyError()
-  total = sum(obj.percent for obj in objs)
+  total = sum(obj.percent for obj in objs) - 1
   generated = randint(0, total)
-  current = 0
+  current = -1
   for obj in objs:
     current += obj.percent
     is_valid = 0 >= generated - current

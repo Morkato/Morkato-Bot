@@ -87,3 +87,5 @@ ptBR:
   familyUpdated: "A família chamada: {family.name} foi atualizada!"
   familyDeleted: "A família chamada: {family.name} foi excluída!"
   familyRollValid: "Você obteve a família chamada: {family.name} parabéns!"
+  familyUserTitle: "Famílias tiradas em roll"
+  familyUserLineStyle: "**{idx}° - Família:** {family.name}"

@@ -1,6 +1,7 @@
 from .base import BaseEmbedBuilder
 from .user import UserRegistryEmbed
 from .family import (
+  FamilyRollMeBuilder,
   FamilyRegistryUser,
   FamilyCreated,
   FamilyUpdated,

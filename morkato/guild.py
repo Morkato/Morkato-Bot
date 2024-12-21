@@ -121,7 +121,7 @@ class Guild:
     return ability
   async def create_family(
     self, name: str, *,
-    user_type: SupportsInt,
+    user_type: Optional[SupportsInt] = None,
     percent: Optional[int] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None

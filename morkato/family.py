@@ -34,13 +34,15 @@ class Family:
   async def update(
     self, *,
     name: Optional[str] = None,
-    npc_type: Optional[SupportsInt] = None,
+    percent: Optional[int] = None,
+    user_type: Optional[SupportsInt] = None,
     description: Optional[str] = None,
     banner: Optional[str] = None
   ) -> Self:
     payload = NoNullDict(
       name=name,
-      npc_type=npc_type,
+      percent=percent,
+      user_type=user_type,
       description=description,
       banner=banner
     )
