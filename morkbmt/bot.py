@@ -48,6 +48,8 @@ class MorkatoBot(Bot):
     self.injected = injected
   async def get_context(self, origin: Union[discord.Message, discord.Interaction], /) -> MorkatoContext:
     return await super().get_context(origin, cls=MorkatoContext)
+  async def _async_setup_hook(self) -> None:
+    await super()._async_setup_hook()
   async def on_ready(self) -> None:
     await self.tree.sync()
     _log.info("Estou conectado, como: %s" % self.user.name)

@@ -39,6 +39,7 @@ class MorkatoConfiguration(Extension):
     self.msgbuilder.from_archive("rpg-families-abilities.yml")
     self.msgbuilder.from_archive("rpg-arts-attacks.yml")
     self.msgbuilder.from_archive("rpg-players.yml")
+    self.msgbuilder.from_archive("rpg-users.yml")
     self.msgbuilder.from_archive("embeds.yml")
     self.msgbuilder.from_archive("utility.yml")
 def strip_text(

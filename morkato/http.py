@@ -417,3 +417,6 @@ class HTTPClient:
   async def registry_user_ability(self, guild_id: int, user_id: int, ability_id: int) -> UserPayload:
     route = Route("POST", "/users/{guild_id}/{user_id}/abilities/{ability_id}", guild_id=guild_id, user_id=user_id, ability_id=ability_id)
     return await self.request(route)
+  async def registry_user_family(self, guild_id: int, user_id: int, family_id: int) -> UserPayload:
+    route = Route("POST", "/users/{guild_id}/{user_id}/families/{family_id}", guild_id=guild_id, user_id=user_id, family_id=family_id)
+    return await self.request(route)

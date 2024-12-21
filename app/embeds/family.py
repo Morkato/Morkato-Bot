@@ -24,17 +24,17 @@ class FamilyBuilder(BaseEmbedBuilder):
     return embed
   def length(self) -> int:
     return 1
-class FamilyRegistryPlayer(FamilyBuilder):
+class FamilyRegistryUser(FamilyBuilder):
   def __init__(self, family: Family, is_valid: bool) -> None:
     super().__init__(family)
     self.is_valid = is_valid
   async def build(self, page: int) -> Embed:
     embed = await super().build(page)
-    if not self.is_valid:
-      embed.set_footer(
-        text = self.msgbuilder.get_content(self.LANGUAGE, "rollNotValid"),
-        icon_url = self.DEFAULT_ICON
-      )
+    key = "rollNotValid" if not self.is_valid else "familyRollValid"
+    embed.set_footer(
+      text = self.msgbuilder.get_content(self.LANGUAGE, key, family = self.family),
+      icon_url = self.DEFAULT_ICON
+    )
     return embed
 class FamilyCreated(FamilyBuilder):
   async def build(self, page: int) -> Embed:

@@ -194,15 +194,15 @@ class BotBuilder:
         injected = _inject_in_converter(converter, injector=self.get_injected_value)
         await converter.setup()
       except ValueNotInjectedError as exc:
-        _log.error("Failed to load converter: %s.%s (%s[%s.%s]) dependence: %s.%s is not injected.",
+        _log.error("Failed to load converter: %s.%s(%s[%s.%s]) dependence: %s.%s (%s) is not injected.",
                     converter.__module__, type(converter).__name__, Converter.__name__,
-                    converter.__module__, converter.__convert_class__.__name__,
-                    exc.annotation.__module__, exc.annotation.__name__)
+                    converter.__convert_class__.__module__, converter.__convert_class__.__name__,
+                    exc.annotation.__module__, exc.annotation.__name__, exc.key)
         continue
       except Exception as exc:
         _log.error("Failed to load converter: %s.%s (%s[%s.%s]) an unexpected error occurred:\n%s",
                    converter.__module__, type(converter).__name__, Converter.__name__,
-                   converter.__module__, converter.__convert_class__.__name__, traceback.format_exc())
+                   converter.__convert_class__.__module__, converter.__convert_class__.__name__, traceback.format_exc())
         await converter.close()
         continue
       bot.morkconverters[cls] = converter

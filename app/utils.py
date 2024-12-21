@@ -1,6 +1,11 @@
 from morkato.abc import UnresolvedSnowflakeList
+from morkato.guild import Guild
+from morkato.user import User
+from morkbmt.context import MorkatoContext
 from .interfaces import ObjectWithPercentT
+from .embeds import UserRegistryEmbed
 from .errors import ModelsEmptyError
+from .view import RegistryUserUi
 from random import randint
 from typing import (
   Callable,
@@ -26,3 +31,12 @@ async def roll(
     if is_valid:
       break
   return obj
+
+async def send_user_registry(ctx: MorkatoContext, guild: Guild) -> Optional[User]:
+  view = RegistryUserUi(guild, ctx.bot.loop)
+  builder = UserRegistryEmbed(ctx.author)
+  embed = builder.build(0)
+  origin = await ctx.send(embed=embed, view=view)
+  resp = await view.get()
+  await origin.delete()
+  return resp

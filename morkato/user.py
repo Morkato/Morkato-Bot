@@ -72,6 +72,11 @@ class User:
       payload = await self.http.update_user(self.guild.id, self.id, **kwargs)
       self.from_payload(payload)
     return self
+  async def delete(self) -> None:
+    await self.http.delete_user(self.guild.id, self.id)
   async def sync_ability(self, ability: Snowflake) -> None:
     await self.http.registry_user_ability(self.guild.id, self.id, ability.id)
     self.abilities_id.append(ability.id)
+  async def sync_family(self, family: Snowflake) -> None:
+    await self.http.registry_user_family(self.guild.id, self.id, family.id)
+    self.families_id.append(family.id)

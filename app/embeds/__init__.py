@@ -1,7 +1,7 @@
 from .base import BaseEmbedBuilder
 from .user import UserRegistryEmbed
 from .family import (
-  FamilyRegistryPlayer,
+  FamilyRegistryUser,
   FamilyCreated,
   FamilyUpdated,
   FamilyDeleted,

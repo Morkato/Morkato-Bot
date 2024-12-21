@@ -1,0 +1,3 @@
+ptBR:
+  userNotRegistered: "O usuário chamado: **{user.name}** não está registrado."
+  userToUnregistered: "O usuário chamado: **{user.name}** foi excluído de meu banco."

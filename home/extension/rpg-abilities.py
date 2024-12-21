@@ -64,14 +64,6 @@ class RPGAbilitiesExtension(BaseExtension):
       AbilityOption.SIMULATE: self.ability_simulate,
       AbilityOption.ME: self.ability_me
     }
-  async def send_user_registry(self, ctx: MorkatoContext, guild: Guild) -> Optional[User]:
-    view = app.view.RegistryUserUi(guild, ctx.bot.loop)
-    builder = app.embeds.UserRegistryEmbed(ctx.author)
-    embed = builder.build(0)
-    origin = await ctx.send(embed=embed, view=view)
-    resp = await view.get()
-    await origin.delete()
-    return resp
   def ability_filter(self, user: User) -> Callable[[Ability], bool]:
     def predicate(ability: Ability) -> bool:
       flag = ability.user_type[user.type]
@@ -91,7 +83,7 @@ class RPGAbilitiesExtension(BaseExtension):
       if user is None:
         user = await guild.fetch_user(ctx.author.id)
     except UserNotFoundError:
-      user = await self.send_user_registry(ctx, guild)
+      user = await app.utils.send_user_registry(ctx, guild)
       if user is None:
         return
     ability: Ability

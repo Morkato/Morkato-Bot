@@ -186,12 +186,6 @@ class UnresolvedFamilyList(UnresolvedObjectListImpl[Family]):
     await abilities.resolve()
     for family_data in payload:
       family = Family(state, guild, family_data)
-      ability_ids = family_data["abilities"]
-      for ability_id in ability_ids:
-        ability = abilities.get(int(ability_id))
-        if ability is None:
-          raise RuntimeError("Unknown ability reference: %s for family: %s (Guild ID: %s)" % (ability_id, family.id, guild.id))
-        family._add_ability(ability)
       self.add(family)
   def add(self, object: Family, /) -> None:
     if self.already_loaded():
