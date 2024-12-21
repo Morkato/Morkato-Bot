@@ -23,8 +23,10 @@ async def roll(
   if len(objs) == 0:
     raise ModelsEmptyError()
   total = sum(obj.percent for obj in objs) - 1
-  generated = randint(0, total)
   current = -1
+  if current == total:
+    raise ModelsEmptyError()
+  generated = randint(0, total)
   for obj in objs:
     current += obj.percent
     is_valid = 0 >= generated - current
