@@ -6,11 +6,13 @@ from .interfaces import ObjectWithPercentT
 from .embeds import UserRegistryEmbed
 from .errors import ModelsEmptyError
 from .view import RegistryUserUi
+from unidecode import unidecode
 from random import randint
 from typing import (
   Callable,
   Optional
 )
+import re
 
 async def roll(
   models: UnresolvedSnowflakeList[ObjectWithPercentT], *,
@@ -38,3 +40,32 @@ async def send_user_registry(ctx: MorkatoContext, guild: Guild) -> Optional[User
   resp = await view.get()
   await origin.delete()
   return resp
+
+def strip_text(
+  text: str, *,
+  ignore_accents: Optional[bool] = None,
+  ignore_empty: Optional[bool] = None,
+  case_insensitive: Optional[bool] = None,
+  strip_text: Optional[bool] = None,
+  empty: Optional[str]  = None
+) -> str:
+  if empty is None:
+    empty = '-'
+  if strip_text:
+    text = text.strip()
+  if ignore_accents:
+     text = unidecode(text)
+  if ignore_empty:
+     text = re.sub(r'\s+', empty, text)
+  if case_insensitive:
+     text = text.lower()
+  return text
+def strip_text_all(text: str, *, empty: Optional[str] = None) -> str:
+  return strip_text(
+     text=text,
+     ignore_accents=True,
+     ignore_empty=True,
+     case_insensitive=True,
+     strip_text=True,
+     empty=empty
+  )

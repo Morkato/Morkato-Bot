@@ -6,7 +6,6 @@ from morkato.family import Family
 from morkato.attack import Attack
 from morkato.art import Art
 from app.embeds.base import BaseEmbedBuilder
-from unidecode import unidecode
 from typing_extensions import Self
 from typing import (
   Optional,
@@ -17,6 +16,7 @@ from typing import (
   Dict
 )
 import app.errors
+import app.utils
 import discord
 import re
 
@@ -42,34 +42,6 @@ class MorkatoConfiguration(Extension):
     self.msgbuilder.from_archive("rpg-users.yml")
     self.msgbuilder.from_archive("embeds.yml")
     self.msgbuilder.from_archive("utility.yml")
-def strip_text(
-  text: str, *,
-  ignore_accents: Optional[bool] = None,
-  ignore_empty: Optional[bool] = None,
-  case_insensitive: Optional[bool] = None,
-  strip_text: Optional[bool] = None,
-  empty: Optional[str]  = None
-) -> str:
-  if empty is None:
-    empty = '-'
-  if strip_text:
-    text = text.strip()
-  if ignore_accents:
-     text = unidecode(text)
-  if ignore_empty:
-     text = re.sub(r'\s+', empty, text)
-  if case_insensitive:
-     text = text.lower()
-  return text
-def strip_text_all(text: str, *, empty: Optional[str] = None) -> str:
-  return strip_text(
-     text=text,
-     ignore_accents=True,
-     ignore_empty=True,
-     case_insensitive=True,
-     strip_text=True,
-     empty=empty
-  )
 
 _ID_REGEX = re.compile(r'([0-9]{15,20})$')
 class IDConverter(Converter[T]):
@@ -87,8 +59,8 @@ class AbilityConverter(IDConverter[Ability]):
       if ability is None:
         raise app.errors.AbilityNotFoundError(arg)
       return ability
-    name = strip_text_all(arg)
-    abilities = (ability for ability in abilities if strip_text_all(ability.name) == name)
+    name = app.utils.strip_text_all(arg)
+    abilities = (ability for ability in abilities if app.utils.strip_text_all(ability.name) == name)
     ability = next(abilities, None)
     if ability is None:
       raise app.errors.AbilityNotFoundError(arg)
@@ -102,8 +74,8 @@ class FamilyConverter(IDConverter[Family]):
       if family is None:
         raise app.errors.FamilyNotFoundError(arg)
       return family
-    name = strip_text_all(arg)
-    families = (family for family in families if strip_text_all(family.name) == name)
+    name = app.utils.strip_text_all(arg)
+    families = (family for family in families if app.utils.strip_text_all(family.name) == name)
     family = next(families, None)
     if family is None:
       raise app.errors.FamilyNotFoundError(arg)
@@ -122,8 +94,8 @@ class ArtConverter(IDConverter[Art]):
       if art is None:
         raise app.errors.ArtNotFoundError(arg)
       return art
-    name = strip_text_all(arg)
-    generated = (art for art in arts if strip_text_all(art.name) == name)
+    name = app.utils.strip_text_all(arg)
+    generated = (art for art in arts if app.utils.strip_text_all(art.name) == name)
     art = next(generated, None)
     if art is None:
       raise app.errors.ArtNotFoundError(arg)
@@ -163,9 +135,9 @@ class AttackConverter(IDConverter[Attack]):
     art: Optional[Art] = None
     if artquery is not None:
       art = await to_art(artquery, arts=arts)
-    name = strip_text_all(attackname)
+    name = app.utils.strip_text_all(attackname)
     all_attacks: Iterator[Attack] = iter(art._attacks.values() if art is not None else attacks.values())
-    all_attacks = (attack for attack in all_attacks if strip_text_all(attack.name) == name)
+    all_attacks = (attack for attack in all_attacks if app.utils.strip_text_all(attack.name) == name)
     attack = next(all_attacks, None)
     if attack is None:
       raise app.errors.AttackNotFoundError(attackname)

@@ -18,6 +18,7 @@ from typing import (
 from enum import Enum
 import app.embeds
 import app.errors
+import app.utils
 
 class ArtOption(Enum):
   GET = "get"
@@ -43,7 +44,7 @@ class RPGCommands(BaseExtension):
     (opt, *args) = query.split(' ')
     if args:
       raise app.errors.NoActionError
-    opt = app.converters.strip_text_all(opt)
+    opt = app.utils.strip_text_all(opt)
     if opt in self.RESPIRATION_KEYS:
       return Art.RESPIRATION
     if opt in self.KEKKIJUTSU_KEYS:
