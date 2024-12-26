@@ -6,4 +6,4 @@ ptBR:
   channelCreatingOnWipeCategory: "Recriando o canal com o nome: **`{channel.name}`** na categoria: **`{category.name}`** mantendo as preferências."
   channelCreatedMessage: "{author.mention} Este canal sofreu o processo de wipe, todas as mensagens foram excluídas, matendo as preferências."
   wipeDone: "Tudo certo! Os canais foram recriados."
-  uploadImage: "Imagem upada com sucesso! Você pode referenciá-la via **`cdn://{author_id}/{name}`** url: **`http://files.morkato.dev/{author_id}/{name}`**."
+  uploadImage: "Imagem upada com sucesso! Disponível em: **`{cdn}/{author_id}/{name}`** para consultas."

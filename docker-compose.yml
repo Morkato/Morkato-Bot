@@ -48,7 +48,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://dmorkato:5432/morkato}
   bot:
     container_name: morkato-bot
-    restart: on-failure
+    restart: no
     build:
       context: .
       dockerfile: bot.dockerfile
