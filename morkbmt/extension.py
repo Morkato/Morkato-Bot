@@ -207,6 +207,7 @@ class ExtensionCommandBuilder(Protocol[ExtensionT]):
 @runtime_checkable
 class ApplicationContext(Protocol[ExtensionT]):
   def get_running_extension(self) -> ExtensionT: ...
+  def get_home_path(self) -> str: ...
   def inject(self, object: Any, /) -> None: ...
 class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
   def __init__(self, extension: ExtensionT):
@@ -260,10 +261,13 @@ class ExtensionCommandBuilderImpl(ExtensionCommandBuilder[ExtensionT]):
     register = apc.rename(**parameters)
     register(command)
 class ApplicationContextImpl(ApplicationContext[ExtensionT]):
-  def __init__(self, extension: ExtensionT, injected: Dict[Type[Any], Any]) -> None:
+  def __init__(self, extension: ExtensionT, injected: Dict[Type[Any], Any], home_path: str) -> None:
     self.__extension = extension
     self.__injected = injected
+    self.__home_path = home_path
   def get_running_extension(self):
     return self.__extension
+  def get_home_path(self) -> str:
+    return self.__home_path
   def inject(self, object: Any, /) -> None:
     self.__injected[type(object)] = object

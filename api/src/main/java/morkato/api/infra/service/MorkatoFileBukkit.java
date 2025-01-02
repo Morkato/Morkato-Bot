@@ -1,7 +1,6 @@
 package morkato.api.infra.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +24,7 @@ public class MorkatoFileBukkit {
     WORK_DIR = Paths.get(path);
     IMAGE_CONTEXT_NAME = Paths.get(WORK_DIR.toString(), "image");
   }
-  private void ensureDirectoriesExist() throws IOException {
+  private void ensureExist() throws IOException {
     if (!Files.exists(WORK_DIR)) {
       Files.createDirectories(WORK_DIR);
       Files.createDirectories(IMAGE_CONTEXT_NAME);
@@ -35,7 +34,7 @@ public class MorkatoFileBukkit {
     }
   }
   public String saveImage(byte[] image) throws IOException {
-    ensureDirectoriesExist();
+    ensureExist();
     UUID uuid = UUID.randomUUID();
     String filename = uuid + ".bin";
     Path path = Paths.get(IMAGE_CONTEXT_NAME.toString(), filename);

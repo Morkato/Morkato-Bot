@@ -162,7 +162,7 @@ class BotBuilder:
     unloaded_extension: Extension
     try:
       unloaded_extension = extension()
-      application = ApplicationContextImpl(extension, self.__injected)
+      application = ApplicationContextImpl(extension, self.__injected, self.__home)
       unloaded_extension.start(application)
     except Exception as exc:
       _log.warning("Failed to start extension: %s.%s error is called:\n%s", extension.__module__, extension.__name__, traceback.format_exc())

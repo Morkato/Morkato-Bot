@@ -9,6 +9,7 @@ import importlib.util
 import discord.utils
 import logging
 import discord
+import yaml
 import asyncio
 import sys
 import os
@@ -27,6 +28,7 @@ def main(class_location: Optional[str] = None, *argv) -> int:
   MORKATO_HOME = os.getenv("MORKATO_HOME")
   BOT_TOKEN = os.getenv("BOT_TOKEN")
   PREFIX = os.getenv("BOT_PREFIX")
+  AMB = os.getenv("AMB", "dev")
   if MORKATO_HOME is None:
     print("MORKATO_HOME is undefined.")
     return 1
@@ -40,6 +42,16 @@ def main(class_location: Optional[str] = None, *argv) -> int:
   discord.utils.setup_logging(
     level=logging.INFO
   )
+  logging_special_file = os.path.join(MORKATO_HOME, ".logconfig")
+  if os.path.exists(logging_special_file):
+    try:
+      with open(logging_special_file, 'r') as fp:
+        payload = yaml.safe_load(fp)
+        mappers = payload[AMB]
+        for (modulename, level) in mappers.items():
+          logging.getLogger(modulename).setLevel(level)
+    except KeyError:
+      pass
   cls: Type[MorkatoBot] = MorkatoBot
   if class_location is not None:
     (module_name, cls_name) = class_location.rsplit('.', 1)

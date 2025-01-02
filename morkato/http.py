@@ -122,6 +122,7 @@ class HTTPClient:
           logger.debug("%s %s retornou: %s", method, url, status)
           if status in range(200, 300):
             return data
+          logger.debug("Response Data: %s", data)
           extra = data.get("extra", {})
           if status == 404:
             model_name = data["model"]
